@@ -1,0 +1,84 @@
+# Source-of-truth for what the site knows.
+# Each entry is a memory. IDs are stable — referenced by the WebGL layer for pulse targets.
+# Sections: story | timeline | projects | capabilities | contact
+# Edit freely; the site rebuilds retrieval on next request.
+
+- id: arc-aircraft-to-agents
+  section: story
+  title: The arc, compressed
+  tags: [origin, aerospace, ai, pivot]
+  body: >
+    I dreamt of flying fighters. Trained to design aircraft — mechanical engineering, then a masters in
+    aerospace design in the UK. Applied twice for short-service commissions; aged out of the third window.
+    The UK aerospace market wasn't hiring by then. So I rebuilt the toolkit. A decade in APAC performance
+    marketing followed. Now I'm building the systems that do that work faster and better than any team I
+    ever ran.
+
+- id: pattern-imagine-then-learn
+  section: story
+  title: The pattern
+  tags: [method, imagination, learning]
+  body: >
+    First I imagine it. Then I learn whatever it takes to build it. That's the loop that shows up in
+    everything — a cafe racer from an RD350, a chat-native ERP, a multi-agent creative pipeline for
+    jewellery, a website that behaves like a mind.
+
+- id: project-jewel-ai
+  section: projects
+  title: The Automated Jewelry Studio
+  tags: [ai, agents, creative, langgraph]
+  body: >
+    A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
+    for jewellery brands. LangGraph orchestration, custom retouching agents, brand-voice guardrails.
+
+- id: project-mrunn-erp
+  section: projects
+  title: Mrunn — chat-native ERP
+  tags: [ai, ops, mastra, agents]
+  body: >
+    An ERP you talk to. Purchase orders, invoices, stock queries — all through a Mastra multi-agent
+    system that also renders traditional forms when they're the right tool. Built because every ERP I've
+    used forces the human to translate their intent into a form.
+
+- id: project-taboola
+  section: projects
+  title: Taboola product work
+  tags: [product, payments, security, apac]
+  body: >
+    Product work at Taboola across payment expansion into new APAC markets, the Ads UI refresh, and a
+    company-wide 2FA rollout that landed without breaking a single advertiser account.
+
+- id: project-kinnect-automation
+  section: projects
+  title: Kinnect reporting automation
+  tags: [engineering-inside-marketing, automation, origin]
+  body: >
+    The origin of the engineer-inside-the-marketer. Kinnect's reporting was manual. I wrote the
+    automation that replaced a week of analyst work per client, per month. This is when I realised the
+    marketing job was really a systems job in disguise.
+
+- id: cap-paid-media
+  section: capabilities
+  title: Paid media
+  tags: [media, apac]
+  body: A decade of performance media across APAC. Canon, Laughing Cow, Evian, Hotstar. 5x ROAS at Evian, 10x spend growth at Kinnect.
+
+- id: cap-ai-agents
+  section: capabilities
+  title: AI agents
+  tags: [ai]
+  body: Mastra, LangGraph, Vercel AI SDK. Multi-agent systems for ERP, creative pipelines, and this site.
+
+- id: cap-full-stack
+  section: capabilities
+  title: Full-stack builds
+  tags: [engineering]
+  body: Next.js, TypeScript, R3F, Postgres, Redis. From marketing automations to production ERPs.
+
+- id: contact-brief
+  section: contact
+  title: How to brief me
+  tags: [cta]
+  body: >
+    Tell me what you're working on, when you need it, and what's tried already. I'll come back within a day
+    with a scoped proposal or an honest "not the right fit."

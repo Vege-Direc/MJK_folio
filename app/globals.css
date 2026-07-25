@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm-outside DOM palette */
+  --color-bg: #0a0a0a;
+  --color-type: #f5f3ee;
+  --color-type-muted: #a8a49a;
+  --color-type-dim: #7a776d;
+  --color-accent: #d4c19c;
+  --color-rule: #2a2825;
+
+  /* Cool-inside WebGL palette (used only in shaders / R3F) */
+  --color-filament: #4dd4e8;
+  --color-pulse: #ff7a3d;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: var(--color-bg); color: var(--color-type); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+::selection { background: var(--color-accent); color: var(--color-bg); }
+
+a { color: var(--color-accent); text-decoration: none; border-bottom: 1px solid rgba(212,193,156,0.3); transition: border-color .15s; }
+a:hover { border-bottom-color: var(--color-accent); }
+
+/* Sacred 8px baseline */
+:root { --baseline: 8px; }
