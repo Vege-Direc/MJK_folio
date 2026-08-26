@@ -5,6 +5,7 @@
 
 - id: arc-aircraft-to-agents
   section: story
+  stopId: origin
   title: The arc, compressed
   tags: [origin, aerospace, ai, pivot]
   period: 2010-2026
@@ -17,6 +18,7 @@
 
 - id: pattern-imagine-then-learn
   section: story
+  stopId: pivot
   title: The pattern
   tags: [method, imagination, learning]
   body: >
@@ -26,7 +28,8 @@
 
 - id: project-jewel-ai
   section: projects
-  title: The Automated Jewelry Studio
+  stopId: now
+  title: JewelAI Studio
   tags: [ai, agents, creative, langgraph]
   body: >
     A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
@@ -34,7 +37,8 @@
 
 - id: project-mrunn-erp
   section: projects
-  title: Mrunn — chat-native ERP
+  stopId: now
+  title: MruNN-ERP — chat-native ERP
   tags: [ai, ops, mastra, agents]
   body: >
     An ERP you talk to. Purchase orders, invoices, stock queries — all through a Mastra multi-agent
@@ -43,6 +47,7 @@
 
 - id: project-taboola
   section: projects
+  stopId: work
   title: Taboola product work
   tags: [product, payments, security, apac]
   period: 2020-2021
@@ -54,6 +59,7 @@
 
 - id: project-kinnect-automation
   section: projects
+  stopId: apac
   title: Kinnect reporting automation
   tags: [engineering-inside-marketing, automation, origin]
   period: 2017-2019
@@ -65,6 +71,7 @@
 
 - id: cap-paid-media
   section: capabilities
+  stopId: apac
   title: Paid media
   tags: [media, apac, india]
   body: >
@@ -75,18 +82,21 @@
 
 - id: cap-ai-agents
   section: capabilities
+  stopId: now
   title: AI agents
   tags: [ai]
   body: Mastra, LangGraph, Vercel AI SDK. Multi-agent systems for ERP, creative pipelines, and this site.
 
 - id: cap-full-stack
   section: capabilities
+  stopId: now
   title: Full-stack builds
   tags: [engineering]
   body: Next.js, TypeScript, R3F, Postgres, Redis. From marketing automations to production ERPs.
 
 - id: contact-brief
   section: contact
+  stopId: contact
   title: How to brief me
   tags: [cta]
   body: >
@@ -97,6 +107,7 @@
 
 - id: krunch-labs
   section: projects
+  stopId: now
   title: Krunch Labs
   tags: [ai, consulting, singapore, founder]
   period: 2025-present
@@ -107,6 +118,7 @@
 
 - id: paxel-assessment
   section: capabilities
+  stopId: work
   title: External assessment
   tags: [credential, ai, engineering, third-party]
   body: >
@@ -115,6 +127,7 @@
 
 - id: project-tallybridge
   section: projects
+  stopId: now
   title: TallyBridge
   tags: [ai, open-source, mcp, accounting]
   body: >
@@ -124,6 +137,7 @@
 
 - id: project-photoshoot-pipeline
   section: projects
+  stopId: now
   title: The multi-agent photoshoot
   tags: [ai, agents, creative]
   body: >
@@ -133,6 +147,7 @@
 
 - id: hotstar-scale
   section: timeline
+  stopId: apac
   title: Hotstar, at scale
   tags: [scale, india, live, media]
   period: 2019-2020
@@ -143,6 +158,7 @@
 
 - id: omnicom-years
   section: timeline
+  stopId: apac
   title: Where the media career started
   tags: [media, india, strategy]
   period: 2013-2017
@@ -153,15 +169,17 @@
 
 - id: build-rd350
   section: story
+  stopId: rd350
   title: The RD 350
   tags: [bike, fabrication, self-taught, aside]
-  media: gallery:rd350-build
+  media: gallery:rd350
   body: >
     Off the clock I restored a 1986 Yamaha RD 350 into a custom cafe racer. Self-taught fabrication
     and design — the same instinct behind everything else I build.
 
 - id: education
   section: timeline
+  stopId: engineering
   title: Education
   tags: [education, aerospace, mechanical]
   body: >
@@ -170,6 +188,7 @@
 
 - id: awards
   section: capabilities
+  stopId: work
   title: Awards
   tags: [awards, recognition]
   body: >

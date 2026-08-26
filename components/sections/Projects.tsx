@@ -2,14 +2,14 @@ const featured = [
   {
     id: 'jewel-ai',
     kicker: 'Multi-agent creative pipeline',
-    title: 'Automated Jewelry Studio',
+    title: 'JewelAI Studio',
     body: 'A LangGraph-orchestrated system that turns product shots and briefs into finished ad creatives for jewellery brands.',
     tag: 'AI · CREATIVE',
   },
   {
     id: 'mrunn',
     kicker: 'Chat-native ERP',
-    title: 'Mrunn',
+    title: 'MruNN-ERP',
     body: 'An ERP you talk to. Purchase orders, invoices, stock — through a Mastra multi-agent system that renders forms only when they\'re the right tool.',
     tag: 'AI · OPS',
   },
