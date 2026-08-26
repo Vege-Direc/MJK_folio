@@ -17,14 +17,14 @@ const featured = [
     id: 'taboola',
     kicker: 'Product work',
     title: 'Taboola',
-    body: 'Payments expansion across APAC, Ads UI refresh, a company-wide 2FA rollout that landed without breaking a single advertiser account.',
+    body: 'Emerging-market payment expansion into Korea and Indonesia, the APAC Ads Interface revamp, and a global two-factor authentication launch.',
     tag: 'PRODUCT · APAC',
   },
   {
     id: 'kinnect',
     kicker: 'Origin story',
     title: 'Kinnect reporting automation',
-    body: 'A week of analyst work per client, per month — replaced. The moment marketing became a systems problem for me.',
+    body: 'Reporting automated with Supermetrics and Looker Studio, cutting report generation time by half. The moment marketing became a systems problem for me.',
     tag: 'AUTOMATION',
   },
 ];
