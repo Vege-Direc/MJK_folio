@@ -7,12 +7,13 @@
   section: story
   title: The arc, compressed
   tags: [origin, aerospace, ai, pivot]
+  period: 2010-2026
   body: >
-    I dreamt of flying fighters. Trained to design aircraft — mechanical engineering, then a masters in
-    aerospace design in the UK. Applied twice for short-service commissions; aged out of the third window.
-    The UK aerospace market wasn't hiring by then. So I rebuilt the toolkit. A decade in APAC performance
-    marketing followed. Now I'm building the systems that do that work faster and better than any team I
-    ever ran.
+    I dreamt of flying fighters. Trained to design aircraft — mechanical engineering at BITS Pilani in
+    Dubai in 2010, then an aerospace masters at Brunel in London in 2012. The UK aerospace market wasn't
+    hiring by the time I finished. So I rebuilt the toolkit. Media strategy at Omnicom in India from
+    2013, then Kinnect, Hotstar, Taboola, and eventually Singapore. Now I'm building the systems that do
+    that work faster and better than any team I ever ran.
 
 - id: pattern-imagine-then-learn
   section: story
@@ -44,24 +45,33 @@
   section: projects
   title: Taboola product work
   tags: [product, payments, security, apac]
+  period: 2020-2021
   body: >
-    Product work at Taboola across payment expansion into new APAC markets, the Ads UI refresh, and a
-    company-wide 2FA rollout that landed without breaking a single advertiser account.
+    Media Product Specialist at Taboola, based in Thailand. I led product rollouts including
+    emerging-market payment expansion into Korea and Indonesia, the APAC Ads Interface revamp, and a
+    global two-factor authentication launch. I also ran beta programs with product and account teams
+    and built the training that took it all to sales and clients across APAC.
 
 - id: project-kinnect-automation
   section: projects
   title: Kinnect reporting automation
   tags: [engineering-inside-marketing, automation, origin]
+  period: 2017-2019
   body: >
-    The origin of the engineer-inside-the-marketer. Kinnect's reporting was manual. I wrote the
-    automation that replaced a week of analyst work per client, per month. This is when I realised the
-    marketing job was really a systems job in disguise.
+    The origin of the engineer-inside-the-marketer. Kinnect's reporting was manual, so I automated it
+    with Supermetrics and Looker Studio and cut report generation time by half. I also grew the media
+    team from two to five. This is when I realised the marketing job was really a systems job in
+    disguise.
 
 - id: cap-paid-media
   section: capabilities
   title: Paid media
-  tags: [media, apac]
-  body: A decade of performance media across APAC. Canon, Laughing Cow, Evian, Hotstar. 5x ROAS at Evian, 10x spend growth at Kinnect.
+  tags: [media, apac, india]
+  body: >
+    A decade of performance and brand media, first across India, then Southeast Asia. Hindustan Unilever,
+    Parle, Tourism Australia and Visa at Omnicom. Skechers, Rustomjee and Lodha at Kinnect. Canon, Evian
+    and The Laughing Cow at The Triad Co. 5x ROAS for Evian; a 10x increase in ad spend on Rustomjee's
+    first project.
 
 - id: cap-ai-agents
   section: capabilities
@@ -82,3 +92,86 @@
   body: >
     Tell me what you're working on, when you need it, and what's tried already. I'll come back within a day
     with a scoped proposal or an honest "not the right fit."
+
+# ── Added 2026-08-26, verified against the resume ──────────────────────────────
+
+- id: krunch-labs
+  section: projects
+  title: Krunch Labs
+  tags: [ai, consulting, singapore, founder]
+  period: 2025-present
+  body: >
+    I founded Krunch Labs in January 2025 in Singapore, building AI systems for consumer and B2B
+    clients across Southeast Asia and India — production multi-agent pipelines, custom ERPs, and
+    automation tools.
+
+- id: paxel-assessment
+  section: capabilities
+  title: External assessment
+  tags: [credential, ai, engineering, third-party]
+  body: >
+    My agent orchestration work was independently assessed by Y Combinator's Paxel as showing
+    "unusually strong architectural judgment," operating "at a strong engineering level."
+
+- id: project-tallybridge
+  section: projects
+  title: TallyBridge
+  tags: [ai, open-source, mcp, accounting]
+  body: >
+    An open-source project, MIT licensed, that syncs Indian accounting software into a queryable
+    database and puts an AI assistant in front of it — 27 MCP tools for plain-English financial
+    queries.
+
+- id: project-photoshoot-pipeline
+  section: projects
+  title: The multi-agent photoshoot
+  tags: [ai, agents, creative]
+  body: >
+    A pipeline of creative-director, prompt-writer and QA-critic agents with self-improving prompt
+    memory. It turned raw supplier photos into more than 50 on-brand catalog images across 20+
+    products for an apparel client.
+
+- id: hotstar-scale
+  section: timeline
+  title: Hotstar, at scale
+  tags: [scale, india, live, media]
+  period: 2019-2020
+  body: >
+    Client success and ad operations at Disney+ Hotstar through IPL 2019 and the ICC Cricket World
+    Cup 2019 — a then-record 25 million concurrent viewers on the platform. I led client relations
+    for ICICI Lombard, Redbull and Apple through it.
+
+- id: omnicom-years
+  section: timeline
+  title: Where the media career started
+  tags: [media, india, strategy]
+  period: 2013-2017
+  body: >
+    Four years at Omnicom in India. Media strategy for Hindustan Unilever across eight categories at
+    PHD; digital strategy for Parle, Tourism Australia and Visa at OMD; SEM, social and display for
+    Hindustan Unilever at Resolution Media.
+
+- id: build-rd350
+  section: story
+  title: The RD 350
+  tags: [bike, fabrication, self-taught, aside]
+  media: gallery:rd350-build
+  body: >
+    Off the clock I restored a 1986 Yamaha RD 350 into a custom cafe racer. Self-taught fabrication
+    and design — the same instinct behind everything else I build.
+
+- id: education
+  section: timeline
+  title: Education
+  tags: [education, aerospace, mechanical]
+  body: >
+    MSc Aerospace Engineering, Brunel University London, 2012, Merit. BEng Mechanical Engineering,
+    BITS Pilani Dubai, 2010, First Class Honours.
+
+- id: awards
+  section: capabilities
+  title: Awards
+  tags: [awards, recognition]
+  body: >
+    Best Social Media Brand at the Sammies in 2018, silver, for Skechers. Best Integrated Campaign at
+    the CMO Asia Awards in 2016, for Tourism Australia.

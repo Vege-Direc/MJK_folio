@@ -2,16 +2,18 @@
 
 @theme {
   /* Warm-outside DOM palette */
-  --color-bg: #0a0a0a;
+  --color-bg: #0a0a0e;
   --color-type: #f5f3ee;
   --color-type-muted: #a8a49a;
   --color-type-dim: #7a776d;
   --color-accent: #d4c19c;
-  --color-rule: #2a2825;
+  --color-rule: #24232a;
 
-  /* Cool-inside WebGL palette (used only in shaders / R3F) */
-  --color-filament: #4dd4e8;
-  --color-pulse: #ff7a3d;
+  /* Cool-inside WebGL palette — mirrors reference/original-webgl.html */
+  --color-filament: #3ecfff;
+  --color-filament-dim: #2a8fb8;
+  --color-pulse: #ff8a3d;
+  --color-particle: #bff7ff;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Fraunces', Georgia, serif;
@@ -19,11 +21,17 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 html, body { background: var(--color-bg); color: var(--color-type); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--color-accent); color: var(--color-bg); }
 
-a { color: var(--color-accent); text-decoration: none; border-bottom: 1px solid rgba(212,193,156,0.3); transition: border-color .15s; }
+a { color: var(--color-accent); text-decoration: none; border-bottom: 1px solid rgba(212,193,156,0.28); transition: border-color .15s; }
 a:hover { border-bottom-color: var(--color-accent); }
 
-/* Sacred 8px baseline */
+/* Sacred 8px baseline; noflash on layout */
 :root { --baseline: 8px; }
+
+/* Reduced motion honoured across the whole app */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

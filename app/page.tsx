@@ -9,7 +9,7 @@ import MindScene from '@/components/mind/MindScene';
 export default function Home() {
   return (
     <>
-      {/* WebGL mind — fixed layer beneath all content */}
+      {/* WebGL mind — fixed beneath all content, scroll drives camera path */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <MindScene />
       </div>
@@ -22,6 +22,7 @@ export default function Home() {
         <Projects />
         <Contact />
       </main>
+
     </>
   );
 }
