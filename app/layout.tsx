@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
+import AnswerPortal from '@/components/chat/AnswerPortal';
 import ChatDock from '@/components/chat/ChatDock';
+import { ChatProvider } from '@/components/chat/ChatProvider';
 import { SITE } from '@/content/site';
 import { serializeJsonLd } from '@/lib/json-ld';
 import './globals.css';
@@ -95,8 +97,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${mono.variable}`}>
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: personJsonLdString }} />
-        {children}
-        <ChatDock />
+        <ChatProvider>
+          {children}
+          <AnswerPortal />
+          <ChatDock />
+        </ChatProvider>
       </body>
     </html>
   );

@@ -1,0 +1,141 @@
+'use client';
+
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
+
+/**
+ * One chat, shared by the dock (input) and the answer (wherever it docks on the page).
+ *
+ * The wire format is `{ question, history }`, never a messages array: roles are assigned on
+ * the server so a forged `system` or `assistant` turn cannot reach the model. This is the
+ * one place the client's message list is flattened back into that shape.
+ */
+
+export type Answer = {
+  /** What was asked. */
+  question: string;
+  /** The layout envelope, once the server has chosen the stop. */
+  envelope: EnvelopeData | null;
+  /** The prose streamed so far. */
+  text: string;
+  /** True while the stream is still open. */
+  streaming: boolean;
+  /** The body the visitor should read: the guard's replacement when there is one. */
+  shown: string;
+};
+
+type ChatContextValue = {
+  answer: Answer | null;
+  asking: boolean;
+  error: Error | undefined;
+  ask: (question: string) => void;
+};
+
+const ChatContext = createContext<ChatContextValue | null>(null);
+
+function textOf(message: AskUIMessage | undefined): string {
+  if (!message) return '';
+  return message.parts
+    .filter((part): part is Extract<AskUIMessage['parts'][number], { type: 'text' }> => part.type === 'text')
+    .map((part) => part.text)
+    .join('');
+}
+
+function envelopeOf(message: AskUIMessage | undefined): EnvelopeData | null {
+  if (!message) return null;
+  // Same id on every write, so the SDK reconciles them into one part holding the latest.
+  const part = message.parts.findLast((p) => p.type === 'data-envelope');
+  return part && part.type === 'data-envelope' ? part.data : null;
+}
+
+/** The last four completed exchanges, as pairs, using the body the visitor actually saw. */
+function historyOf(messages: AskUIMessage[]): { q: string; a: string }[] {
+  const pairs: { q: string; a: string }[] = [];
+  for (let i = 0; i < messages.length - 1; i++) {
+    if (messages[i].role !== 'user' || messages[i + 1].role !== 'assistant') continue;
+    const q = textOf(messages[i]).trim();
+    const env = envelopeOf(messages[i + 1]);
+    const a = (env?.body ?? textOf(messages[i + 1])).trim();
+    if (q && a) pairs.push({ q, a });
+    i++;
+  }
+  return pairs.slice(-4);
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/**
+ * Take the page to the stop. One native smooth scroll, never suppressed, never snapped:
+ * the scene follows scroll the way it always does, so this is also how the camera flies.
+ * Reduced motion gets an instant jump, which is what that preference asks for.
+ */
+function goToStop(route: RouteData) {
+  const el = document.getElementById(route.stopId);
+  if (el) el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  window.dispatchEvent(new CustomEvent<RouteData>(ROUTE_EVENT, { detail: route }));
+}
+
+export function ChatProvider({ children }: { children: ReactNode }) {
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<AskUIMessage>({
+        api: '/api/ask',
+        prepareSendMessagesRequest({ messages: sent }) {
+          const asked = sent[sent.length - 1];
+          return {
+            body: {
+              question: asked ? textOf(asked) : '',
+              history: historyOf(sent.slice(0, -1)),
+            },
+          };
+        },
+      }),
+    [],
+  );
+
+  const { messages, sendMessage, status, error } = useChat<AskUIMessage>({
+    transport,
+    onData(part) {
+      if (part.type === 'data-route') goToStop(part.data);
+    },
+  });
+
+  const asking = status === 'submitted' || status === 'streaming';
+
+  const answer = useMemo<Answer | null>(() => {
+    const lastUserIndex = messages.findLastIndex((m) => m.role === 'user');
+    if (lastUserIndex < 0) return null;
+    const question = textOf(messages[lastUserIndex]);
+    const reply = messages[lastUserIndex + 1];
+    const envelope = envelopeOf(reply);
+    const text = textOf(reply);
+    const shown = envelope?.body ?? text;
+    return { question, envelope, text, streaming: asking, shown };
+  }, [messages, asking]);
+
+  const ask = useCallback(
+    (question: string) => {
+      const q = question.trim();
+      if (!q || asking) return;
+      void sendMessage({ text: q });
+    },
+    [asking, sendMessage],
+  );
+
+  const value = useMemo<ChatContextValue>(
+    () => ({ answer, asking, error: error ?? undefined, ask }),
+    [answer, asking, error, ask],
+  );
+
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+}
+
+export function useAsk(): ChatContextValue {
+  const ctx = useContext(ChatContext);
+  if (!ctx) throw new Error('useAsk must be used inside <ChatProvider>');
+  return ctx;
+}

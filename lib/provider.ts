@@ -67,6 +67,13 @@ export function askModel() {
 
   return {
     model: openrouter(PRIMARY_MODEL, { provider: { require_parameters: true } }),
-    providerOptions: { openrouter: { models: FALLBACK_MODELS } },
+    providerOptions: {
+      openrouter: {
+        models: FALLBACK_MODELS,
+        // A reasoning model spends seconds thinking before the first visible word. The
+        // answer is two to five grounded sentences; it does not need a scratchpad.
+        reasoning: { enabled: false },
+      },
+    },
   };
 }

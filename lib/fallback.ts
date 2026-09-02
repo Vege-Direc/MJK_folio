@@ -58,14 +58,30 @@ const COPY: Record<FallbackReason, { kicker: string; title: string }> = {
   },
 };
 
-export function fallbackBlock(stopId: StopId | null, reason: FallbackReason): FallbackBlock {
+/**
+ * @param preferIds memory ids in priority order (typically the retrieval hits for the
+ *   question). Memories on the stop that appear here lead, in this order; the rest follow
+ *   in corpus order. Without it the first memories of the stop are used.
+ */
+export function fallbackBlock(
+  stopId: StopId | null,
+  reason: FallbackReason,
+  preferIds: readonly string[] = [],
+): FallbackBlock {
   const { kicker, title } = COPY[reason];
   const resolvedStop: StopId = stopId && stopId !== 'hero' ? stopId : DEFAULT_STOP;
 
-  // The first one or two memories for the stop, in corpus order, verbatim. Two when a
-  // second is available, so a stop whose lead memory is a single short sentence still
-  // reads as a real answer rather than a fragment.
-  const memories = memoriesForStop(resolvedStop).slice(0, 2);
+  const onStop = memoriesForStop(resolvedStop);
+  const rank = (id: string) => {
+    const i = preferIds.indexOf(id);
+    return i === -1 ? Number.POSITIVE_INFINITY : i;
+  };
+  const ordered = [...onStop].sort((a, b) => rank(a.id) - rank(b.id));
+
+  // The first one or two memories, verbatim. Two when a second is available, so a stop
+  // whose lead memory is a single short sentence still reads as a real answer rather
+  // than a fragment.
+  const memories = ordered.slice(0, 2);
 
   return {
     kicker,
