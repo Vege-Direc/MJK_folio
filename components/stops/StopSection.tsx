@@ -5,7 +5,7 @@ import type { Memory } from '@/lib/corpus/schema';
 import AuthoredBody from './AuthoredBody';
 import Carousel from './Carousel';
 import Timeline from './Timeline';
-import { timelineEntries } from './timeline-data';
+import { timelineGroups } from './timeline-data';
 
 /**
  * One stop, server-rendered. Nine of these are the page.
@@ -172,7 +172,7 @@ function media(stop: Stop): ReactNode {
     case 'cards':
       return <Cards stop={stop} />;
     case 'timeline':
-      return <Timeline entries={timelineEntries()} />;
+      return <Timeline groups={timelineGroups()} />;
     case 'carousel':
       return <Carousel />;
     case 'contact':

@@ -1,6 +1,6 @@
 import { loadMemories } from '@/lib/corpus/load';
 import { parsePeriod, type Memory } from '@/lib/corpus/schema';
-import type { TimelineEntry } from './timeline-entry';
+import type { TimelineEntry, TimelineGroup } from './timeline-entry';
 
 /**
  * The career, in order, drawn entirely from the corpus.
@@ -23,6 +23,21 @@ import type { TimelineEntry } from './timeline-entry';
  */
 
 /**
+ * What each era is called on the rail.
+ *
+ * Derived, not invented: each label is the subject of that stop's own authored title —
+ * `engineering` is "Mechanical, then aerospace", `apac` is "A decade in paid media",
+ * `now` is "Building the systems I used to run". Keyed by stop rather than by employer
+ * so the rule survives the corpus growing; a stop with no label here simply gets no
+ * caption, and the rail carries on.
+ */
+const ERA_LABEL: Record<string, string> = {
+  engineering: 'Engineering',
+  apac: 'Paid media',
+  now: 'Building',
+};
+
+/**
  * The first sentence of a memory body.
  *
  * Bodies are YAML folded scalars, so they arrive as one long line with the newlines
@@ -41,7 +56,7 @@ function tidy(body: string): string {
 
 /** Sorted oldest first. Ties break on the id so the order is total and stable. */
 export function timelineEntries(memories: Memory[] = loadMemories()): TimelineEntry[] {
-  return memories
+  const rows = memories
     .filter((m): m is Memory & { period: string } => m.section === 'timeline' && Boolean(m.period))
     .map((m) => {
       const parsed = parsePeriod(m.period);
@@ -51,10 +66,58 @@ export function timelineEntries(memories: Memory[] = loadMemories()): TimelineEn
         // A period that does not parse cannot be placed in time. The schema already
         // refuses to load one, so this is a floor, not a fallback with an opinion.
         start: parsed?.start ?? 0,
+        end: parsed?.end ?? parsed?.start ?? 0,
+        stopId: m.stopId as string,
+        nested: false,
         title: m.title,
         summary: firstSentence(m.body),
         body: tidy(m.body),
       };
     })
     .sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
+
+  /*
+   * An entry is nested when an earlier one CONTAINS it: started before it and had not
+   * finished when it did. Containment rather than mere overlap, because a range that ends
+   * the year another starts is a handover, not a nesting — Omnicom to Kinnect in 2017 is
+   * the succession this rule must not indent. Computed from the periods rather than
+   * listed by id, so it stays true as the corpus changes and can never name an employer.
+   */
+  return rows.map((row, i) => ({
+    ...row,
+    nested: rows.some((other, j) => j < i && other.start < row.start && other.end >= row.end),
+  }));
+}
+
+/**
+ * The rail, cut into eras.
+ *
+ * A run, not a bucket: entries are already in date order, so an era ends the moment the
+ * stop changes. That happens to give three clean runs today (two engineering, seven
+ * apac, one now) and it would give four if a future memory interleaved them — which is
+ * the honest answer, because the career would have interleaved.
+ */
+export function timelineGroups(entries: TimelineEntry[] = timelineEntries()): TimelineGroup[] {
+  const groups: TimelineGroup[] = [];
+  for (const entry of entries) {
+    const open = groups[groups.length - 1];
+    if (open && open.stopId === entry.stopId) {
+      open.entries.push(entry);
+      continue;
+    }
+    groups.push({
+      stopId: entry.stopId,
+      label: ERA_LABEL[entry.stopId] ?? '',
+      span: '',
+      entries: [entry],
+    });
+  }
+  // The span is the era's own extent, read off its entries once they are all in.
+  for (const g of groups) {
+    const from = Math.min(...g.entries.map((e) => e.start));
+    const open = g.entries.some((e) => e.period.endsWith('present'));
+    const to = Math.max(...g.entries.map((e) => e.end));
+    g.span = open ? `${from}–` : from === to ? `${from}` : `${from}–${to}`;
+  }
+  return groups;
 }

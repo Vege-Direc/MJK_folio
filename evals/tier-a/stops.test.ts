@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ComposeKind } from '../../content/stops';
 import { ANSWERABLE_STOP_IDS, STOPS, STOP_IDS, stopById } from '../../content/stops';
-import { timelineEntries } from '../../components/stops/timeline-data';
+import { timelineEntries, timelineGroups } from '../../components/stops/timeline-data';
 import { loadMemories } from '../../lib/corpus/load';
 import { parsePeriod } from '../../lib/corpus/schema';
 
@@ -126,5 +126,50 @@ describe('the §04 timeline', () => {
       expect(memory?.body.replace(/\s+/g, ' ').trim()).toBe(e.body);
       expect(e.body.startsWith(e.summary)).toBe(true);
     }
+  });
+});
+
+/**
+ * The rail is cut into eras and two rows are indented, and both are RULES rather than
+ * lists -- eras come from the stop each run belongs to, nesting from the periods
+ * themselves. A rule can go wrong silently in ways a hard-coded list cannot: the
+ * difference between a handover and a containment is one comparison operator, and
+ * getting it wrong indents a succession that merely touches at a year boundary.
+ */
+describe('the timeline rail', () => {
+  const groups = timelineGroups();
+
+  it('covers every entry exactly once, in order', () => {
+    const flat = groups.flatMap((g) => g.entries.map((e) => e.id));
+    expect(flat).toEqual(timelineEntries().map((e) => e.id));
+  });
+
+  it('cuts an era wherever the stop changes, and nowhere else', () => {
+    for (const g of groups) {
+      expect(new Set(g.entries.map((e) => e.stopId)).size, `${g.stopId} run is not one stop`).toBe(1);
+    }
+    // Consecutive groups must differ, or the run was cut for no reason.
+    for (let i = 1; i < groups.length; i++) {
+      expect(groups[i].stopId).not.toBe(groups[i - 1].stopId);
+    }
+  });
+
+  it('labels and dates every era from its own entries', () => {
+    for (const g of groups) {
+      expect(g.label.length, `${g.stopId} has no era label`).toBeGreaterThan(0);
+      const from = Math.min(...g.entries.map((e) => e.start));
+      expect(g.span.startsWith(String(from)), `${g.stopId} span ${g.span} does not open at ${from}`).toBe(true);
+    }
+  });
+
+  it('indents only entries an earlier one contains, never a handover', () => {
+    const entries = timelineEntries();
+    for (const e of entries) {
+      const container = entries.find((o) => o.id !== e.id && o.start < e.start && o.end >= e.end);
+      expect(e.nested, `${e.id} nesting disagrees with its period`).toBe(Boolean(container));
+    }
+    // A succession that merely touches at a year boundary is not a nesting.
+    const nested = entries.filter((e) => e.nested).map((e) => e.id);
+    expect(nested.length).toBeLessThan(entries.length / 2);
   });
 });
