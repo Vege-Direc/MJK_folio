@@ -44,7 +44,7 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
           {envelope?.kicker ?? '§ ANSWER'}
         </span>
         <span className="font-mono text-[10px] tracking-[0.15em] text-[color:var(--color-type-dim)] truncate max-w-[50%]">
-          asked: {question}
+          ASKED: {question}
         </span>
       </div>
 

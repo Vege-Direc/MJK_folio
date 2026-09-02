@@ -89,7 +89,7 @@ export default function ChatDock() {
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask the mind anything…"
+            placeholder="Ask the mind."
             maxLength={500}
             aria-label="Ask a question about Mathew"
             className="flex-1 bg-transparent text-[color:var(--color-type)] placeholder:text-[color:var(--color-type-dim)] outline-none py-3 text-base md:text-lg font-serif"

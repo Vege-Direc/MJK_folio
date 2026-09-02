@@ -14,6 +14,6 @@
 export const suggestedPrompts = [
   'Walk me through the arc — aircraft to agents.',
   'Show me the AI work.',
-  'What actually shipped at Taboola?',
+  'What’s the paid-media track record?',
   'Brief me for a project.',
 ];

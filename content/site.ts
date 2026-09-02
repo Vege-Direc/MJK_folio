@@ -12,8 +12,10 @@
 export const SITE = {
   name: 'Mathew John Kondekeril',
   shortName: 'MJK',
-  title: 'Mathew John Kondekeril — First I imagine it. Then I learn whatever it takes to build it.',
-  description: 'Engineer by training, marketer by trade, builder by habit. Ask the site anything.',
+  // 54 characters: a homepage title past ~60 is truncated in search results, and the tagline
+  // already leads the page itself. The tri-role hook is licensed by the hero body.
+  title: 'Mathew John Kondekeril — Engineer, marketer, builder.',
+  description: 'Engineer by training, marketer by trade, builder by habit. Ask what he’s shipped.',
   tagline: 'First I imagine it. Then I learn whatever it takes to build it.',
   // The production origin. NEXT_PUBLIC_SITE_URL overrides it for previews and local runs.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mjk.nila.li',

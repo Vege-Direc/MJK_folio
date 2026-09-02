@@ -5,6 +5,8 @@
  * with a fake clock standing in for real elapsed time so a 24-hour window test does not
  * take 24 hours.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ANSWERABLE_STOP_IDS } from '../../content/stops';
 import { memoryById } from '../../lib/corpus/load';
@@ -227,9 +229,18 @@ describe('fallbackBlock', () => {
     }
   });
 
-  it('uses the corpus-approved refusal verbatim for off-topic', () => {
-    const block = fallbackBlock('now', 'off-topic');
-    expect(block.title).toBe('I only talk about Mathew. Ask me what he shipped.');
+  it('refuses off-topic in the same words the system prompt tells the model to use', () => {
+    // Asserting the invariant, not a literal: the visitor must hear one refusal, whether it came
+    // from the model (which is told this line in content/system-prompt.md) or from this fallback
+    // (which fires before any model call). A previous version of this test hardcoded the string,
+    // so editing the copy in one place left the other stale and only the test went red.
+    const prompt = readFileSync(join(process.cwd(), 'content', 'system-prompt.md'), 'utf-8');
+    const title = fallbackBlock('now', 'off-topic').title;
+    const normalise = (s: string) => s.replace(/[’']/g, "'").trim();
+    expect(
+      normalise(prompt),
+      `content/system-prompt.md no longer contains the refusal the fallback shows: "${title}"`,
+    ).toContain(normalise(title));
   });
 
   it('is 100% licensed copy for every answerable stop: body is verbatim, cites are real', () => {

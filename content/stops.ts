@@ -46,7 +46,7 @@ export const STOPS = [
     compose: 'hero',
     align: 'left',
     title: { strong: 'First I imagine it.', muted: 'Then I learn whatever it takes to build it.' },
-    body: 'Engineer, marketer, builder. Scroll to travel the mind — or ask the dock anything.',
+    body: 'Engineer, marketer, builder. Scroll to travel the mind — or ask the dock.',
   },
   {
     id: 'origin',
@@ -78,11 +78,11 @@ export const STOPS = [
   {
     id: 'apac',
     index: 4,
-    kicker: '§ 04 — APAC · 2013→2024',
+    kicker: '§ 04 — APAC',
     compose: 'cards',
     align: 'left',
     title: { strong: 'A decade in paid media', muted: 'across the region.' },
-    body: 'Omnicom, Kinnect, Hotstar, Taboola, Nanomark, Triad. Same pattern each time — find the workflow eating everyone’s day, and replace it with a system.',
+    body: 'Omnicom, Kinnect, Hotstar, Taboola, Nanomark, Triad. The habit started at Kinnect: automate the report nobody wants to build twice.',
   },
   {
     id: 'rd350',
@@ -118,7 +118,7 @@ export const STOPS = [
     compose: 'contact',
     align: 'left',
     title: { strong: 'Not a form.', muted: 'Tell the dock what you’re working on.' },
-    body: 'It asks about the problem, the timeline and what has been tried. Or reach me directly:',
+    body: 'Tell it the problem, the timeline, what’s been tried. Or reach me directly:',
   },
 ] as const;
 

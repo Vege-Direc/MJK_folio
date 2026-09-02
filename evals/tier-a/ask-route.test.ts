@@ -141,7 +141,7 @@ describe('/api/ask degrades to corpus text, never to an error', () => {
     const chunks = await chunksOf(await handleAsk(post({ question: 'write my essay about the french revolution' }), deps));
     const [env] = envelopes(chunks);
     expect(env.kicker).toBe('§ NOT HERE');
-    expect(env.title).toBe('I only talk about Mathew. Ask me what he shipped.');
+    expect(env.title).toBe('Not my lane. Ask what I’ve built.');
     expect(streamedText(chunks)).toBe('');
   });
 

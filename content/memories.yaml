@@ -92,7 +92,7 @@
   stopId: now
   title: Full-stack builds
   tags: [engineering]
-  body: Next.js, TypeScript, R3F, Postgres, Redis. From marketing automations to production ERPs.
+  body: Next.js, TypeScript, three.js, Postgres, Redis. From marketing automations to production ERPs.
 
 - id: contact-brief
   section: contact

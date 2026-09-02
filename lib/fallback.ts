@@ -46,7 +46,7 @@ const COPY: Record<FallbackReason, { kicker: string; title: string }> = {
   },
   'off-topic': {
     kicker: '§ NOT HERE',
-    title: 'I only talk about Mathew. Ask me what he shipped.',
+    title: 'Not my lane. Ask what I’ve built.',
   },
   provider: {
     kicker: '§ QUIET',
@@ -54,7 +54,7 @@ const COPY: Record<FallbackReason, { kicker: string; title: string }> = {
   },
   unguarded: {
     kicker: '§ VERIFIED',
-    title: 'That answer did not check out. Here is what is verified instead.',
+    title: 'That didn’t check out. Here’s what’s verified instead.',
   },
 };
 
