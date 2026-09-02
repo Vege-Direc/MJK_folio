@@ -42,11 +42,26 @@ export const STOPS = [
   {
     id: 'hero',
     index: 0,
-    kicker: 'MJK · SINGAPORE · 2026',
+    /*
+     * The masthead names him. It used to read `MJK · SINGAPORE · 2026`, which told a
+     * first-time visitor an initialism, a city and the current year — and then handed
+     * them a tagline with no idea whose tagline it was, or what the remaining eight
+     * stops were about. An initialism is not an introduction.
+     */
+    kicker: 'MATHEW JOHN KONDEKERIL · SINGAPORE',
     compose: 'hero',
     align: 'left',
     title: { strong: 'First I imagine it.', muted: 'Then I learn whatever it takes to build it.' },
-    body: 'Engineer, marketer, builder. Scroll to travel the mind — or ask it a question below.',
+    /*
+     * `lede` is the introduction the hero was missing, and it is a separate field
+     * rather than a longer `body` so the three jobs can be typeset apart: the tagline
+     * earns the display size, the lede states the role at full strength, and the body
+     * carries the detail and the way in. Every clause below is licensed by `who-i-am`
+     * (name, the two engineering degrees, the decade of paid media across India and
+     * Southeast Asia, Krunch Labs in Singapore since January 2025).
+     */
+    lede: 'Engineer by training, marketer by trade, builder by habit.',
+    body: 'I trained in aerospace, spent a decade running paid media across India and Southeast Asia, and now build AI systems at Krunch Labs in Singapore. Scroll to travel the mind. Or type a question at the bottom.',
   },
   {
     id: 'origin',
@@ -131,6 +146,18 @@ export type ComposeKind = Stop['compose'];
  * and the one stop with no second half (`work`) makes `.muted` unreadable on the union.
  */
 export type StopTitle = { readonly strong: string; readonly muted?: string };
+
+/**
+ * The hero's introduction line, and only the hero has one.
+ *
+ * `STOPS` is `as const`, so `lede` is present on exactly one member of the union and
+ * unreadable on the union itself. The `in` narrowing is the honest way to ask — it
+ * keeps the field genuinely optional rather than widening every stop to carry a
+ * property eight of them do not have.
+ */
+export function ledeOf(stop: Stop): string | undefined {
+  return 'lede' in stop ? stop.lede : undefined;
+}
 
 export const STOP_IDS = STOPS.map((s) => s.id) as readonly StopId[];
 

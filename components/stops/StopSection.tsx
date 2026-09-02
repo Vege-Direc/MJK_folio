@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Stop, StopTitle } from '@/content/stops';
+import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
 import type { Memory } from '@/lib/corpus/schema';
 import AuthoredBody from './AuthoredBody';
@@ -78,6 +78,7 @@ function Title({ title, level }: { title: StopTitle; level: 1 | 2 }) {
 }
 
 function Content({ stop, wide }: { stop: Stop; wide?: boolean }) {
+  const lede = ledeOf(stop);
   return (
     <div className={wide ? 'content-zone' : `content-zone ${stop.align === 'right' ? 'right' : 'left'}`}>
       <p className="section-kicker">{stop.kicker}</p>
@@ -90,6 +91,7 @@ function Content({ stop, wide }: { stop: Stop; wide?: boolean }) {
           zero so the answer reads as the foreground, and SHOW ORIGINAL brings it back.
         */}
         <AuthoredBody stopId={stop.id}>
+          {lede ? <p className="section-lede">{lede}</p> : null}
           <p className="section-body">{stop.body}</p>
         </AuthoredBody>
         {/*
@@ -188,6 +190,13 @@ export default function StopSection({ stop }: { stop: Stop }) {
       // Rendered by the server so the first paint already has stop 0 lit and the other
       // eight sitting back. ScrollProgress takes it over on the first scroll.
       data-active={stop.index === 0 ? 'true' : 'false'}
+      // The reading glass hangs off this element, so the two facts it needs to place
+      // itself live here: which side the text is on, and whether there is a media
+      // column at all. It cannot hang off `.section-inner` — that takes `opacity` when
+      // the stop is inactive, and an ancestor below 1 makes a backdrop root, which
+      // would leave `backdrop-filter` with nothing to sample.
+      data-align={contentSide}
+      data-centred={centred ? '' : undefined}
       className="panel"
     >
       {/*
