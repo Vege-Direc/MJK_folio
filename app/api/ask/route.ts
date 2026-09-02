@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { streamText, type ModelMessage } from 'ai';
 import { z } from 'zod';
 import { askModel, hasApiKey } from '@/lib/provider';
-import { retrieveMemories } from '@/lib/rag';
+import { retrieveMemories } from '@/lib/retrieve';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
