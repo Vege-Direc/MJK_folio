@@ -18,6 +18,50 @@ export default function ChatDock() {
   const docked = useAnswerTarget(answer?.envelope?.stopId ?? null) !== null;
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Publish the dock's real height as `--dock-h`.
+   *
+   * Every stop reserves its bottom padding from this. The two numbers that used to
+   * guess at it were tuned against a ~110px dock and the dock is 173px now, which is
+   * how an answer's verdict line and its citations ended up rendering inside the dock's
+   * own black gradient — present, correct, and invisible. A ResizeObserver is the only
+   * honest source, because the height changes with the wrapped prompt row, the error
+   * line and the viewport.
+   */
+  useEffect(() => {
+    const el = dockRef.current;
+    if (!el) return;
+    const publish = () => {
+      document.documentElement.style.setProperty('--dock-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    };
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    publish();
+    return () => ro.disconnect();
+  }, []);
+
+  /**
+   * Lift the dock clear of the on-screen keyboard on iOS.
+   *
+   * The keyboard shrinks the visual viewport without touching the layout viewport, so a
+   * `position: fixed; bottom: 0` bar slides underneath it and the field the visitor is
+   * typing into is the thing they can no longer see.
+   */
+  const [kbInset, setKbInset] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => setKbInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    vv.addEventListener('resize', onResize);
+    vv.addEventListener('scroll', onResize);
+    onResize();
+    return () => {
+      vv.removeEventListener('resize', onResize);
+      vv.removeEventListener('scroll', onResize);
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -44,14 +88,25 @@ export default function ChatDock() {
   const showInline = answer !== null && !docked;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50">
+    <div
+      ref={dockRef}
+      className="fixed inset-x-0 bottom-0 z-50"
+      style={kbInset ? { transform: `translateY(-${kbInset}px)` } : undefined}
+    >
       {/* Subtle gradient veil so type stays readable over WebGL */}
       <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-bg)] via-[color:var(--color-bg)]/85 to-transparent pointer-events-none" />
 
       <div className="relative mx-auto max-w-5xl px-6 md:px-10 pt-6 pb-4">
+        {/*
+          A transport failure is the visitor's problem to act on, not the system's state
+          to narrate. This used to shout "⟶ THE MIND IS RESTING. THE PAGE STILL SCROLLS."
+          in caps at someone who had asked a question and got nothing — explaining an
+          internal condition they never enquired about, in the register of a status
+          light. One quiet sentence, and it says what to do rather than what broke.
+        */}
         {error && (
-          <p className="pb-4 font-mono text-xs tracking-[0.1em] text-[color:var(--color-type-dim)]">
-            ⟶ THE MIND IS RESTING. THE PAGE STILL SCROLLS.
+          <p className="pb-4 text-sm text-[color:var(--color-type-dim)]" role="status">
+            Ask again in a moment.
           </p>
         )}
 
@@ -85,6 +140,18 @@ export default function ChatDock() {
           >
             {asking ? '⟶ ANSWERING' : '⟶ ASK'}
           </span>
+          {/*
+            No `autoFocus`. It put the caret in this field on load, which took Space and
+            PageDown — the primary way through a nine-screen scroll-driven page — away
+            from every keyboard visitor, unconditionally. The global keydown handler two
+            dozen lines up carries a comment explaining that Space must not be stolen,
+            and then `autoFocus` on this element stole it. Type-to-focus already buys the
+            discoverability, and it correctly exempts Space.
+
+            The focus ring is not decoration either: this is the only text field on the
+            site and it had `outline: none` with nothing put back, so a keyboard visitor
+            could not see where they were.
+          */}
           <input
             ref={inputRef}
             value={input}
@@ -92,8 +159,7 @@ export default function ChatDock() {
             placeholder="Ask the mind."
             maxLength={500}
             aria-label="Ask a question about Mathew"
-            className="flex-1 bg-transparent text-[color:var(--color-type)] placeholder:text-[color:var(--color-type-dim)] outline-none py-3 text-base md:text-lg font-serif"
-            autoFocus
+            className="ask-input flex-1 bg-transparent text-[color:var(--color-type)] placeholder:text-[color:var(--color-type-dim)] outline-none py-3 text-base md:text-lg font-serif"
           />
           <span className="hidden md:block font-mono text-[10px] tracking-[0.15em] text-[color:var(--color-type-dim)]">
             ↵ SEND

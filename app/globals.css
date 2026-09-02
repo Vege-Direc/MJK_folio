@@ -37,20 +37,55 @@
    */
   --color-bg: #0a0a0e;
   --color-type: #f5f3ee;
-  --color-type-muted: #c9c5b8;
-  --color-type-dim: #a5a196;
+  --color-type-muted: #c2bfb3;
+  --color-type-dim: #9d998e;
   --color-accent: #d4c19c;
   --color-rule: #2e2d36;
 
   /**
-   * The reading scrim, as tokens so the text column and the media column stay in step
-   * and a single number tunes both. See `.content-zone::before` for what they do.
+   * The reading glass. See `.panel::before` for what it is and why it is not a wash.
+   *
+   * `blur` is what actually buys the legibility: it turns a 2px near-white filament —
+   * line-work at the same spatial frequency as a glyph stroke — into a wide soft glow
+   * the eye reads as background. `brightness` then takes the whole plate down under the
+   * type without altering a single hue, which is the part a flat overlay cannot do.
+   * `saturate` puts back the colour that dimming costs, so the scene keeps its blues.
+   *
+   * The tint is deliberately small. Push blur up and tint down, never the reverse: the
+   * tint is the one term that hides the scene rather than subduing it.
    */
-  --scrim-core: rgba(10, 10, 14, 0.96);
-  --scrim-hold: rgba(10, 10, 14, 0.95);
-  --scrim-fade: rgba(10, 10, 14, 0.9);
-  --scrim-tail: rgba(10, 10, 14, 0.68);
+  --glass-filter: blur(26px) brightness(0.26) saturate(1.5);
+  --glass-tint: rgba(10, 10, 14, 0.24);
+
+  /*
+   * The feather. Solid across the middle where the type sits, gone entirely by the
+   * edge, so the pane has no boundary anywhere — the measured geometry puts the far
+   * corner of a run of type at ~64% of the ray, which is why the mask stays opaque to
+   * 62% and does all of its work outside the words.
+   */
+  --glass-mask: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    #000 0%,
+    #000 62%,
+    rgba(0, 0, 0, 0.62) 80%,
+    transparent 100%
+  );
+
+  /* The `@supports` fallback wash, for a browser with no `backdrop-filter`. */
+  --scrim-core: rgba(10, 10, 14, 0.95);
+  --scrim-hold: rgba(10, 10, 14, 0.94);
+  --scrim-fade: rgba(10, 10, 14, 0.88);
+  --scrim-tail: rgba(10, 10, 14, 0.5);
   --scrim-none: rgba(10, 10, 14, 0);
+
+  /**
+   * The dock's measured height, published by a ResizeObserver in ChatDock so every
+   * stop can clear it. Two hard-coded numbers used to guess at this and both were
+   * wrong: the verdict line under an answer rendered at y=810 against a dock top of
+   * 727, i.e. inside the dock's own black gradient, which is the single reason the
+   * citations looked broken. This value is the fallback before the observer fires.
+   */
+  --dock-h: 173px;
 
   --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
   --font-serif: var(--font-fraunces), 'Fraunces', Georgia, serif;
@@ -165,7 +200,13 @@
   gap: 0;
   width: 100%;
   height: 100%;
-  padding: 8vh 5vw;
+  /*
+   * The bottom pad is derived, never guessed. `--dock-h` is written from a
+   * ResizeObserver on the dock itself, so a stop's last line clears the dock's black
+   * gradient whatever the dock happens to be that viewport — which is what stops the
+   * verdict line and the citation chips rendering inside it.
+   */
+  padding: 8vh 5vw calc(var(--dock-h) + 32px);
   position: relative;
   text-align: left;
   transition: opacity 0.5s cubic-bezier(0.2, 0, 0, 1), transform 0.5s cubic-bezier(0.2, 0, 0, 1);
@@ -191,16 +232,35 @@
   padding: 8vh 6vw;
 }
 
+/*
+ * `align-self: center` on a shrink-wrapping flex child made the authored
+ * `align: left | right` alternation completely inert on the four one-column stops:
+ * the title's left edge was a function of how long the copy happened to be, and the
+ * first five stops measured 272, 488, 457, 488 and 82px — five different margins,
+ * none of them chosen. Stretching the column and pushing it with `margin-inline`
+ * gives the page a spine: a left rail, or a right one, and nothing in between.
+ */
 .center-stage .content-zone {
-  max-width: 56rem;
+  align-self: stretch;
+  max-width: 46rem;
+  margin-inline: 0;
   padding: 0;
+}
+
+.center-stage[data-align='right'] .content-zone {
+  margin-inline-start: auto;
 }
 
 .content-zone {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  /*
+   * Was a single 24px gap doing three different jobs — kicker to title, title to body,
+   * body to answer all got the same interval, so nothing in the column had more weight
+   * than anything else. The intervals are authored individually below instead.
+   */
+  gap: 0;
   align-self: center;
   max-width: 44rem;
   padding-right: 2vw;
@@ -230,7 +290,7 @@
   padding-left: 2vw;
 }
 
-/* ── the reading scrim ─────────────────────────────────────────────────────── */
+/* ── the reading glass ─────────────────────────────────────────────────────── */
 
 /**
  * The top complaint in the owner's review: the prose is very hard to read over the
@@ -240,118 +300,178 @@
  * Both are unreadable, and neither number is visible from the CSS, because the flat
  * page colour says 4.9:1 and the flat page colour is not what is behind the type.
  *
- * The fix is a scrim, not a panel. Two ellipses of the page's own background colour,
- * one under each column, each inscribed in a box that overscans its column generously
- * — so the wash is dense where the type is and reaches zero alpha exactly at the box
- * edge. There is no border, no blur, no rectangle and no seam anywhere; the filaments
- * above, below and outside the columns are untouched, and the scene still shows
- * through faintly across the whole plate, because 0.95 is not 1.
+ * The first fix was a wash: a near-opaque ellipse of `--color-bg`. It made the numbers
+ * and the owner rejected it on sight, correctly — "too dark to see the neurons now,
+ * which kind of defeats the purpose". A 0.95 alpha plate is a black oval cut out of
+ * the one thing the visitor came to look at, placed exactly where they are looking.
  *
- * They hang off `.section-inner`, not off the two zones, and this is the whole trick.
- * The first attempt put each scrim on its own column as a `z-index: -1` pseudo-element,
- * which looks right in the CSS and is wrong on screen: a grid item with a z-index
- * establishes a stacking context, so the text column's scrim — buried at -1 inside a
- * context at 3 — still painted over the entire media column at 2, and greyed out every
- * card on the right-hand side of the stop. Hung here instead, both scrims sit at 0,
- * below both columns, and the fact that they overlap in the gutter stops mattering:
- * overlap only adds density under content that is painted later anyway.
+ * So: diagnose properly. What makes this text unreadable is not how *bright* the
+ * background is, it is how *sharp* it is — thin, near-white filaments crossing glyph
+ * strokes at the same spatial frequency as the strokes themselves. Opacity fights that
+ * with brute force and loses the picture. Blur removes it at the source: a blurred
+ * filament becomes a soft wide glow, which the eye files as background rather than as
+ * competing line-work, and `brightness()` inside the same `backdrop-filter` then drops
+ * what is left below the type without touching its shape or its colour. The scene
+ * stays visible. The words win anyway.
  *
- * Geometry, since the numbers are not self-evident. `ellipse 50% 50%` makes the ray
- * reach the box edge on both axes, which is what puts the zero exactly there — and it
- * is why the boxes are pinned `top: 0; bottom: 0` rather than overscanned vertically:
- * a scrim taller than its panel is a scrim clipped at ~0.9 alpha by `.panel`'s
- * `overflow: hidden`, which draws a hard horizontal band between every pair of stops.
- * Horizontally each box runs 14vw off its own outer edge and across to 34%, which puts
- * the far corner of a run of type near 68% of the ray. That is why the profile still
- * holds 0.90 out to 72%. Alpha 0.90 over a pure-white filament resolves to
- * rgb(35,35,38) — the worst case the contrast numbers below are measured against.
+ * Three things are load-bearing here:
+ *
+ * 1. It hangs off `.panel`, not `.section-inner`. `backdrop-filter` samples everything
+ *    painted beneath it *within the nearest backdrop root* — and any ancestor with
+ *    `opacity < 1` becomes one. `.section-inner` takes `opacity: 0.32` whenever its
+ *    stop is inactive, so a glass mounted there would sample an empty backdrop, render
+ *    as a bare tint, and then pop into focus as the stop activated. `.panel` never
+ *    changes opacity, so the effect is stable through every scroll.
+ * 2. The mask, not the gradient, does the feathering. The element is a plain rectangle
+ *    carrying a uniform filter; `mask-image` then dissolves it to nothing before it
+ *    reaches any edge, which is why there is no seam, no rectangle and no vignette
+ *    ring. Pinning `top: 0; bottom: 0` matters for the same reason it did before: a
+ *    mask that has not reached zero by the panel boundary draws a hard band between
+ *    every pair of stops.
+ * 3. `background` is a tint, not a curtain. It sits at 0.22 — enough to warm the glass
+ *    and settle the darkest passages, far too little to hide anything.
+ *
+ * `@supports` keeps a browser without `backdrop-filter` readable: it gets the old
+ * wash, at the alpha the numbers need, because unreadable text is the worse failure.
  */
-.section-inner::before,
-.section-inner::after {
+.panel::before,
+.panel::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
   z-index: 0;
   pointer-events: none;
+  /* The fallback: a plain feathered wash for anything without backdrop-filter. */
   background: radial-gradient(
     ellipse 50% 50% at 50% 50%,
     var(--scrim-core) 0%,
-    var(--scrim-hold) 55%,
-    var(--scrim-fade) 72%,
-    var(--scrim-tail) 84%,
+    var(--scrim-hold) 58%,
+    var(--scrim-fade) 74%,
+    var(--scrim-tail) 87%,
     var(--scrim-none) 100%
   );
 }
 
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel::before,
+  .panel::after {
+    background: var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    -webkit-mask-image: var(--glass-mask);
+    mask-image: var(--glass-mask);
+  }
+}
+
 /* ::before follows the text column, ::after the media column. */
-.section-inner::before {
+.panel::before {
   left: -14vw;
   right: 34%;
 }
 
-.section-inner::after {
+.panel::after {
   left: 34%;
   right: -14vw;
 }
 
 /* `align: right` puts the text on the right, so the two swap sides. */
-.section-inner[data-align='right']::before {
+.panel[data-align='right']::before {
   left: 34%;
   right: -14vw;
 }
 
-.section-inner[data-align='right']::after {
+.panel[data-align='right']::after {
   left: -14vw;
   right: 34%;
 }
 
 /*
- * Hero and plain have no media column. One scrim, wider and softer, and the second is
- * not drawn at all rather than washing an empty half of the panel for nothing.
+ * Hero and plain have no media column. One pane, wider, and the second is not drawn at
+ * all rather than filtering an empty half of the panel for nothing — which is also the
+ * cheapest performance win available here, since cost scales with filtered area.
  */
-.center-stage::before {
+.panel[data-centred]::before {
   left: -18vw;
   right: 26%;
 }
 
-.center-stage[data-align='right']::before {
+.panel[data-centred][data-align='right']::before {
   left: 26%;
   right: -18vw;
 }
 
-.center-stage::after {
+.panel[data-centred]::after {
   display: none;
 }
 
 /* ── type ──────────────────────────────────────────────────────────────────── */
 
+/*
+ * 11px at 0.22em in a mono face fragments a short label into loose glyphs —
+ * "§ 0 4 — A P A C" reads as a serial number rather than a section marker. Slightly
+ * larger, tracked less, weighted more.
+ */
 .section-kicker {
   color: var(--color-accent);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  margin-bottom: 14px;
 }
 
+/*
+ * Light type on a dark, *moving* ground needs compensating on all three axes: a touch
+ * more leading, a touch of tracking, and a touch more weight than the same face would
+ * need on paper. Inter is variable here, so 420 costs nothing.
+ */
 .section-title {
   font-family: var(--font-serif);
   font-weight: 400;
   font-size: clamp(2.2rem, 4.8vw, 4.4rem);
-  line-height: 1.02;
+  /* 1.02 put the descenders of "imagine", "parallel" and "region" into the next cap-line. */
+  line-height: 1.06;
   letter-spacing: -0.015em;
   color: var(--color-type);
+  text-wrap: balance;
+  padding-bottom: 0.06em;
+  margin-bottom: 30px;
 }
 
 .section-title .muted {
   color: var(--color-type-muted);
 }
 
+/**
+ * The hero's introduction, and the only place on the page besides an answer where body
+ * text runs at full `--color-type`.
+ *
+ * That is not a conflict with the answer's foreground rule: `hero` is the one stop a
+ * generated answer may never target, so these two never appear in the same column.
+ * It sits between the tagline and the detail — the reader gets the role at full
+ * strength before the paragraph that qualifies it.
+ */
+.section-lede {
+  color: var(--color-type);
+  font-family: var(--font-sans);
+  font-size: 1.1875rem;
+  line-height: 1.5;
+  letter-spacing: 0.002em;
+  font-weight: 450;
+  text-wrap: pretty;
+  max-width: 40ch;
+  margin-bottom: 16px;
+}
+
 .section-body {
   color: var(--color-type-muted);
   font-family: var(--font-sans);
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 1.0625rem;
+  line-height: 1.66;
+  letter-spacing: 0.004em;
+  font-weight: 420;
+  text-wrap: pretty;
   max-width: 44ch;
 }
 
@@ -363,7 +483,39 @@
 .section-body-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  /* The answer is a new movement, not the next paragraph. */
+  gap: 34px;
+}
+
+/**
+ * The authored paragraph, collapsing to make way for an answer.
+ *
+ * `grid-template-rows: 1fr -> 0fr` animates a height nobody had to measure, which is
+ * the only way to do this without a ResizeObserver and a layout read per frame. The
+ * inner element carries the `overflow: hidden` the idiom needs.
+ *
+ * The height transition survives `prefers-reduced-motion` on purpose — see the
+ * reduced-motion block at the foot of this file for why a silent jump is the worse
+ * option — so only opacity is dropped there.
+ */
+.authored-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 160ms ease-out;
+  opacity: 1;
+}
+
+.authored-body-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.authored-body[data-collapsed] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  /* Exit faster than entry, and do not hold the gap open once it is gone. */
+  transition: grid-template-rows 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 120ms ease-out;
+  margin-bottom: -34px;
 }
 
 /* ── cards ─────────────────────────────────────────────────────────────────── */
@@ -383,7 +535,7 @@
 .mini-card .mk {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   color: var(--color-accent);
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -398,8 +550,139 @@
 
 .mini-card .mb {
   color: var(--color-type-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ── timeline ──────────────────────────────────────────────────────────────── */
+
+/**
+ * The dated rail on §04.
+ *
+ * One `border-top: 1px solid var(--color-rule)` per row is the entire chrome — the same
+ * vocabulary as `.mini-card` and `.contact-links`, so this introduces no new component
+ * style, only a new arrangement. No boxes, no fills: it sits over the scene and the
+ * reading glass on `.panel` is what makes it legible, exactly as the cards it replaced.
+ */
+/*
+ * Ten rows and one open panel have to fit a media column that is about 620px tall on a
+ * 900px viewport once the stop's padding and the dock reserve are taken out. Two-line
+ * rows made that 880px, and the stop clipped its first and last entries — so the closed
+ * row is one line: period, employer, and as much of the first sentence as the column
+ * has room for. It reads as a résumé index, which is the right register for a rail whose
+ * whole job is to be scanned.
+ */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tl-row {
+  border-top: 1px solid var(--color-rule);
+}
+
+.tl-row > button {
+  display: grid;
+  grid-template-columns: 5.25rem auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 14px;
+  width: 100%;
+  padding: 7px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.tl-year {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--color-type-dim);
+  white-space: nowrap;
+  transition: color 160ms;
+}
+
+.tl-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--color-type);
+}
+
+/*
+ * The first sentence, on the closed row. Clamped to one line: ten rows have to fit a
+ * media column beside a stop title, and a summary that wraps turns a scannable rail into
+ * a wall. The whole body is one click away and that is what the click is for.
+ */
+/*
+ * The first sentence, on the closed row and on the same line. Clamped: the whole body is
+ * one click away and that is what the click is for, so the rail spends its height on
+ * showing every entry rather than on showing one of them twice.
+ */
+.tl-summary {
+  grid-column: 3;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.4;
+  color: var(--color-type-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/*
+ * `grid-template-rows: 0fr -> 1fr` animates a height nobody had to measure. The inner
+ * element carries the `overflow: hidden` the idiom requires.
+ */
+.tl-row > div {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tl-row[data-open] > div {
+  grid-template-rows: 1fr;
+  transition-duration: 260ms;
+}
+
+.tl-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/*
+ * The panel runs the full width of the column rather than the 46ch a body paragraph
+ * would normally take. The longest entry is about 700 characters; at 46ch that is
+ * fifteen lines and the rail overflows its stop, and at the column's own width it is
+ * eleven and it fits. Sixty-odd characters is still inside a comfortable measure.
+ */
+.tl-panel-inner p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-type-muted);
+  padding: 0 0 12px;
+}
+
+/* The one colour change in the component, and it doubles as the "you are here" mark. */
+.tl-row[data-open] .tl-year {
+  color: var(--color-accent);
+}
+
+.tl-row[data-open] .tl-summary {
+  display: none;
+}
+
+.tl-row > button:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tl-row > button:hover .tl-title {
+  color: var(--color-accent);
 }
 
 /* ── carousel ──────────────────────────────────────────────────────────────── */
@@ -439,7 +722,7 @@
   z-index: 2;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   color: var(--color-type);
   text-transform: uppercase;
   padding: 4px 8px;
@@ -497,7 +780,7 @@
   margin-top: 10px;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   color: var(--color-type-dim);
 }
 
@@ -511,20 +794,51 @@
  * gate, and the interval outlived the element. A visible control is the part that
  * cannot be got wrong by accident.
  */
+/*
+ * It measured 60x19px, seven pixels inside the dock's gradient — the least visible
+ * element on the stop, and it is the control that exists specifically to satisfy SC
+ * 2.2.2. Negative margins keep the enlarged hit area from moving the row it sits in.
+ */
 .carousel-toggle {
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: 10px 8px;
+  margin: -10px -8px;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   color: var(--color-type-dim);
   transition: color 0.15s;
 }
 
 .carousel-toggle:hover {
   color: var(--color-accent);
+}
+
+/* The scrolling prompt row, told to look scrollable. */
+@media (max-width: 900px) {
+  .prompt-row {
+    -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 86%, transparent 100%);
+  }
+}
+
+/* ── the ask field ─────────────────────────────────────────────────────────── */
+
+/*
+ * The only text input on the site, and until now it had no visible boundary and no
+ * focus ring at all. A rule under it is enough to say "type here"; the accent on
+ * focus is the same treatment the carousel controls use, so the site keeps one.
+ */
+.ask-input {
+  border-bottom: 1px solid var(--color-rule);
+  transition: border-color 0.15s;
+}
+
+.ask-input:focus-visible {
+  border-bottom-color: var(--color-accent);
+  outline: none;
 }
 
 /* ── contact ───────────────────────────────────────────────────────────────── */
@@ -563,7 +877,7 @@
 .contact-links .kk {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   color: var(--color-type-dim);
   white-space: nowrap;
 }
@@ -574,27 +888,6 @@
   overflow-wrap: anywhere;
 }
 
-/* ── scroll hint ───────────────────────────────────────────────────────────── */
-
-/* bottom:128px clears the chat dock, exactly as the prototype did (:111). */
-.scroll-hint {
-  position: fixed;
-  left: 50%;
-  bottom: 128px;
-  transform: translateX(-50%);
-  z-index: 2;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-type-dim);
-  pointer-events: none;
-  transition: opacity 0.6s;
-}
-
-html[data-scrolled='true'] .scroll-hint {
-  opacity: 0;
-}
 
 /* ── mobile: the restack the prototype never had ───────────────────────────── */
 
@@ -615,35 +908,78 @@ html[data-scrolled='true'] .scroll-hint {
   .section-inner.center-stage {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /*
+     * `center` printed the last card of every cards stop underneath the dock. The
+     * reserve below is correct and was never the bug: when content exceeds
+     * `min-height`, centring pushes the overflow out symmetrically — through the
+     * reserved padding at the bottom and off the top. Starting at the top is what
+     * makes the reserve do the job it was written to do.
+     */
+    justify-content: flex-start;
     align-items: stretch;
     gap: 28px;
-    /* The dock is fixed and full-width, and with its four suggested prompts stacked it
-       is about 205px tall at 375px. Reserving that is what keeps a stop's own content
-       out from under it; the panel grows rather than clipping when it still does not
-       fit, which is why `.panel` gives up `overflow: hidden` at this width. */
-    padding: 4vh 7vw 208px;
+    padding: 4vh 7vw calc(var(--dock-h) + 32px);
     min-height: var(--stop-height);
   }
 
   .content-zone,
-  .content-zone.right {
+  .content-zone.right,
+  .center-stage .content-zone {
     order: 1;
     max-width: none;
+    margin-inline: 0;
     padding: 0;
-    gap: 18px;
+    gap: 0;
   }
 
   /*
-   * One column, so the scrim has almost no horizontal room to feather in: 14vw of a
-   * 375px phone is 52px, which would put the edge of the text at three-quarters of the
-   * ray. Widen the overscan and shorten it vertically, where a stacked stop is long and
-   * the two scrims would otherwise overlap into one continuous plate down the page.
+   * One column and a panel that grows, so the desktop geometry does not transfer: an
+   * ellipse inscribed in a 1200px-tall stacked panel puts its solid core in the middle
+   * and leaves the top and bottom of the column uncovered. The two panes become one
+   * full-width pane instead, feathered top and bottom only — there are no margins on a
+   * phone for the scene to glow through at the sides anyway.
+   *
+   * The blur radius drops with the tint raised to compensate. Filter cost scales with
+   * filtered area and with radius, and this is the tier most likely to be on a phone
+   * GPU that is also running the scene.
    */
-  .content-zone::before,
-  .media-zone::before,
-  .center-stage .content-zone::before {
-    inset: -14vh -30vw;
+  /*
+   * One column and a panel that grows, so the desktop geometry does not transfer twice
+   * over. An ellipse inscribed in a 1200px-tall stacked panel puts its solid core in
+   * the middle and leaves the top and bottom of the column uncovered — and with
+   * `justify-content: flex-start` the top of the column is exactly where the kicker
+   * sits. Measured: the apac kicker came in at 2.63:1 against a background of
+   * rgb(102,119,129), because it was sitting in the mask's own feather.
+   *
+   * So there is no vertical feather here at all, and that is the point rather than a
+   * compromise. Panels stack edge to edge, every one of them carries the same pane, and
+   * the panes therefore butt together into one continuous sheet of glass running the
+   * length of the page — no seam to hide, because there is no gap between them. The
+   * left and right edges sit 6vw off-screen. The blur radius drops and the brightness
+   * rises to match: cost scales with radius and with area, and this is the tier most
+   * likely to be a phone GPU already running the scene.
+   */
+  .panel::before,
+  .panel[data-align='right']::before,
+  .panel[data-centred]::before {
+    left: -6vw;
+    right: -6vw;
+    --glass-filter: blur(18px) brightness(0.29) saturate(1.5);
+    --glass-mask: none;
+    background: var(--scrim-hold);
+  }
+
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .panel::before,
+    .panel[data-align='right']::before,
+    .panel[data-centred]::before {
+      background: var(--glass-tint);
+    }
+  }
+
+  .panel::after,
+  .panel[data-align='right']::after {
+    display: none;
   }
 
   .media-zone,
@@ -653,8 +989,17 @@ html[data-scrolled='true'] .scroll-hint {
     padding: 0;
   }
 
+  /* 30.4px against a 16px body is only a 1.9x step; the display face needs more. */
   .section-title {
-    font-size: clamp(1.9rem, 8vw, 2.6rem);
+    font-size: clamp(2.05rem, 8.8vw, 2.8rem);
+    line-height: 1.14;
+    margin-bottom: 22px;
+  }
+
+  .section-lede {
+    font-size: 1.0625rem;
+    max-width: none;
+    margin-bottom: 14px;
   }
 
   .section-body {
@@ -665,6 +1010,38 @@ html[data-scrolled='true'] .scroll-hint {
   .card-row {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  /*
+   * 44px minimum on the row, which is the touch target. The period moves above the
+   * title rather than beside it: a 5.5rem column is a third of a 375px screen, and
+   * "2021–2023" beside "Independent consulting" leaves the title two words per line.
+   */
+  .timeline {
+    max-width: none;
+  }
+
+  .tl-row > button {
+    grid-template-columns: 1fr;
+    row-gap: 1px;
+    padding: 11px 0;
+    min-height: 44px;
+  }
+
+  /*
+   * The panel grows on a phone, so the rail can afford the second line the desktop
+   * column cannot: the summary drops below the title instead of competing with it for a
+   * 375px row.
+   */
+  .tl-summary {
+    grid-column: 1;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.45;
+  }
+
+  .tl-title {
+    font-size: 18px;
   }
 
   .carousel {
@@ -693,11 +1070,6 @@ html[data-scrolled='true'] .scroll-hint {
     align-items: flex-start;
     gap: 4px;
   }
-
-
-  .scroll-hint {
-    display: none;
-  }
 }
 
 /* ── reduced motion ────────────────────────────────────────────────────────── */
@@ -709,10 +1081,32 @@ html[data-scrolled='true'] .scroll-hint {
 
   .section-inner {
     transition: none;
+  }
+
+  /*
+   * The old reset was `.section-inner { transform: none }` at specificity (0,1,0),
+   * which lost outright to `.panel[data-active='false'] .section-inner` at (0,2,1) —
+   * so the 8px lift and the 1.5% scale still ran under `prefers-reduced-motion`. It
+   * has to be reset in the same selector to win. The opacity change stays: it is the
+   * whole "you are here" affordance, and it does not move anything.
+   */
+  .panel[data-active='false'] .section-inner {
     transform: none;
   }
 
   .carousel-hero img {
+    transition: none;
+  }
+
+  /*
+   * The timeline keeps its height transition, and that is deliberate. An accordion that
+   * snaps open moves everything below it by 100px with no signal that anything happened
+   * — a discontinuity, which is worse for someone sensitive to motion than a short,
+   * contained one. `prefers-reduced-motion` asks for less movement, not for jumps. What
+   * goes is the colour transition on the year mark, which communicates nothing the
+   * colour itself does not.
+   */
+  .tl-year {
     transition: none;
   }
 }
