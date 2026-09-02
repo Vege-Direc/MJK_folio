@@ -15,8 +15,9 @@
  *      author who has never seen this file what to fix and why it matters. Write the
  *      messages that way, or delete the rule.
  *
- * Structural rules live in lib/corpus/schema.ts so runtime importers get them too. What
- * lives here needs either the filesystem or the whole corpus in view.
+ * Structural rules live in lib/corpus/schema.ts. Nothing imports them at runtime yet, so
+ * they are build-time rules; what lives here needs either the filesystem or the whole
+ * corpus in view.
  *
  * Exit codes: 0 clean (warnings allowed and expected), 1 on any error.
  */
@@ -349,10 +350,10 @@ rawItems.forEach((item, index) => {
   });
 });
 
-// `corpusSchema` in lib/corpus/schema.ts enforces the same uniqueness rule for anything
-// loading the corpus at runtime. It is deliberately not used here: it can only see
-// memories that already validated, and a duplicate id must still be reported when the
-// entry carrying it has an unrelated error as well.
+// Deliberately not a whole-corpus zod schema. One would only see memories that already
+// validated, and a duplicate id must still be reported when the entry carrying it has an
+// unrelated error as well -- so the rule lives here, over the raw items, not in
+// lib/corpus/schema.ts.
 
 /* -- 6. periods agree with the prose around them --------------------------- */
 

@@ -2,7 +2,10 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=optional
+# No --omit=optional. Next's platform binaries -- @next/swc-*, lightningcss-* and sharp --
+# are optionalDependencies, so omitting them removes the compiler the build needs and the
+# image cannot be built at all.
+RUN npm ci
 
 # --- build
 FROM node:22-alpine AS builder
@@ -21,6 +24,11 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# The ask route and lib/rag.ts read content/ off disk at runtime with a path built from
+# process.cwd(), so nothing imports it and nothing traces it. next.config.ts declares it
+# under outputFileTracingIncludes; this line is the belt to that braces, because the cost
+# of the two disagreeing is a container that 500s on every question.
+COPY --from=builder --chown=nextjs:nodejs /app/content ./content
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0

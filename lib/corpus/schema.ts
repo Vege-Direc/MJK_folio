@@ -5,10 +5,15 @@
  * the source of truth for every factual claim the site makes. Everything it has ever got
  * wrong was typed by a person into an unvalidated file. This schema is where that stops.
  *
- * The rules live here rather than in `scripts/check-corpus.ts` so that anything importing
- * the corpus at runtime gets the same guarantees the build gate does. Rules that need the
- * filesystem or the whole corpus in view (does the gallery exist? is this stop thin?) live
- * in the script.
+ * One importer today: `scripts/check-corpus.ts`, the gate that `prebuild`, CI and the
+ * authoring hook all run. Nothing loads the corpus through this schema at runtime --
+ * `lib/rag.ts` parses the YAML raw -- so the rules below are build-time rules and nothing
+ * more. That is said plainly rather than flattered, because a rule only the build enforces
+ * is a rule production can still violate.
+ *
+ * The structural rules live here, apart from the checker, because they are the ones a
+ * runtime loader will eventually want. Rules needing the filesystem or the whole corpus in
+ * view (does the gallery exist? is this stop thin?) live in the script.
  *
  * Every message below is written for someone who has never read this file. The error text
  * IS the documentation for the corpus format -- there is no other document, on purpose.
@@ -19,11 +24,11 @@ import { ANSWERABLE_STOP_IDS, STOP_IDS, type StopId } from '../../content/stops'
 /* -- vocabularies ---------------------------------------------------------- */
 
 /** Sections group memories for rendering. A memory in no known section renders nowhere. */
-export const SECTIONS = ['story', 'timeline', 'projects', 'capabilities', 'contact'] as const;
+const SECTIONS = ['story', 'timeline', 'projects', 'capabilities', 'contact'] as const;
 export type Section = (typeof SECTIONS)[number];
 
 /** The keys a memory may carry. Anything else is a typo -- see `unknownFieldsIn`. */
-export const MEMORY_FIELDS = [
+const MEMORY_FIELDS = [
   'id',
   'section',
   'stopId',
@@ -41,8 +46,8 @@ const ANSWERABLE_LIST = ANSWERABLE_STOP_IDS.join(', ');
 const SECTION_LIST = SECTIONS.join(', ');
 
 /** Resume periods are history. A year outside this window is a typo, not a date. */
-export const EARLIEST_YEAR = 1950;
-export const LATEST_YEAR = new Date().getFullYear() + 1;
+const EARLIEST_YEAR = 1950;
+const LATEST_YEAR = new Date().getFullYear() + 1;
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PERIOD = /^(\d{4})(?:-(\d{4}|present))?$/;
@@ -64,12 +69,10 @@ const idSchema = z
   );
 
 const sectionSchema = z.enum(SECTIONS, {
-  errorMap: () => ({
-    message:
-      `\`section\` must be one of: ${SECTION_LIST}. ` +
-      'A memory with an unrecognised section still parses and is still retrieved, but no part of the page knows ' +
-      'how to render it -- it disappears silently instead of failing.',
-  }),
+  error: () =>
+    `\`section\` must be one of: ${SECTION_LIST}. ` +
+    'A memory with an unrecognised section still parses and is still retrieved, but no part of the page knows ' +
+    'how to render it -- it disappears silently instead of failing.',
 });
 
 /**
@@ -78,13 +81,11 @@ const sectionSchema = z.enum(SECTIONS, {
  * to route with. This is the rule that makes that state unshippable.
  */
 const stopIdSchema = z.enum(STOP_IDS as unknown as readonly [StopId, ...StopId[]], {
-  errorMap: () => ({
-    message:
-      `\`stopId\` must name one of the nine stops declared in content/stops.ts: ${STOP_LIST}. ` +
-      'The router maps a question to a stopId and the renderer maps that stopId to a layout, so a memory without ' +
-      'a valid one can be retrieved but never placed -- it can never reach the screen. Add the stop this memory ' +
-      'belongs to; do not invent an id here, add it to content/stops.ts first.',
-  }),
+  error: () =>
+    `\`stopId\` must name one of the nine stops declared in content/stops.ts: ${STOP_LIST}. ` +
+    'The router maps a question to a stopId and the renderer maps that stopId to a layout, so a memory without ' +
+    'a valid one can be retrieved but never placed -- it can never reach the screen. Add the stop this memory ' +
+    'belongs to; do not invent an id here, add it to content/stops.ts first.',
 });
 
 const titleSchema = z
@@ -124,14 +125,18 @@ const periodSchema = z.preprocess(
   (value) => (typeof value === 'number' && Number.isInteger(value) ? String(value) : value),
   z
     .string({
-      invalid_type_error:
-        '`period` must be a year or a range of years, written as text: "2019", "2017-2019" or ' +
-        '"2025-present". A fractional or non-numeric value is not a period. If YAML is reading your ' +
-        'value as something else, quote it.',
+      // zod 4 folded `invalid_type_error` and `required_error` into a single `error` map.
+      // Returning undefined for every other code defers to the messages raised below.
+      error: (issue) =>
+        issue.code === 'invalid_type'
+          ? '`period` must be a year or a range of years, written as text: "2019", "2017-2019" or ' +
+            '"2025-present". A fractional or non-numeric value is not a period. If YAML is reading your ' +
+            'value as something else, quote it.'
+          : undefined,
     })
     .trim()
     .superRefine((value, ctx) => {
-      const fail = (message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+      const fail = (message: string) => ctx.addIssue({ code: 'custom', message });
 
       if (TYPOGRAPHIC_DASH.test(value)) {
         TYPOGRAPHIC_DASH.lastIndex = 0;
@@ -211,22 +216,16 @@ const aliasesSchema = z
  * So a number here is never a string. It is a value, the unit it counts, and the kind of
  * quantity it is, because "5" on its own licenses nothing.
  */
-export const FACT_NUMBER_KINDS = [
-  'count',
-  'multiple',
-  'percent',
-  'currency',
-  'duration',
-  'year',
-  'rank',
-] as const;
-export type FactNumberKind = (typeof FACT_NUMBER_KINDS)[number];
+const FACT_NUMBER_KINDS = ['count', 'multiple', 'percent', 'currency', 'duration', 'year', 'rank'] as const;
 
-export const factNumberSchema = z.object({
+const factNumberSchema = z.object({
   value: z.number({
-    invalid_type_error:
-      '`facts[].numbers[].value` must be a bare number (5, 0.5, 25000000) -- not a string, and not "25 million". ' +
-      'The unit belongs in `unit`. A number stored as prose cannot be compared against anything.',
+    error: (issue) =>
+      issue.code === 'invalid_type'
+        ? '`facts[].numbers[].value` must be a bare number (5, 0.5, 25000000) -- not a string, and not ' +
+          '"25 million". The unit belongs in `unit`. A number stored as prose cannot be compared against ' +
+          'anything.'
+        : undefined,
   }),
   unit: z
     .string()
@@ -237,13 +236,11 @@ export const factNumberSchema = z.object({
         'unit licenses no claim, because nothing can check what it counted.',
     ),
   kind: z.enum(FACT_NUMBER_KINDS, {
-    errorMap: () => ({
-      message: `\`facts[].numbers[].kind\` must be one of: ${FACT_NUMBER_KINDS.join(', ')}.`,
-    }),
+    error: () => `\`facts[].numbers[].kind\` must be one of: ${FACT_NUMBER_KINDS.join(', ')}.`,
   }),
 });
 
-export const factSchema = z.object({
+const factSchema = z.object({
   text: z
     .string()
     .trim()
@@ -282,7 +279,7 @@ export const memorySchema = z
     // so a memory that can be routed there is a memory that can quietly overwrite it.
     if (memory.stopId === 'hero') {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['stopId'],
         message:
           '`stopId: hero` is not allowed. The hero is authored copy -- written once, reviewed once, and never ' +
@@ -292,34 +289,9 @@ export const memorySchema = z
     }
   });
 
-export const corpusSchema = z.array(memorySchema).superRefine((memories, ctx) => {
-  const seen = new Map<string, number>();
-  memories.forEach((memory, index) => {
-    const first = seen.get(memory.id);
-    if (first === undefined) {
-      seen.set(memory.id, index);
-      return;
-    }
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [index, 'id'],
-      message:
-        `duplicate \`id: ${memory.id}\` -- already used by the memory titled "${memories[first].title}". ` +
-        'Ids are the retrieval citation key and the WebGL pulse target, so two memories sharing one means the ' +
-        'second is unreachable: every lookup resolves to the first. Give this one an id of its own.',
-    });
-  });
-});
-
 /* -- types ----------------------------------------------------------------- */
 
-export type Fact = z.infer<typeof factSchema>;
-export type FactNumber = z.infer<typeof factNumberSchema>;
 export type Memory = z.infer<typeof memorySchema>;
-export type Corpus = z.infer<typeof corpusSchema>;
-
-/** What an author writes, before defaults are applied. */
-export type MemoryInput = z.input<typeof memorySchema>;
 
 /* -- helpers the checker shares -------------------------------------------- */
 
