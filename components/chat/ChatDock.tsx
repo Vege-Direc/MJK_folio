@@ -93,8 +93,21 @@ export default function ChatDock() {
       className="fixed inset-x-0 bottom-0 z-50"
       style={kbInset ? { transform: `translateY(-${kbInset}px)` } : undefined}
     >
-      {/* Subtle gradient veil so type stays readable over WebGL */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-bg)] via-[color:var(--color-bg)]/85 to-transparent pointer-events-none" />
+      {/*
+        The veil, which has to occlude the page as well as the scene.
+
+        It used to be `from-bg via-bg/85 to-transparent`, which reaches full transparency
+        at its own top edge — so a stop's content scrolling up behind the dock stayed
+        completely visible through it. On a phone that printed the timeline's fourth entry
+        on top of the prompt row: "Kinnect India" and "Senior Manager, then Account
+        Director…" over "Walk me through the arc", both legible, neither readable. The
+        bottom padding every stop reserves from `--dock-h` keeps the *end* of a stop
+        clear; nothing was keeping its middle clear on the way past.
+
+        So the gradient is solid across the rows that carry type and feathers only above
+        them. No blur: this is the same scene the reading halo exists to avoid smearing.
+      */}
+      <div className="dock-veil" />
 
       <div className="relative mx-auto max-w-5xl px-6 md:px-10 pt-6 pb-4">
         {/*
@@ -133,12 +146,12 @@ export default function ChatDock() {
           className="flex items-center gap-4 border-t border-[color:var(--color-rule)] pt-4"
         >
           <span
-            className={`font-mono text-[10px] tracking-[0.2em] transition-colors ${
+            className={`text-[13px] transition-colors ${
               asking ? 'text-[color:var(--color-accent)]' : 'text-[color:var(--color-type-dim)]'
             }`}
             aria-live="polite"
           >
-            {asking ? '⟶ ANSWERING' : '⟶ ASK'}
+            {asking ? 'Answering' : 'Ask'}
           </span>
           {/*
             No `autoFocus`. It put the caret in this field on load, which took Space and
@@ -161,9 +174,9 @@ export default function ChatDock() {
             aria-label="Ask a question about Mathew"
             className="ask-input flex-1 bg-transparent text-[color:var(--color-type)] placeholder:text-[color:var(--color-type-dim)] outline-none py-3 text-base md:text-lg font-serif"
           />
-          <span className="hidden md:block font-mono text-[10px] tracking-[0.15em] text-[color:var(--color-type-dim)]">
-            ↵ SEND
-          </span>
+          <button type="submit" className="dock-send">
+            Send
+          </button>
         </form>
       </div>
     </div>

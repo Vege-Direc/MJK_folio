@@ -65,6 +65,17 @@ export default function Carousel() {
     () => false,
   );
   const [index, setIndex] = useState(0);
+  // The frame being faded over. Held for one transition so the incoming photograph has
+  // something at full strength underneath it instead of the empty frame.
+  const [prev, setPrev] = useState<number | null>(null);
+
+  /** Move to a frame, remembering the one it replaces so the two can cross-fade. */
+  const goTo = (next: number | ((i: number) => number)) =>
+    setIndex((i) => {
+      const to = typeof next === 'function' ? next(i) : next;
+      if (to !== i) setPrev(i);
+      return to;
+    });
   const [playing, setPlaying] = useState(true);
   const [held, setHeld] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -73,14 +84,14 @@ export default function Carousel() {
 
   useEffect(() => {
     if (!advancing) return;
-    timer.current = setInterval(() => setIndex((i) => (i + 1) % FRAMES.length), INTERVAL_MS);
+    timer.current = setInterval(() => goTo((i) => (i + 1) % FRAMES.length), INTERVAL_MS);
     // The cleanup is the fix: the prototype's interval survived teardown and kept firing
     // against detached nodes.
     return () => clearInterval(timer.current);
   }, [advancing]);
 
   const step = useCallback((delta: number) => {
-    setIndex((i) => (i + delta + FRAMES.length) % FRAMES.length);
+    goTo((i) => (i + delta + FRAMES.length) % FRAMES.length);
   }, []);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -116,7 +127,7 @@ export default function Carousel() {
             // Only the first frame is on screen at load; the rest cross-fade in later.
             priority={i === 0}
             loading={i === 0 ? undefined : 'lazy'}
-            className={i === index ? 'on' : undefined}
+            className={i === index ? 'on' : i === prev ? 'prev' : undefined}
           />
         ))}
         {/* Announced, not just drawn: the prototype wrote this text with no live region. */}
@@ -134,7 +145,7 @@ export default function Carousel() {
             aria-selected={i === index}
             aria-label={`Frame ${i + 1}: ${f.cap}`}
             tabIndex={i === index ? 0 : -1}
-            onClick={() => setIndex(i)}
+            onClick={() => goTo(i)}
           >
             <Image src={f.src} alt="" width={f.w} height={f.h} sizes={THUMB_SIZES} loading="lazy" />
           </button>
