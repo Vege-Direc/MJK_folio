@@ -6,13 +6,15 @@ Personal site for Mathew John Kondekeril. Long-scroll editorial with a persisten
 
 ## Stack
 - Next.js 16 (App Router, Turbopack, standalone output)
-- react-three-fiber + Three.js 0.169 (WebGL mind — being ported to vanilla Three)
+- Three.js 0.169, vanilla, in `lib/mind/` (no react-three-fiber; the scene owns no React state)
 - Tailwind v4 + custom-property palette
 - AI SDK v7 (`ai`, `@ai-sdk/react`) + `@openrouter/ai-sdk-provider`
 - One OpenRouter key; the primary model and its fallback list are committed in `lib/provider.ts`
 - Coolify (Docker deploy)
 
-Not yet wired: Redis (`ioredis` is installed for the rate limiter, nothing imports it).
+Not yet wired: Redis (`ioredis` is installed for the rate limiter, nothing imports it), and the
+chat dock does not yet dock its answers into the stops — every stop renders an empty
+`#answer-<stopId>` for that.
 
 ## Palette rule
 Cool inside the mind (cyan filaments, orange pulse — WebGL only). Warm outside (oat + amber — DOM only). They **never touch**.
@@ -27,13 +29,14 @@ npm install && npm run dev
 
 ## Repo tree
 ```
-app/           routing, layout, /api/ask + /api/health
-components/    mind (R3F), sections, chat dock
-content/       memories.yaml (RAG), stops.ts, static-copy.ts, system-prompt.md
-evals/         tier-A tests — corpus claims, retrieval, stops
-lib/           provider, rag, corpus schema, event bus
+app/           routing, layout, globals.css (the design layer), /api/ask + /api/health
+components/    mind/ (canvas mount + scroll->progress), stops/ (the nine sections), chat/
+content/       memories.yaml (RAG), stops.ts (identity + layout + authored copy), system-prompt.md
+evals/         tier-A tests — authored claims, retrieval, stops
+lib/           mind/ (the three.js scene), provider, rag, corpus loader + schema
 scripts/       check-corpus.ts — the gate prebuild and CI run
-reference/     original index.html WebGL — to port into components/mind/
+public/        far-network.json (tier-3 topology, fetched at runtime), media/rd350/, resume.pdf
+reference/     preview.html — the prototype the scene and layout were ported from
 ```
 
 ## Content is code

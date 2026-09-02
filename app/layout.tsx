@@ -3,9 +3,13 @@ import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import ChatDock from '@/components/chat/ChatDock';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-serif' });
-const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
+// Distinct variable names: app/globals.css declares --font-sans/-serif/-mono as Tailwind
+// @theme tokens on :root, which has the same specificity as the class next/font puts on
+// <html>. Whichever stylesheet the head happens to emit second would win, and when that
+// is the theme the page renders in system fallbacks with no error anywhere.
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces' });
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains' });
 
 export const metadata: Metadata = {
   title: 'Mathew John Kondekeril — First I imagine it. Then I learn whatever it takes to build it.',

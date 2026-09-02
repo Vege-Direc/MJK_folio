@@ -1,30 +1,136 @@
 /**
- * The nine stops. Single source of truth for stop identity and layout.
+ * The nine stops. Single source of truth for stop identity, layout and authored copy.
  *
- * Ids come from MJK_STOPS in public/preview.html (the authoritative design).
- * `compose` is a property of the STOP, never of a generated answer — the model
- * has no layout authority. The deterministic router maps a question to a
- * stopId; the renderer maps stopId -> compose.
+ * Ids come from MJK_STOPS in the prototype (`reference/preview.html:2151`), the
+ * authoritative design. `compose` is a property of the STOP, never of a generated
+ * answer — the model has no layout authority. The deterministic router maps a question
+ * to a stopId; the renderer maps stopId -> compose.
  *
  * Every memory in content/memories.yaml must carry a stopId from this list.
  * scripts/check-corpus.ts enforces that.
+ *
+ * ── ON THE COPY ────────────────────────────────────────────────────────────────
+ * `title` and `body` are AUTHORED. They may carry voice; they may not carry a number,
+ * a client name, an employer or a claim that content/memories.yaml does not license.
+ * `evals/tier-a/claims.test.ts` scans this file and fails the build when they do.
+ *
+ * The prototype's copy was ported with the following removed, because the corpus does
+ * not support them (the four in `claims.test.ts` plus five more found in the same pass):
+ *
+ *   "Isobar"                          — appears nowhere in the corpus; he did not work there
+ *   "CANON · 5x awareness · 12 markets" — no awareness multiple, no market count, for anyone
+ *   "LAUGHING COW · 2x spend"         — the 10x is Rustomjee's, at a different agency
+ *   "A week of analyst work — replaced" — the licensed figure is "by half", and the week
+ *                                          was never measured
+ *   "Two short-service commissions. Aged out of the third window."  — not in the corpus
+ *   "Two years, three attempts at the tank"                          — not in the corpus
+ *   "A 1980s Yamaha RD350"            — the corpus says 1986
+ *   "RD350 · 2016-2018"               — the corpus gives no restoration dates
+ *   "This site — Next.js, R3F, streaming"  — R3F was deleted in this same change
+ *
+ * Three more came from the placeholder components this change replaced and are not
+ * ported either: "2026 — v0.1", "then emails me a brief", "docks alongside this text".
+ * The first is a version number nobody set, the other two promise behaviour that does
+ * not exist.
+ *
+ * `title` is structured, not markup: the prototype carried `titleHTML` with a `<br>` and
+ * a `<span class="muted">` and the renderer set it with innerHTML. Authored copy is
+ * still copy — `{ strong, muted }` renders through React and cannot inject anything.
  */
 
 export const STOPS = [
-  { id: 'hero',        index: 0, kicker: 'MJK · SINGAPORE · 2026', compose: 'hero',     align: 'left'  },
-  { id: 'origin',      index: 1, kicker: '§ 01 — Origin',          compose: 'plain',    align: 'right' },
-  { id: 'engineering', index: 2, kicker: '§ 02 — Engineering',     compose: 'plain',    align: 'left'  },
-  { id: 'pivot',       index: 3, kicker: '§ 03 — Pivot',           compose: 'plain',    align: 'right' },
-  { id: 'apac',        index: 4, kicker: '§ 04 — APAC · 2013→2024', compose: 'cards',   align: 'left'  },
-  { id: 'rd350',       index: 5, kicker: '§ 05 — Aside',           compose: 'carousel', align: 'left'  },
-  { id: 'now',         index: 6, kicker: '§ 06 — Now',             compose: 'cards',    align: 'right' },
-  { id: 'work',        index: 7, kicker: '§ 07 — Selected work',   compose: 'cards',    align: 'left'  },
-  { id: 'contact',     index: 8, kicker: '§ 08 — Brief me',        compose: 'contact',  align: 'left'  },
+  {
+    id: 'hero',
+    index: 0,
+    kicker: 'MJK · SINGAPORE · 2026',
+    compose: 'hero',
+    align: 'left',
+    title: { strong: 'First I imagine it.', muted: 'Then I learn whatever it takes to build it.' },
+    body: 'Engineer, marketer, builder. Scroll to travel the mind — or ask the dock anything.',
+  },
+  {
+    id: 'origin',
+    index: 1,
+    kicker: '§ 01 — Origin',
+    compose: 'plain',
+    align: 'right',
+    title: { strong: 'It started with', muted: 'wanting to fly.' },
+    body: 'Not any aircraft — the fast ones. That is not the story people ask about first. It is the one that explains the rest.',
+  },
+  {
+    id: 'engineering',
+    index: 2,
+    kicker: '§ 02 — Engineering',
+    compose: 'plain',
+    align: 'left',
+    title: { strong: 'Mechanical, then', muted: 'aerospace.' },
+    body: 'Mechanical engineering to get in the door. An aerospace design masters in the UK, because you cannot design what you do not understand. By the time it was finished, the market that needed those drawings was not hiring.',
+  },
+  {
+    id: 'pivot',
+    index: 3,
+    kicker: '§ 03 — Pivot',
+    compose: 'plain',
+    align: 'right',
+    title: { strong: 'So I rebuilt', muted: 'the toolkit.' },
+    body: 'Marketing was the closest system to engineering that would take an aerospace graduate with no media experience. I brought engineering — code, automation, systems thinking — to a place that ran on spreadsheets.',
+  },
+  {
+    id: 'apac',
+    index: 4,
+    kicker: '§ 04 — APAC · 2013→2024',
+    compose: 'cards',
+    align: 'left',
+    title: { strong: 'A decade in paid media', muted: 'across the region.' },
+    body: 'Omnicom, Kinnect, Hotstar, Taboola, Nanomark, Triad. Same pattern each time — find the workflow eating everyone’s day, and replace it with a system.',
+  },
+  {
+    id: 'rd350',
+    index: 5,
+    kicker: '§ 05 — Aside',
+    compose: 'carousel',
+    align: 'left',
+    title: { strong: 'In parallel,', muted: 'a motorcycle.' },
+    body: 'A 1986 Yamaha RD 350, stripped to the frame and rebuilt as a cafe racer of my own design. Self-taught fabrication, learned in the doing. Same loop as everything else — imagine, learn, build, keep going.',
+  },
+  {
+    id: 'now',
+    index: 6,
+    kicker: '§ 06 — Now',
+    compose: 'cards',
+    align: 'right',
+    title: { strong: 'Building the systems', muted: 'I used to run.' },
+    body: 'Krunch Labs. MruNN — a chat-native ERP on Mastra. JewelAI — a LangGraph creative pipeline for jewellery. This site — Next.js, three.js, streaming.',
+  },
+  {
+    id: 'work',
+    index: 7,
+    kicker: '§ 07 — Selected work',
+    compose: 'cards',
+    align: 'left',
+    title: { strong: 'Ask about any of these.' },
+    body: 'Ask the dock and the answer arrives here, under this paragraph, in the stop it belongs to.',
+  },
+  {
+    id: 'contact',
+    index: 8,
+    kicker: '§ 08 — Brief me',
+    compose: 'contact',
+    align: 'left',
+    title: { strong: 'Not a form.', muted: 'Tell the dock what you’re working on.' },
+    body: 'It asks about the problem, the timeline and what has been tried. Or reach me directly:',
+  },
 ] as const;
 
 export type Stop = (typeof STOPS)[number];
 export type StopId = Stop['id'];
 export type ComposeKind = Stop['compose'];
+/**
+ * The two halves of a stop title, rendered, never injected. Declared rather than
+ * derived: `STOPS` is `as const`, so `Stop['title']` is a union of nine literal shapes
+ * and the one stop with no second half (`work`) makes `.muted` unreadable on the union.
+ */
+export type StopTitle = { readonly strong: string; readonly muted?: string };
 
 export const STOP_IDS = STOPS.map((s) => s.id) as readonly StopId[];
 

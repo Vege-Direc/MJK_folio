@@ -11,7 +11,7 @@ import { ANSWERABLE_STOP_IDS, STOPS, STOP_IDS, stopById } from '../../content/st
 
 /**
  * The compose kinds the renderer knows how to draw, from the authoritative design in
- * `public/preview.html`. A stop composing anything else renders as nothing.
+ * `reference/preview.html`. A stop composing anything else renders as nothing.
  *
  * Typed as `ComposeKind[]` deliberately: add a compose kind to STOPS and this list
  * still type-checks (it is a subset), so the runtime assertion below stays the thing

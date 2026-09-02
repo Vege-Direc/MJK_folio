@@ -16,7 +16,6 @@
   "dependencies": {
     "@ai-sdk/react": "^4.0.93",
     "@openrouter/ai-sdk-provider": "^3.0.0",
-    "@react-three/fiber": "^9.0.0",
     "ai": "7.0.90",
     "ioredis": "^5.4.0",
     "minisearch": "^7.2.0",
