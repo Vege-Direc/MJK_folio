@@ -11,6 +11,7 @@
     "test": "vitest run",
     "corpus:check": "tsx scripts/check-corpus.ts",
     "guard:eval": "tsx scripts/guard-eval.ts",
+    "route:eval": "tsx scripts/route-eval.ts",
     "knip": "knip --no-exit-code",
     "prebuild": "npm run corpus:check"
   },
