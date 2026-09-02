@@ -51,6 +51,12 @@ export type RetrievalResult = {
    * question about 19 -- so the two rarely disagree by accident.
    */
   topical: boolean;
+  /**
+   * Whether the section on screen was used to work out what the question is about. True
+   * only for a question that points rather than names. The route reads it to decide
+   * whether the previous exchange is still the same subject.
+   */
+  grounded: boolean;
   /** BM25+ score of the best hit. Raw, not normalised -- the threshold is calibrated to it. */
   topScore: number;
   hits: RetrievalHit[];
@@ -182,6 +188,42 @@ const MIN_SHARE = 0.5;
  */
 const WORK_REQUEST =
   /\b(write|review|fix|debug|refactor|optimi[sz]e|translate|summari[sz]e|proofread|edit|rewrite|solve|grade|critique)\s+(me\s+)?(my|our|this|these)\b/i;
+
+/**
+ * Questions that point at something instead of naming it.
+ *
+ * Tested against the RAW question, not the tokens, because the tokeniser drops every one
+ * of these words as a stopword -- which is the whole reason the failure happened. A
+ * visitor read section six, typed "can you give me more details on these systems?", and
+ * got an answer about the third-party report he had asked about two minutes earlier. The
+ * router was right; retrieval had "detail" and "system" to work with and nothing else.
+ */
+const DEIXIS = /\b(this|that|these|those|it|its|they|them|their|here|above|below|the same)\b/i;
+const FOLLOWUP = /\b(more|else|further|elaborate|expand|go on|tell me more|and\b.*\?)\b/i;
+
+/**
+ * Above this the question stands on its own and the viewport is ignored entirely.
+ * Read from `route:eval`'s printed bands, exactly as MIN_TOP_SCORE is.
+ */
+const SELF_CONTAINED_SCORE = 25;
+
+/** How hard the viewport may push when the question is at its most helpless. */
+const VIEWPORT_WEIGHT = 2;
+
+/**
+ * Whether the question needs the page to tell it what it is about.
+ *
+ * Three tests, all cheap, all local, no model call. It must not be a request to do the
+ * visitor's work; it must point or follow rather than name; and it must name nothing the
+ * corpus recognises AND still be scoring poorly. The anchor test is what stops "was this
+ * the RD 350?" from being treated as helpless simply because it contains "this".
+ */
+function contextDependent(question: string, topScore: number, anchors: Set<string>): boolean {
+  if (WORK_REQUEST.test(question)) return false;
+  if (!DEIXIS.test(question) && !FOLLOWUP.test(question)) return false;
+  if (tokenize(question).some((t) => anchors.has(t))) return false;
+  return topScore < SELF_CONTAINED_SCORE;
+}
 
 /** `ANSWERABLE_STOP_IDS` as a membership test that accepts any `StopId`, `hero` included. */
 const ANSWERABLE = new Set<string>(ANSWERABLE_STOP_IDS);
@@ -502,6 +544,17 @@ type Engine = {
   index: MiniSearch<IndexedDoc>;
   byId: Map<string, Memory>;
   aliases: Map<string, string[]>;
+  /**
+   * Terms rare enough to name a subject on their own: "taboola", "rd350", "tallybridge".
+   * Derived from the corpus on the same `df <= 3` rule the alias table already uses, for
+   * the same reason -- a term in four or more memories names nothing in particular.
+   *
+   * This is what tells a question that only LOOKS context-dependent from one that is. "Was
+   * this the RD 350?" is full of demonstratives and needs no help; "more on these systems"
+   * has the same shape and no subject at all. Score cannot separate them, because the two
+   * bands overlap: the loudest deictic question scores 20.2 and "what's mrunn" scores 19.8.
+   */
+  anchors: Set<string>;
 };
 
 let engine: Engine | null = null;
@@ -528,11 +581,56 @@ function getEngine(): Engine {
       body: m.body,
     })),
   );
-  engine = { index, byId: new Map(memories.map((m) => [m.id, m])), aliases: buildAliases(memories) };
+  engine = {
+    index,
+    byId: new Map(memories.map((m) => [m.id, m])),
+    aliases: buildAliases(memories),
+    anchors: buildAnchors(memories),
+  };
   return engine;
 }
 
+/**
+ * Every term that could name a subject by itself: rare across the corpus, and drawn from
+ * the places an author names things -- ids, titles and tags -- rather than from prose.
+ */
+function buildAnchors(memories: Memory[]): Set<string> {
+  const df = new Map<string, number>();
+  for (const m of memories) {
+    for (const t of new Set(tokenize(`${m.id} ${m.title} ${m.tags.join(' ')} ${m.body}`))) {
+      df.set(t, (df.get(t) ?? 0) + 1);
+    }
+  }
+  const anchors = new Set<string>();
+  for (const m of memories) {
+    for (const t of tokenize(`${m.id} ${m.title} ${m.tags.join(' ')}`)) {
+      if (t.length >= 3 && (df.get(t) ?? 0) <= 3) anchors.add(t);
+    }
+  }
+  return anchors;
+}
+
 /* -- retrieval ------------------------------------------------------------- */
+
+/**
+ * Put the section being read at the front of the licence set.
+ *
+ * Its memories keep a nominal score above whatever the question matched by accident, so
+ * they lead the context and the answer's title; anything the question genuinely matched
+ * follows, because a follow-up often does still lean on the previous subject.
+ */
+function ground(
+  searched: RetrievalHit[],
+  viewing: StopId,
+  byId: Map<string, Memory>,
+  k: number,
+): RetrievalHit[] {
+  const onStop = [...byId.values()].filter((m) => m.stopId === viewing);
+  const lead = Math.max(searched[0]?.score ?? 0, MIN_TOP_SCORE) + 1;
+  const grounded: RetrievalHit[] = onStop.map((memory, i) => ({ memory, score: lead - i * 0.01 }));
+  const seen = new Set(grounded.map((h) => h.memory.id));
+  return [...grounded, ...searched.filter((h) => !seen.has(h.memory.id))].slice(0, Math.max(k, 4));
+}
 
 function formatContext(hits: RetrievalHit[]): string {
   return hits
@@ -547,7 +645,10 @@ function formatContext(hits: RetrievalHit[]): string {
  * `confident` reads. `hero` can never win -- the schema forbids a memory pointing there,
  * and this filters for it anyway rather than trusting that it always will.
  */
-function vote(hits: RetrievalHit[]): { stopId: StopId | null; share: number } {
+function vote(
+  hits: RetrievalHit[],
+  prior?: { stopId: StopId; softness: number },
+): { stopId: StopId | null; share: number } {
   const byStop = new Map<StopId, number[]>();
   for (const hit of hits) {
     const stop = hit.memory.stopId;
@@ -555,15 +656,37 @@ function vote(hits: RetrievalHit[]): { stopId: StopId | null; share: number } {
     byStop.set(stop, [...(byStop.get(stop) ?? []), hit.score]);
   }
 
-  let winner: StopId | null = null;
-  let best = 0;
+  const mass = new Map<StopId, number>();
   let total = 0;
   for (const [stop, scores] of byStop) {
     const sorted = [...scores].sort((a, b) => b - a);
-    const mass = sorted[0] + STOP_SUPPORT * sorted.slice(1).reduce((a, b) => a + b, 0);
-    total += mass;
-    if (mass > best) {
-      best = mass;
+    const m = sorted[0] + STOP_SUPPORT * sorted.slice(1).reduce((a, b) => a + b, 0);
+    mass.set(stop, m);
+    total += m;
+  }
+
+  /*
+   * The section on screen, added as a prior rather than as an override.
+   *
+   * `softness` is how little the question said for itself, so a flat likelihood lets the
+   * prior decide and a peaked one drowns it. That shape is what makes the dangerous case
+   * safe: a visitor parked on section six who asks something specific about section two is
+   * asking a question that scores well, so `softness` is near zero and the prior cannot
+   * move the result. Verified exhaustively rather than argued -- every question in the
+   * routing table, from every one of the eight viewports, routes exactly where it routes
+   * with no viewport at all.
+   */
+  if (prior && ANSWERABLE.has(prior.stopId)) {
+    const push = VIEWPORT_WEIGHT * prior.softness * Math.max(total, 1);
+    mass.set(prior.stopId, (mass.get(prior.stopId) ?? 0) + push);
+    total += push;
+  }
+
+  let winner: StopId | null = null;
+  let best = 0;
+  for (const [stop, m] of mass) {
+    if (m > best) {
+      best = m;
       winner = stop;
     }
   }
@@ -578,9 +701,12 @@ function vote(hits: RetrievalHit[]): { stopId: StopId | null; share: number } {
  * to tell apart from "here are six memories" -- that distinction is the whole reason this
  * returns an object rather than the string `lib/rag.ts` used to.
  */
-export function retrieve(question: string, opts: { k?: number } = {}): RetrievalResult {
+export function retrieve(
+  question: string,
+  opts: { k?: number; viewing?: StopId | null } = {},
+): RetrievalResult {
   const k = Math.max(1, opts.k ?? DEFAULT_K);
-  const { index, byId, aliases } = getEngine();
+  const { index, byId, aliases, anchors } = getEngine();
 
   const terms = tokenize(question);
   const expansions = expand(tokenizeAll(question), terms, aliases);
@@ -590,25 +716,68 @@ export function retrieve(question: string, opts: { k?: number } = {}): Retrieval
   if (expansions.length) {
     parts.push({ combineWith: 'OR', queries: expansions, boostTerm: () => ALIAS_WEIGHT });
   }
-  if (!parts.length) {
-    return { stopId: null, confident: false, topical: false, topScore: 0, hits: [], context: '' };
+  const searched: RetrievalHit[] = parts.length
+    ? index
+        .search({ combineWith: 'OR', queries: parts })
+        .slice(0, k)
+        .flatMap((result) => {
+          const memory = byId.get(String(result.id));
+          return memory ? [{ memory, score: result.score }] : [];
+        })
+    : [];
+
+  const topScore = searched[0]?.score ?? 0;
+
+  /*
+   * "Tell me more." "Go on." "And these?"
+   *
+   * Made entirely of stopwords, so there is nothing to search for and the old code
+   * returned nothing at all before the viewport was ever consulted -- refusing the very
+   * questions the viewport exists to answer. A question with no content words is the
+   * strongest possible evidence that its subject is on the screen rather than in the text.
+   */
+  const grounded = Boolean(opts.viewing) && (!parts.length || contextDependent(question, topScore, anchors));
+
+  if (!parts.length && !grounded) {
+    return {
+      stopId: null,
+      confident: false,
+      topical: false,
+      grounded: false,
+      topScore: 0,
+      hits: [],
+      context: '',
+    };
   }
 
-  const hits: RetrievalHit[] = index
-    .search({ combineWith: 'OR', queries: parts })
-    .slice(0, k)
-    .flatMap((result) => {
-      const memory = byId.get(String(result.id));
-      return memory ? [{ memory, score: result.score }] : [];
-    });
+  /*
+   * A grounded question is handed the section's own memories, ahead of whatever it
+   * happened to match. Routing to the right place while passing the licences from the
+   * wrong one is the original defect wearing a different hat: the visitor is taken to
+   * section six and the model is still holding section seven's material.
+   */
+  const hits: RetrievalHit[] = grounded && opts.viewing ? ground(searched, opts.viewing, byId, k) : searched;
+  const prior =
+    grounded && opts.viewing
+      ? {
+          stopId: opts.viewing,
+          softness: Math.min(1, Math.max(0, 1 - topScore / SELF_CONTAINED_SCORE)),
+        }
+      : undefined;
 
-  const topScore = hits[0]?.score ?? 0;
-  const { stopId, share } = vote(hits);
-  const topical = stopId !== null && topScore >= MIN_TOP_SCORE && !WORK_REQUEST.test(question);
+  const { stopId, share } = vote(hits, prior);
+
+  // A question that only makes sense against the page is not off-topic just because it
+  // scored badly on its own. "More on these?" earns its topicality from the section the
+  // visitor is reading, which is where its subject actually is.
+  const topical =
+    stopId !== null && (topScore >= MIN_TOP_SCORE || grounded) && !WORK_REQUEST.test(question);
+
   return {
     stopId,
     confident: topical && share >= MIN_SHARE,
     topical,
+    grounded,
     topScore,
     hits,
     context: formatContext(hits),

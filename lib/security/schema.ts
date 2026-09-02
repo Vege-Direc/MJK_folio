@@ -19,6 +19,7 @@
  * default, and there is no key here for either name to land in even if it survived.
  */
 import { z } from 'zod';
+import { STOP_IDS, type StopId } from '../../content/stops';
 
 /** Enough for a 500-character question and four exchanges, with room to spare. */
 export const MAX_BODY_BYTES = 16 * 1024;
@@ -45,6 +46,17 @@ export const askBodySchema = z.object({
     .array(historyTurnSchema)
     .max(4, '`history` holds at most the last 4 exchanges.')
     .optional(),
+  /**
+   * The section on screen when the question was asked, and the section the previous
+   * answer landed in. Both are closed enums of stop ids, so the widest thing a client can
+   * say here is "one of nine", and neither can carry text into the prompt.
+   *
+   * They exist because a question like "more on these?" has its subject on the screen
+   * rather than in its words, and because an earlier answer about a different section is
+   * not context, it is a distraction.
+   */
+  viewing: z.enum(STOP_IDS as unknown as [StopId, ...StopId[]]).optional(),
+  previousStopId: z.enum(STOP_IDS as unknown as [StopId, ...StopId[]]).optional(),
 });
 
 export type AskHistoryTurn = z.infer<typeof historyTurnSchema>;

@@ -44,7 +44,7 @@ export type AskDeps = {
   /** Loosely typed on purpose: tests hand in `MockLanguageModelV4` from `ai/test`. */
   askModel: () => { model: LanguageModel; providerOptions?: ProviderOptions };
   admit: (ip: string) => Promise<AdmitResult>;
-  retrieve: (question: string) => RetrievalResult;
+  retrieve: (question: string, opts?: { viewing?: StopId | null }) => RetrievalResult;
   guard: typeof guard;
   salvage: typeof salvageDetailed;
   fallbackBlock: (stopId: StopId | null, reason: FallbackReason, preferIds?: readonly string[]) => FallbackBlock;
@@ -78,6 +78,14 @@ function stopLabel(stopId: StopId): string {
 }
 
 const DEFAULT_STOP: StopId = 'now';
+
+/** Enough of a prior answer to remember what was said, far too little to anchor on. */
+function firstSentence(text: string): string {
+  const trimmed = text.trim();
+  const end = /[.!?](\s|$)/.exec(trimmed);
+  const cut = end ? trimmed.slice(0, end.index + 1) : trimmed;
+  return cut.length > 240 ? `${cut.slice(0, 237).trimEnd()}...` : cut;
+}
 
 /**
  * An unannounced fallback wears the stop's ordinary answer kicker, so corpus prose
@@ -154,12 +162,12 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   if (!parsed.ok) {
     return json({ error: 'bad-request', detail: parsed.reason }, parsed.status);
   }
-  const { question, history = [] } = parsed.value;
+  const { question, history = [], viewing, previousStopId } = parsed.value;
 
   // Admission before retrieval: a visitor who is over their limit should not cost a
   // BM25 pass either, and the answer they get is still corpus text.
   const admitted = await deps.admit(clientIp(req.headers));
-  const retrieved = deps.retrieve(question);
+  const retrieved = deps.retrieve(question, { viewing });
   const hitIds = retrieved.hits.map((h) => h.memory.id);
   const fallback = (stopId: StopId | null, reason: FallbackReason, detail: string = reason) =>
     fallbackResponse(
@@ -207,17 +215,35 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
     status: 'streaming',
   };
 
-  // ai v7 refuses a `system` role inside `messages`, which is the right shape for this
-  // route: instructions travel in their own field and cannot arrive disguised as a turn.
-  const instructions = `${deps.systemPrompt()}\n\n---\nRelevant memories:\n${retrieved.context}`;
+  /*
+   * The previous exchange, and the two rules that keep it from becoming the subject.
+   *
+   * This is the defect MJK found. He asked about a third-party report, which answered on
+   * section seven. He then scrolled to section six and asked "can you give me more details
+   * on these systems?" -- and was answered about the report. The router had picked section
+   * six correctly; what beat it was the previous answer, replayed as a full `assistant`
+   * turn in the recency-privileged slot, several thousand characters of it, against a
+   * question whose own words carried almost no signal.
+   *
+   * Replaying the site's own answer as an `assistant` turn recreates from the inside the
+   * exact hazard `lib/security/schema.ts` refuses from outside: text the model reads as
+   * its own prior commitment rather than as material. The model already has no authority
+   * over layout. It should have none over subject either.
+   *
+   * So: an exchange that happened somewhere else is dropped outright, because a new
+   * section is a new subject. One that happened here survives as a single line inside the
+   * instructions, trimmed to its first sentence, labelled as context rather than topic --
+   * never as a turn, and never in `messages`, which now holds exactly one entry.
+   */
+  const sameSubject = previousStopId === stopId;
+  const prior = sameSubject ? history.at(-1) : undefined;
+  const priorLine = prior
+    ? `\n\n---\nEarlier in this conversation, for continuity only. The subject of THIS question is the memories above, not this exchange.\nThey asked: ${prior.q}\nYou answered: ${firstSentence(prior.a)}`
+    : '';
 
-  const messages: ModelMessage[] = [
-    ...history.flatMap((turn): ModelMessage[] => [
-      { role: 'user', content: turn.q },
-      { role: 'assistant', content: turn.a },
-    ]),
-    { role: 'user', content: question },
-  ];
+  const instructions = `${deps.systemPrompt()}\n\n---\nRelevant memories:\n${retrieved.context}${priorLine}`;
+
+  const messages: ModelMessage[] = [{ role: 'user', content: question }];
 
   const { model, providerOptions } = deps.askModel();
 

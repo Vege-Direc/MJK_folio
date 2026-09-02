@@ -3,6 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { STOPS, type StopId } from '@/content/stops';
 import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
 
 /**
@@ -75,6 +76,19 @@ function historyOf(messages: AskUIMessage[]): { q: string; a: string }[] {
   return pairs.slice(-4);
 }
 
+/**
+ * The section the reader is looking at, read straight off the element `ScrollProgress`
+ * already maintains. `data-stop` on `<html>` is an index; the server wants the id, and
+ * wants it validated, so anything unrecognised becomes undefined and the server simply
+ * carries on without a viewport.
+ */
+function viewingStop(): StopId | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const index = Number(document.documentElement.dataset.stop);
+  if (!Number.isInteger(index)) return undefined;
+  return STOPS.find((s) => s.index === index)?.id;
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -97,10 +111,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         api: '/api/ask',
         prepareSendMessagesRequest({ messages: sent }) {
           const asked = sent[sent.length - 1];
+          const previous = sent.filter((m) => m.role === 'assistant').at(-1);
           return {
             body: {
               question: asked ? textOf(asked) : '',
               history: historyOf(sent.slice(0, -1)),
+              // Where the reader is, and where the last answer landed. A question like
+              // "more on these?" has its subject on the screen rather than in its words,
+              // and an earlier answer from a different section is a distraction rather
+              // than context. Both are read at send time, not held in state, so they
+              // describe the moment the question was actually asked.
+              viewing: viewingStop(),
+              previousStopId: envelopeOf(previous)?.stopId,
             },
           };
         },
