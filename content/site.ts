@@ -15,7 +15,8 @@ export const SITE = {
   title: 'Mathew John Kondekeril — First I imagine it. Then I learn whatever it takes to build it.',
   description: 'Engineer by training, marketer by trade, builder by habit. Ask the site anything.',
   tagline: 'First I imagine it. Then I learn whatever it takes to build it.',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  // The production origin. NEXT_PUBLIC_SITE_URL overrides it for previews and local runs.
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mjk.nila.li',
   email: 'mathew_johnk@hotmail.com',
   github: 'https://github.com/Vege-Direc',
   linkedin: 'https://www.linkedin.com/in/mathew-john-kondekeril',
