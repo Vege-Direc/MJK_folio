@@ -41,6 +41,8 @@ export type Violation = {
   kind: 'unlicensed-quantity' | 'unknown-entity' | 'mispaired-quantity';
   detail: string;
   suggestion?: string;
+  /** The offending quantity, when the violation is about one. Lets salvage redact it. */
+  quantity?: Quantity;
 };
 
 export type GuardResult = {
@@ -145,6 +147,7 @@ export function guard(answer: string, licences: Memory[], options: GuardOptions 
           sentence,
           kind: 'unlicensed-quantity',
           detail: `${describe(quantity)} is licensed by no sentence in the corpus. Nothing measured it.`,
+          quantity,
         });
         continue;
       }
@@ -157,6 +160,7 @@ export function guard(answer: string, licences: Memory[], options: GuardOptions 
             detail:
               `${describe(quantity)} names nobody and is licensed only outside the retrieved memories ` +
               `(${[...new Set(matches.map((l) => l.memoryId))].join(', ')}).`,
+            quantity,
           });
         }
         continue;
@@ -172,6 +176,7 @@ export function guard(answer: string, licences: Memory[], options: GuardOptions 
             `${describe(quantity)} is licensed, but only about ${namesIn(best)} -- not about ` +
             `${entities.join(', ')}. A real number attached to the wrong subject is still a false claim.`,
           suggestion: `the corpus licenses ${describe(quantity)} for ${namesIn(best)} (${best.memoryId}), not for ${entities.join(', ')}`,
+          quantity,
         });
       }
     }
@@ -180,16 +185,72 @@ export function guard(answer: string, licences: Memory[], options: GuardOptions 
   return { ok: violations.length === 0, violations, checked };
 }
 
+export type Salvage = {
+  text: string;
+  /** Sentences removed outright. */
+  dropped: number;
+  /** Sentences kept with an unbacked count removed from them. */
+  redacted: number;
+};
+
 /**
- * Rescue what is true. Drops every sentence that violated and returns the rest -- but
- * only if the remainder is still an answer rather than a fragment: at least half the
- * sentences survive, and at least two are left. Otherwise null, and the caller should
- * refuse rather than trim a paragraph down to a shrug.
+ * A count the model made up by counting -- "three rollouts", "two products" -- when the
+ * corpus lists the items without numbering them. Small, a bare word or one or two digits,
+ * and of kind `count`. Nothing else qualifies: a multiple, a percentage, money, or a real
+ * number attached to the wrong subject is a claim, and the whole sentence goes.
  */
-export function salvage(answer: string, result: GuardResult): string | null {
+function isCountedWord(q: Quantity): boolean {
+  return q.kind === 'count' && q.value <= 12 && /^(?:[a-z]+|\d{1,2})$/i.test(q.raw.trim());
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Rescue what is true.
+ *
+ * A sentence whose only fault is a counted word loses the word and stays. Every other
+ * violating sentence is dropped. The remainder is returned only if it is still an answer
+ * rather than a fragment: at least half the sentences survive, and either two are left or
+ * the one that is left is long enough to carry a thought on its own. Otherwise null, and
+ * the caller should show the licensed memory text rather than a shrug.
+ */
+export function salvageDetailed(answer: string, result: GuardResult): Salvage | null {
   const all = sentences(answer);
-  const bad = new Set(result.violations.map((v) => v.sentence));
-  const kept = all.filter((s) => !bad.has(s));
-  if (kept.length < 2 || kept.length * 2 < all.length) return null;
-  return kept.join(' ');
+  const bySentence = new Map<string, Violation[]>();
+  for (const v of result.violations) bySentence.set(v.sentence, [...(bySentence.get(v.sentence) ?? []), v]);
+
+  const kept: string[] = [];
+  let dropped = 0;
+  let redacted = 0;
+
+  for (const sentence of all) {
+    const faults = bySentence.get(sentence);
+    if (!faults) {
+      kept.push(sentence);
+      continue;
+    }
+    const onlyCounts = faults.every((v) => v.kind === 'unlicensed-quantity' && v.quantity && isCountedWord(v.quantity));
+    if (!onlyCounts) {
+      dropped++;
+      continue;
+    }
+    let text = sentence;
+    for (const v of faults) {
+      text = text.replace(new RegExp(`\\b${escapeRegExp(v.quantity!.raw.trim())}\\b\\s*`, 'i'), '');
+    }
+    kept.push(text.replace(/\s{2,}/g, ' ').trim());
+    redacted++;
+  }
+
+  if (kept.length * 2 < all.length) return null;
+  const substantive = kept.length >= 2 || (kept.length === 1 && kept[0].split(/\s+/).length >= 12);
+  if (!substantive) return null;
+  return { text: kept.join(' '), dropped, redacted };
+}
+
+/** The text alone. See `salvageDetailed`. */
+export function salvage(answer: string, result: GuardResult): string | null {
+  return salvageDetailed(answer, result)?.text ?? null;
 }

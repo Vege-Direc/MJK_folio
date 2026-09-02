@@ -217,6 +217,21 @@ describe('/api/ask never lets a fabrication reach the page as prose', () => {
     expect(last.status).toBe('salvaged');
     expect(last.body).toContain('cut report generation time by half');
     expect(last.body).not.toMatch(/week of analyst work/i);
-    expect(last.note).toMatch(/removed/);
+    expect(last.note).toMatch(/one line removed/);
+  });
+
+  it('a counted word the corpus never counted is removed, and the sentence survives', async () => {
+    // This is the live shape: the corpus lists the rollouts without numbering them, and the
+    // model counts them. The number goes; the true sentence stays.
+    const counted =
+      'I led three product rollouts at Taboola: emerging-market payment expansion into Korea and Indonesia, the APAC Ads Interface revamp, and a global two-factor authentication launch.';
+    const chunks = await chunksOf(
+      await handleAsk(post({ question: 'What shipped at Taboola?' }), depsWith(modelSaying(counted))),
+    );
+    const last = envelopes(chunks).at(-1)!;
+    expect(last.status).toBe('salvaged');
+    expect(last.body).toMatch(/^I led product rollouts at Taboola/);
+    expect(last.body).toContain('Korea and Indonesia');
+    expect(last.note).toMatch(/one number removed/);
   });
 });

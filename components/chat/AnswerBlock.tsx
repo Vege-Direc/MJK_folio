@@ -1,6 +1,17 @@
 'use client';
 
+import { STOPS } from '@/content/stops';
 import type { Answer } from './ChatProvider';
+
+/**
+ * Cards inside the answer only where the stop has no media column of its own. On a
+ * `cards` stop the same memories already sit beside the text; repeating them under the
+ * answer says the same thing twice.
+ */
+function showsCards(stopId: string | undefined): boolean {
+  const stop = STOPS.find((s) => s.id === stopId);
+  return stop?.compose === 'plain';
+}
 
 /**
  * One answer, laid out. Everything structural here (kicker, title, cards, cites) came from
@@ -24,7 +35,7 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
 
   return (
     <article
-      className={`answer ${compact ? 'answer-compact' : ''}`}
+      className={compact ? 'answer answer-compact' : 'answer mt-10 pt-6 border-t border-[color:var(--color-rule)] max-w-2xl'}
       aria-busy={streaming || undefined}
       data-status={envelope?.status ?? 'pending'}
     >
@@ -44,7 +55,7 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
       )}
 
       <p
-        className="font-serif text-base md:text-lg leading-relaxed text-[color:var(--color-type-muted)] whitespace-pre-wrap"
+        className="font-sans text-base md:text-lg leading-relaxed text-[color:var(--color-type-muted)] whitespace-pre-wrap"
         aria-hidden={streaming || undefined}
       >
         {shown}
@@ -62,7 +73,7 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
         </p>
       )}
 
-      {envelope && envelope.cards.length > 0 && !compact && (
+      {envelope && envelope.cards.length > 0 && !compact && showsCards(envelope.stopId) && (
         <ul className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {envelope.cards.map((card) => (
             <li key={card.id} id={`card-${card.id}`} className="border-t border-[color:var(--color-rule)] pt-3">

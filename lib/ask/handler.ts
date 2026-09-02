@@ -12,7 +12,7 @@ type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOpt
 import { stopById, type StopId } from '../../content/stops';
 import type { AskUIMessage, EnvelopeData } from './types';
 import { fallbackBlock, type FallbackBlock, type FallbackReason } from '../fallback';
-import { guard, salvage } from '../grounding/guard';
+import { guard, salvageDetailed } from '../grounding/guard';
 import { askModel, hasApiKey } from '../provider';
 import { retrieve, type RetrievalResult } from '../retrieve';
 import { admit, clientIp, type AdmitResult } from '../security/limits';
@@ -46,7 +46,7 @@ export type AskDeps = {
   admit: (ip: string) => Promise<AdmitResult>;
   retrieve: (question: string) => RetrievalResult;
   guard: typeof guard;
-  salvage: typeof salvage;
+  salvage: typeof salvageDetailed;
   fallbackBlock: (stopId: StopId | null, reason: FallbackReason, preferIds?: readonly string[]) => FallbackBlock;
   systemPrompt: () => string;
 };
@@ -59,7 +59,7 @@ export const defaultDeps: AskDeps = {
   admit,
   retrieve,
   guard,
-  salvage,
+  salvage: salvageDetailed,
   fallbackBlock,
   systemPrompt: () => readFileSync(SYSTEM_PROMPT_PATH, 'utf-8'),
 };
@@ -220,9 +220,12 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
       // the page. Only the prose does, and the guard gets the last word on the prose.
       writer.merge(result.toUIMessageStream({ sendStart: false, sendFinish: false, sendReasoning: false }));
 
+      const startedAt = Date.now();
       let text = '';
       try {
         text = await result.text;
+        const meta = await result.response;
+        console.info(`[api/ask] ${meta.modelId} answered ${stopId} in ${Date.now() - startedAt} ms`);
       } catch (error) {
         failed = true;
         console.error('[api/ask] result.text rejected:', error);
@@ -258,15 +261,17 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         );
         const kept = deps.salvage(text, verdict);
         if (kept) {
-          const n = verdict.violations.length;
+          const parts: string[] = [];
+          if (kept.dropped) parts.push(kept.dropped === 1 ? 'one line removed' : `${kept.dropped} lines removed`);
+          if (kept.redacted) parts.push(kept.redacted === 1 ? 'one number removed' : `${kept.redacted} numbers removed`);
           writer.write({
             type: 'data-envelope',
             id: 'envelope',
             data: {
               ...envelope,
               status: 'salvaged',
-              body: kept,
-              note: `${n === 1 ? 'One line' : `${n} lines`} removed: not backed by the corpus.`,
+              body: kept.text,
+              note: `Checked against the corpus; ${parts.join(', ')}.`,
             },
           });
         } else {

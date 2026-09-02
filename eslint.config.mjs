@@ -19,5 +19,8 @@ export default defineConfig([
     'graphify-out/**',
     'reference/**',
     'public/**',
+    // Agent worktrees live under .claude/worktrees while a build step runs; each is a
+    // whole copy of the repo and would multiply every finding.
+    '.claude/**',
   ]),
 ]);
