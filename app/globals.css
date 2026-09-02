@@ -763,38 +763,169 @@
 /* ── timeline ──────────────────────────────────────────────────────────────── */
 
 /**
- * The dated rail on §04.
+ * The dated rail on §04, drawn as one vertical spine rather than ten horizontal rules.
  *
- * One `border-top: 1px solid var(--color-rule)` per row is the entire chrome — the same
- * vocabulary as `.mini-card` and `.contact-links`, so this introduces no new component
- * style, only a new arrangement. No boxes, no fills: it sits over the scene and the
- * reading glass on `.panel` is what makes it legible, exactly as the cards it replaced.
- */
-/*
- * Ten rows and one open panel have to fit a media column that is about 620px tall on a
- * 900px viewport once the stop's padding and the dock reserve are taken out. Two-line
- * rows made that 880px, and the stop clipped its first and last entries — so the closed
- * row is one line: period, employer, and as much of the first sentence as the column
- * has room for. It reads as a résumé index, which is the right register for a rail whose
- * whole job is to be scanned.
+ * The first version read as a table, and it read as a table because it was drawn as one:
+ * ten full-bleed hairlines across a 581px column is 5,810px of rule ink, which is
+ * exactly the chrome a table has and a timeline does not. The mechanics were never the
+ * problem — the accordion, the server-open/client-collapse and the keyboard handling are
+ * all unchanged — only the language they were dressed in.
+ *
+ * One line running *through* the gaps is what makes the eye read passage rather than
+ * enumeration, and it costs a single pseudo-element. Total rule ink drops to about
+ * 700px, so this masks the scene roughly eight times LESS than the version it replaces:
+ * the change is with DESIGN.md's "never mask the scene", not in tension with it.
+ *
+ * No beads on the spine, deliberately. The palette forbids matching the scene, so a warm
+ * dot beside cyan filaments could only ever be a pale mimicry of one; a scene node is an
+ * additive billboard with bloom, breathe and sway and a crisp DOM circle is a skeuomorph
+ * of it; and the scene grows branching trees, not chains, so the metaphor would be false
+ * as well as thin. The rhyme with the scene is behavioural instead — a signal that has
+ * travelled this far along a filament — which is what the warm run of spine says.
  */
 .timeline {
+  position: relative;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 22px;
 }
 
+/* The spine: dim for its whole length, always present, JS or no JS. */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--color-rule);
+}
+
+/**
+ * The travelled run, and the one part of this that needs JavaScript.
+ *
+ * Masked from transparent to opaque so it is brightest where the reader is and fades out
+ * behind them. A flat warm bar from the top would read as a progress meter; a run that
+ * is strongest at its leading end reads as a signal that arrived — which is what the
+ * scene does when the camera reaches a node, and the only rhyme with it worth drawing.
+ *
+ * `--t` is unset without JavaScript, so the height is 0 and this is simply not there.
+ */
+.timeline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 1px;
+  height: var(--t, 0px);
+  background: var(--color-accent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 78%);
+  mask-image: linear-gradient(to bottom, transparent, #000 78%);
+  transition: height 0.45s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/**
+ * Each row attaches to the spine with a short tick rather than a rule across the
+ * content. This is the whole move: the active-row signal already existed and was
+ * invisible, because one lit rule among ten identical rules is not a signal. Hung off a
+ * spine, the same behaviour lands.
+ */
 .tl-row {
-  border-top: 1px solid var(--color-rule);
+  position: relative;
+}
+
+.tl-row::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 13px;
+  width: 10px;
+  height: 1px;
+  background: var(--color-rule);
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.22s;
+}
+
+.tl-row[data-active]::before,
+.tl-row[data-open]::before {
+  width: 16px;
+  background: var(--color-accent);
+}
+
+/*
+ * Two entries run *inside* another rather than after it, and they are indented to say
+ * so, with an elbow tick reaching back to the spine. Two indents in ten rows is a
+ * detail; a third would make it a system, and the honest way to show more overlap than
+ * that is a Gantt chart, which would evict the prose that is the actual content.
+ */
+.tl-row[data-nested] {
+  margin-left: 18px;
+}
+
+.tl-row[data-nested]::before {
+  left: -40px;
+  width: 28px;
+}
+
+.tl-row[data-nested][data-active]::before,
+.tl-row[data-nested][data-open]::before {
+  width: 34px;
+}
+
+/**
+ * The era captions: three runs of the rail, named from the stop each run belongs to.
+ *
+ * They are what make a sparse chronology readable rather than merely long — the same
+ * job "THE TWILIGHT ZONE" does on a deep-sea scroll — and they give a new memory
+ * somewhere to join instead of just making the list one row taller.
+ */
+.tl-era {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 14px 0 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tl-era:first-child {
+  margin-top: 0;
+}
+
+.tl-era::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 7px;
+  width: 10px;
+  height: 1px;
+  background: var(--color-rule);
+}
+
+.tl-era-label {
+  color: var(--color-type-muted);
+}
+
+.tl-era-span {
+  color: var(--color-type-dim);
 }
 
 .tl-row > button {
   display: grid;
-  grid-template-columns: 5.25rem auto minmax(0, 1fr) 1rem;
+  /*
+   * Three columns, not four. The closed-row summary is gone on desktop: all ten of them
+   * truncated to an ellipsis, which is decoration rather than information, and each
+   * row's `auto` title column made the summary start at a different x ten times over —
+   * a table with misaligned columns. Dropping it fixes the ragged edge and pays for the
+   * eras and the air.
+   */
+  grid-template-columns: 5.25rem minmax(0, 1fr) 1rem;
   align-items: baseline;
   column-gap: 14px;
   width: 100%;
-  padding: 7px 8px 7px 0;
+  padding: 6px 8px 6px 0;
   background: none;
   border: none;
   border-radius: 2px;
@@ -815,10 +946,18 @@
   background: rgba(212, 193, 156, 0.06);
 }
 
+.tl-row > button:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tl-row > button:hover .tl-title {
+  color: var(--color-accent);
+}
+
 /*
- * The affordance the first version did not have. A chevron drawn from a rotated square,
- * turned by `aria-expanded` — so the mark reads the same state the assistive technology
- * does and the two cannot drift apart.
+ * The affordance. A chevron drawn from a rotated square, turned by `aria-expanded` — so
+ * the mark reads the same state the assistive technology does and the two cannot drift.
  */
 .tl-mark {
   justify-self: end;
@@ -837,32 +976,23 @@
 }
 
 /*
- * The row the reader is level with, tracked by IntersectionObserver in Timeline.tsx.
- * Same language as the nine lit stops, one level down — it is what makes the rail look
- * alive on the way past, before anything has been clicked.
- */
-.tl-row[data-active] {
-  border-top-color: var(--color-accent);
-}
-
-.tl-row[data-active] .tl-year {
-  color: var(--color-accent);
-}
-
-/*
- * The year pins as its row passes the reading line, and is pushed out by the next one.
- * Costs one property; it is what turns ten static rows into a rail you are travelling
- * along, which was the missing half of "wasn't it supposed to be interactive?".
+ * The year sits one step up from the dimmest token, not on it. At 11px mono over a lit
+ * scene the dim token measured 3.7:1 against the brightest pixel beside a stroke, and it
+ * can afford the step now that the active-row signal rides on the tick as well as on the
+ * colour -- the amber still reads as a change because it changes hue, not only value.
  */
 .tl-year {
-  position: sticky;
-  top: 8vh;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--color-type-dim);
+  color: var(--color-type-muted);
   white-space: nowrap;
   transition: color 160ms;
+}
+
+.tl-row[data-active] .tl-year,
+.tl-row[data-open] .tl-year {
+  color: var(--color-accent);
 }
 
 .tl-title {
@@ -873,24 +1003,12 @@
 }
 
 /*
- * The first sentence, on the closed row. Clamped to one line: ten rows have to fit a
- * media column beside a stop title, and a summary that wraps turns a scannable rail into
- * a wall. The whole body is one click away and that is what the click is for.
- */
-/*
- * The first sentence, on the closed row and on the same line. Clamped: the whole body is
- * one click away and that is what the click is for, so the rail spends its height on
- * showing every entry rather than on showing one of them twice.
+ * The first sentence is not drawn on a closed row. It is kept in the DOM because the
+ * panel is what carries it and because a very wide viewport can afford it again — see
+ * the 1600px rule at the foot of this block.
  */
 .tl-summary {
-  grid-column: 3;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--color-type-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+  display: none;
 }
 
 /*
@@ -917,31 +1035,40 @@
  * The panel runs the full width of the column rather than the 46ch a body paragraph
  * would normally take. The longest entry is about 700 characters; at 46ch that is
  * fifteen lines and the rail overflows its stop, and at the column's own width it is
- * eleven and it fits. Sixty-odd characters is still inside a comfortable measure.
+ * eleven and it fits.
  */
 .tl-panel-inner p {
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.55;
   color: var(--color-type-muted);
-  padding: 0 0 12px;
+  padding: 0 0 10px;
 }
 
-/* The one colour change in the component, and it doubles as the "you are here" mark. */
-.tl-row[data-open] .tl-year {
-  color: var(--color-accent);
-}
+/*
+ * Above 1600px the column is wide enough to carry the first sentence again without the
+ * ragged edge that made it a fault at 1440 — the title column is fixed, so every summary
+ * starts at the same x. Decided from a screenshot at 1920, not in the abstract.
+ */
+@media (min-width: 1600px) {
+  .tl-row > button {
+    grid-template-columns: 5.25rem minmax(0, 15rem) minmax(0, 1fr) 1rem;
+  }
 
-.tl-row[data-open] .tl-summary {
-  display: none;
-}
+  .tl-summary {
+    display: block;
+    grid-column: 3;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-type-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
 
-.tl-row > button:focus-visible {
-  outline: 1px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.tl-row > button:hover .tl-title {
-  color: var(--color-accent);
+  .tl-row[data-open] .tl-summary {
+    visibility: hidden;
+  }
 }
 
 /* ── carousel ──────────────────────────────────────────────────────────────── */
@@ -1358,24 +1485,58 @@
   }
 
   /*
-   * 44px minimum on the row, which is the touch target. The period moves above the
-   * title rather than beside it: a 5.5rem column is a third of a 375px screen, and
-   * "2021–2023" beside "Independent consulting" leaves the title two words per line.
+   * The spine survives on a phone — it is the left edge of a single column, which is
+   * where a spine wants to be anyway — but the gutter narrows, because 22px of a 375px
+   * screen is worth more here than it is at 1440.
    */
   .timeline {
     max-width: none;
+    padding-left: 16px;
   }
 
+  .tl-row::before,
+  .tl-era::before {
+    left: -16px;
+    width: 8px;
+  }
+
+  .tl-row[data-active]::before,
+  .tl-row[data-open]::before {
+    width: 12px;
+  }
+
+  /*
+   * The nested pair keeps its indent, halved. Any more and a 375px column starts losing
+   * title width to a relationship the body already explains in words.
+   */
+  .tl-row[data-nested] {
+    margin-left: 10px;
+  }
+
+  .tl-row[data-nested]::before {
+    left: -26px;
+    width: 18px;
+  }
+
+  .tl-row[data-nested][data-active]::before,
+  .tl-row[data-nested][data-open]::before {
+    width: 22px;
+  }
+
+  /*
+   * 44px minimum on the row, which is the touch target. The period moves above the title
+   * rather than beside it: a 5.25rem column is a third of a 375px screen, and
+   * "2021–2023" beside "Independent consulting" leaves the title two words per line.
+   */
   .tl-row > button {
     grid-template-columns: 1fr auto;
     row-gap: 1px;
-    padding: 11px 0;
+    padding: 10px 0;
     min-height: 44px;
   }
 
   .tl-year,
-  .tl-title,
-  .tl-summary {
+  .tl-title {
     grid-column: 1;
   }
 
@@ -1384,29 +1545,12 @@
     grid-row: 1 / -1;
   }
 
-  /*
-   * The panel grows on a phone, so the rail can afford the second line the desktop
-   * column cannot: the summary drops below the title instead of competing with it for a
-   * 375px row.
-   */
-  /*
-   * No sticky year on a phone. The gutter it pins into does not exist in a single
-   * column, so the pin detaches the year from its own row and prints it over the row
-   * below — which is exactly what it did.
-   */
-  .tl-year {
-    position: static;
-  }
-
-  .tl-summary {
-    grid-column: 1;
-    white-space: normal;
-    overflow: visible;
-    line-height: 1.45;
-  }
-
   .tl-title {
     font-size: 18px;
+  }
+
+  .tl-era {
+    margin: 16px 0 5px;
   }
 
   .carousel {

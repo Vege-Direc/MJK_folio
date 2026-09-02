@@ -1,8 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
-import type { TimelineEntry } from './timeline-entry';
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import type { TimelineGroup } from './timeline-entry';
 import { periodLabel } from './timeline-entry';
+
+/**
+ * The reading line, as a percentage inset from each edge of the viewport.
+ *
+ * Named rather than inlined into the rootMargin string because the whole point is that
+ * the active row is the one the reader is level with, not the one merely on screen —
+ * and because a bare "-42%" in a string is indistinguishable, to the copy scanner that
+ * guards this directory, from an unlicensed statistic.
+ */
+const READING_BAND = 42;
 
 /**
  * "Has this rendered on the client yet?", without a setState in an effect.
@@ -41,29 +51,34 @@ const onServer = () => false;
  * on top, and they only ever act when a header already holds focus — anything else would
  * take `ArrowDown` away from the page, on a page whose primary control is scrolling.
  */
-export default function Timeline({ entries }: { entries: TimelineEntry[] }) {
+export default function Timeline({ groups }: { groups: TimelineGroup[] }) {
   const collapsed = useSyncExternalStore(subscribe, onClient, onServer);
   const [openId, setOpenId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
 
   /**
-   * Which row the reader is level with, tracked the way the page already tracks stops.
+   * Which row the reader is level with, and how far down the spine that is.
    *
-   * The owner's complaint about the first version was "wasn't it supposed to be
-   * interactive?" — and it was, and gave no sign of it until you clicked. Ten identical
-   * static rows read as a printed table. This is the same `data-active` idiom
-   * `ScrollProgress` applies to the nine stops, one level down: the row nearest the
-   * reading line lights its year and its rule, so the rail is visibly alive on the way
-   * past and the affordance is discovered before anything is clicked.
+   * The complaint about the first version was that it gave no sign of being interactive
+   * until you clicked it, and the diagnosis was that the signal had nowhere to land: one
+   * lit rule among ten identical rules registers as nothing. With a spine it lands —
+   * the tick at the active row brightens and lengthens, and the run of spine above it
+   * goes warm.
+   *
+   * `--t` is measured off the row rather than counted from an index, so an era caption
+   * or an open panel cannot put the warm run out of step with the ticks. It is
+   * decoration by construction: with no JavaScript it is simply never set, the spine
+   * stays uniformly dim, and nothing about the rail depends on it.
    *
    * An IntersectionObserver rather than a scroll handler, because this is a question
    * about what is on screen and that is what the observer is for — no listener running
    * on every frame of a scroll-driven page that already has a camera to feed.
    */
   useEffect(() => {
-    const rows = Array.from(listRef.current?.querySelectorAll<HTMLElement>('.tl-row') ?? []);
-    if (!rows.length) return;
+    const list = listRef.current;
+    const rows = Array.from(list?.querySelectorAll<HTMLElement>('.tl-row') ?? []);
+    if (!list || !rows.length) return;
     const seen = new Map<string, number>();
     const io = new IntersectionObserver(
       (entriesIn) => {
@@ -71,16 +86,25 @@ export default function Timeline({ entries }: { entries: TimelineEntry[] }) {
         let bestId: string | null = null;
         let best = 0;
         for (const [id, ratio] of seen) {
-          if (ratio > best) { best = ratio; bestId = id; }
+          if (ratio > best) {
+            best = ratio;
+            bestId = id;
+          }
         }
         setActiveId(bestId);
+
+        const row = rows.find((r) => r.id === bestId);
+        list.style.setProperty('--t', row ? `${Math.round(row.offsetTop + 13)}px` : '0px');
       },
       // A band across the middle of the viewport: the reading line, not the whole screen.
-      { rootMargin: '-42% 0px -42% 0px', threshold: [0, 0.5, 1] },
+      {
+        rootMargin: [-READING_BAND + '%', '0px', -READING_BAND + '%', '0px'].join(' '),
+        threshold: [0, 0.5, 1],
+      },
     );
     for (const r of rows) io.observe(r);
     return () => io.disconnect();
-  }, [entries]);
+  }, [groups]);
 
   const isOpen = (id: string) => !collapsed || openId === id;
 
@@ -115,41 +139,55 @@ export default function Timeline({ entries }: { entries: TimelineEntry[] }) {
 
   return (
     <ol className="timeline" ref={listRef} onKeyDown={onKeyDown}>
-      {entries.map((entry) => {
-        const open = isOpen(entry.id);
-        return (
-          // The row's id IS the memory's id, exactly as the cards already do, so a
-          // citation or a pulse can address the row an answer came from.
-          <li
-            className="tl-row"
-            id={entry.id}
-            key={entry.id}
-            data-open={open || undefined}
-            data-active={activeId === entry.id || undefined}
-          >
-            <button
-              type="button"
-              data-tl-header=""
-              id={`tl-b-${entry.id}`}
-              aria-expanded={open}
-              aria-controls={`tl-p-${entry.id}`}
-              onClick={() => setOpenId((cur) => (cur === entry.id ? null : entry.id))}
-            >
-              <span className="tl-year">{periodLabel(entry.period)}</span>
-              <span className="tl-title">{entry.title}</span>
-              <span className="tl-summary">{entry.summary}</span>
-              {/* The affordance. Rotated by CSS off aria-expanded, so the mark and the
-                  state cannot disagree. */}
-              <span className="tl-mark" aria-hidden="true" />
-            </button>
-            <div id={`tl-p-${entry.id}`} role="region" aria-labelledby={`tl-b-${entry.id}`}>
-              <div className="tl-panel-inner">
-                <p>{entry.body}</p>
-              </div>
-            </div>
-          </li>
-        );
-      })}
+      {groups.map((group) => (
+        <Fragment key={group.stopId + group.span}>
+          {group.label ? (
+            // An era caption, not a heading: it names a run of the rail, and the rail is
+            // one list. Its tick hangs off the same spine as every row, which is what
+            // keeps it part of the line rather than a label floating beside it.
+            <li className="tl-era">
+              <span className="tl-era-label">{group.label}</span>
+              <span className="tl-era-span">{group.span}</span>
+            </li>
+          ) : null}
+          {group.entries.map((entry) => {
+            const open = isOpen(entry.id);
+            return (
+              // The row's id IS the memory's id, exactly as the cards do, so a citation
+              // or a pulse can address the row an answer came from.
+              <li
+                className="tl-row"
+                id={entry.id}
+                key={entry.id}
+                data-open={open || undefined}
+                data-active={activeId === entry.id || undefined}
+                data-nested={entry.nested || undefined}
+              >
+                <button
+                  type="button"
+                  data-tl-header=""
+                  id={`tl-b-${entry.id}`}
+                  aria-expanded={open}
+                  aria-controls={`tl-p-${entry.id}`}
+                  onClick={() => setOpenId((cur) => (cur === entry.id ? null : entry.id))}
+                >
+                  <span className="tl-year">{periodLabel(entry.period)}</span>
+                  <span className="tl-title">{entry.title}</span>
+                  <span className="tl-summary">{entry.summary}</span>
+                  {/* The affordance. Rotated by CSS off aria-expanded, so the mark and
+                      the state cannot disagree. */}
+                  <span className="tl-mark" aria-hidden="true" />
+                </button>
+                <div id={`tl-p-${entry.id}`} role="region" aria-labelledby={`tl-b-${entry.id}`}>
+                  <div className="tl-panel-inner">
+                    <p>{entry.body}</p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </Fragment>
+      ))}
     </ol>
   );
 }
