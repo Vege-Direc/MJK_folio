@@ -19,7 +19,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { loadMemories } from '../../lib/corpus/load';
-import { guard, salvage } from '../../lib/grounding/guard';
+import { guard, salvage, salvageDetailed } from '../../lib/grounding/guard';
 import { buildGazetteer, extractEntities } from '../../lib/grounding/entities';
 import { extractQuantities, sameQuantity, type Quantity } from '../../lib/grounding/numbers';
 import { normalise, sentences } from '../../lib/grounding/text';
@@ -116,11 +116,30 @@ describe('salvage', () => {
   });
 
   it('refuses when fewer than half survive', () => {
-    expect(salvaged([good[0], good[1], bad[0], bad[1], bad[2]])).toBeNull();
+    // Three sentences that must go outright: a mispaired multiple, an unknown employer,
+    // and a doubled spend for the wrong client. Two of five is not an answer.
+    const doubled = 'For The Laughing Cow I doubled spend.';
+    expect(salvaged([good[0], good[1], bad[0], bad[1], doubled])).toBeNull();
   });
 
-  it('refuses when a single sentence is left, however true', () => {
-    expect(salvaged([good[0], bad[0]])).toBeNull();
+  it('removes a counted word the corpus never counted, and keeps the sentence', () => {
+    // "five new APAC markets" is the shape that shipped. The count is unbacked; the rest of
+    // the sentence is not a claim the guard can fault, so the number goes and the words stay.
+    expect(salvaged([good[0], bad[2]])).toBe([good[0], 'Payments expansion across new APAC markets.'].join(' '));
+    const answer = [good[0], bad[2]].join(' ');
+    expect(salvageDetailed(answer, guard(answer, CORPUS))).toEqual({
+      text: [good[0], 'Payments expansion across new APAC markets.'].join(' '),
+      dropped: 0,
+      redacted: 1,
+    });
+  });
+
+  it('keeps a single surviving sentence when it is long enough to be an answer', () => {
+    expect(salvaged([good[0], bad[0]])).toBe(good[0]);
+  });
+
+  it('refuses when the one sentence left is too short to stand alone', () => {
+    expect(salvaged([good[1], bad[0]])).toBeNull();
   });
 });
 
