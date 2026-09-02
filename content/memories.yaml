@@ -505,3 +505,27 @@
     pipeline for an apparel client. A multi-channel outreach engine built on Clay and Attio. The
     go-to-market engine for Artha. And this site, which answers questions about me from a corpus it is
     not allowed to contradict.
+
+- id: who-i-am
+  section: story
+  stopId: origin
+  title: Who I am
+  tags: [identity, introduction, about, bio, name, singapore, summary]
+  body: >
+    I'm Mathew John Kondekeril. I trained as an engineer, mechanical at BITS Pilani in Dubai and
+    aerospace at Brunel in London, then spent a decade running paid media across India and Southeast
+    Asia for brands like Hindustan Unilever, Visa, Skechers and Evian. Since January 2025 I have run
+    Krunch Labs in Singapore, building AI systems for clients across Southeast Asia and India. Engineer
+    by training, marketer by trade, builder by habit. This site is one of the things I built, and it
+    answers from a written record it is not allowed to contradict.
+
+- id: what-i-do-now
+  section: story
+  stopId: now
+  title: What I do now
+  tags: [now, current, today, role, work, ai, systems, singapore]
+  body: >
+    I build AI systems for people who have a business problem rather than an AI problem. Multi-agent
+    pipelines, custom ERPs, automation and the analytics to see whether any of it worked. I still take
+    on paid media and growth work, because I ran that side for a decade and know where the money leaks.
+    Most engagements start as one automation and turn into the system around it.

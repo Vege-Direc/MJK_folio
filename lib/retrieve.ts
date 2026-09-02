@@ -203,6 +203,27 @@ export const ALIASES: Record<string, string[]> = {
   experience: ['career', 'employment', 'roles'],
   timeline: ['career', 'employment', 'roles'],
 
+  /* identity -- the first question anyone asks a personal site, and the one it answered
+   * worst of all. "who are you", "tell me about yourself" and "what do you do" are made
+   * entirely of stopwords, so they tokenised to nothing, scored 0.0, and were refused as
+   * off-topic. Phrase aliases are the only thing that can rescue a query with no content
+   * words in it. */
+  'who are you': ['identity', 'introduction', 'mathew', 'kondekeril'],
+  'who is mathew': ['identity', 'introduction', 'mathew', 'kondekeril'],
+  'who is this': ['identity', 'introduction', 'mathew', 'kondekeril'],
+  'about you': ['identity', 'introduction', 'mathew'],
+  'about yourself': ['identity', 'introduction', 'mathew'],
+  'tell me about yourself': ['identity', 'introduction', 'mathew'],
+  'introduce yourself': ['identity', 'introduction', 'mathew'],
+  'your background': ['identity', 'introduction', 'career', 'employment'],
+  'what do you do': ['now', 'current', 'today', 'role'],
+  // `expand` only tests windows of up to four terms, so a five-word key can never fire.
+  'doing now': ['now', 'current', 'today', 'role'],
+  'what do you build': ['built', 'shipped', 'projects'],
+  'good at': ['capabilities', 'media', 'agents', 'engineering', 'built'],
+  'what can you do': ['capabilities', 'media', 'agents', 'engineering', 'built'],
+  'what are your skills': ['capabilities', 'media', 'agents', 'engineering'],
+
   /* contact -- how a visitor asks to work with me */
   hire: ['contact', 'brief', 'proposal'],
   'hire you': ['contact', 'brief', 'proposal'],

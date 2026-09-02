@@ -79,11 +79,18 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'what are you building these days',
     'what ai agent frameworks do you use',
     'what is your stack',
+    'what do you do',
   ),
 
-  // -- origin: the aircraft, and the exit from it --------------------------
+  // -- origin: who he is, the aircraft, and the exit from it ---------------
+  // The identity questions are made entirely of stopwords, so they tokenised to nothing
+  // and were refused as off-topic -- on a personal site, to the first question anyone asks.
   ...cases(
     'origin',
+    'who are you',
+    'who is mathew',
+    'tell me about yourself',
+    'introduce yourself',
     'why aircraft',
     'Walk me through the arc — aircraft to agents.',
     'did you want to fly fighter jets',
