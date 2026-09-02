@@ -10,6 +10,9 @@ Runs alongside Mrunn and Jewel AI on your existing Coolify host.
 - `OPENROUTER_API_KEY` — one key. OpenRouter rate-limits per account, so more keys add nothing.
 - `REDIS_URL` — Coolify's one-click Redis service URL. Reserved for rate-limit state.
 - `NEXT_TELEMETRY_DISABLED=1`
+- `NEXT_PUBLIC_SITE_URL` — the public https origin (e.g. `https://mathewjohnk.com`). Feeds
+  metadata, Open Graph, JSON-LD and the sitemap; wrong or unset here means shared links
+  and search results point at `localhost`.
 
 The model is not an env var. `lib/provider.ts` commits the primary model and the fallback
 list, because each entry is a checked claim that belongs in a diff.
