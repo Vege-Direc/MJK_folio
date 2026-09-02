@@ -221,12 +221,28 @@ describe('clientIp', () => {
 describe('fallbackBlock', () => {
   const REASONS: FallbackReason[] = ['budget', 'rate', 'off-topic', 'provider', 'unguarded'];
 
-  it('gives every reason a non-empty kicker and title', () => {
+  it('gives every reason a title, and announces only the refusal', () => {
+    // A visitor who is rate-limited, or who arrives after the day's budget is spent, still
+    // gets a true answer in MJK's own words. Telling them it is a substitute for something
+    // better casts doubt on good writing and answers a question they never asked. Only the
+    // deliberate refusal speaks about the site rather than about him.
     for (const reason of REASONS) {
       const block = fallbackBlock('now', reason);
-      expect(block.kicker.trim().length, `${reason} has no kicker`).toBeGreaterThan(0);
       expect(block.title.trim().length, `${reason} has no title`).toBeGreaterThan(0);
+      if (reason === 'off-topic') {
+        expect(block.announced, 'a refusal must announce itself').toBe(true);
+        expect(block.kicker?.trim().length ?? 0).toBeGreaterThan(0);
+      } else {
+        expect(block.announced, `${reason} must not announce itself`).toBe(false);
+        expect(block.kicker, `${reason} must let the caller supply the answer kicker`).toBeNull();
+      }
     }
+  });
+
+  it('titles an unannounced fallback with the memory it leads on', () => {
+    const block = fallbackBlock('rd350', 'rate');
+    expect(block.cites.length).toBeGreaterThan(0);
+    expect(block.title).toBe(memoryById(block.cites[0])!.title);
   });
 
   it('refuses off-topic in the same words the system prompt tells the model to use', () => {
@@ -277,13 +293,16 @@ describe('fallbackBlock', () => {
     }
   });
 
-  it('contains no digits -- no number is asserted that is not already in a cited memory', () => {
-    // The kicker/title copy itself must introduce no new numeric claim. (The body is
-    // separately proven verbatim above, so any number there is already licensed.)
+  it('asserts no number of its own', () => {
+    // The copy this file authors must introduce no numeric claim. An unannounced block's
+    // title is a memory title rather than authored copy, so it is licensed by definition
+    // and exempt -- "The RD 350" is a fact, not an assertion this module invented.
     for (const reason of REASONS) {
       const block = fallbackBlock('now', reason);
-      expect(block.kicker, `${reason} kicker contains a digit`).not.toMatch(/\d/);
-      expect(block.title, `${reason} title contains a digit`).not.toMatch(/\d/);
+      expect(block.kicker ?? '', `${reason} kicker contains a digit`).not.toMatch(/\d/);
+      if (block.announced) {
+        expect(block.title, `${reason} title contains a digit`).not.toMatch(/\d/);
+      }
     }
   });
 });

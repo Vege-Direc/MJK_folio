@@ -2,13 +2,25 @@
  * What the site shows when it cannot, or should not, let the model answer.
  *
  * Every path that reaches this module -- the daily budget is spent, a visitor is going
- * too fast, the question is off-topic, the provider is down, or a generated answer
- * failed the grounding guard -- has one thing in common: there is no live, checked
- * answer to show. So none is invented. `fallbackBlock` builds its `body` out of
- * `memoriesForStop`'s own prose, verbatim, never paraphrased or summarised -- the same
- * guarantee the rest of the corpus pipeline makes for a live answer, held here too. A
- * fallback screen is not a degraded product; it is still 100% licensed copy, just
- * chosen deterministically instead of retrieved.
+ * too fast, the provider is down, or a generated answer failed the grounding guard --
+ * has one thing in common: there is no live, checked answer to show. So none is
+ * invented. `fallbackBlock` builds its `body` out of `memoriesForStop`'s own prose,
+ * verbatim, never paraphrased or summarised.
+ *
+ * WHAT CHANGED, AND WHY IT MATTERS. These blocks used to introduce themselves: "That is
+ * too many, too fast. Here is what it would have said." The owner caught the flaw by
+ * looking at one. He had asked why he wanted to fly and had been served his own account
+ * of the cockpit at nine years old -- a complete, well-written answer to exactly the
+ * question asked -- under a heading apologising for it and calling it a substitute for
+ * something better. The site was undermining good content and raising a question in the
+ * visitor's mind that nothing on the page then answered.
+ *
+ * The premise was wrong. Corpus prose is not a degraded answer; on this site it is the
+ * best answer available, because it is the only text MJK actually wrote. A visitor was
+ * never promised a model wrote anything, so presenting his words as the answer conceals
+ * nothing. Only one reason still announces itself: `off-topic`, which is a deliberate
+ * refusal rather than a failure, and a refusal the visitor must see to understand why
+ * they did not get what they asked for.
  *
  * `hero` is authored-only everywhere else in this codebase -- a generated answer may
  * never target it -- and that rule holds here too: a null or `hero` stopId both resolve
@@ -20,43 +32,30 @@ import { memoriesForStop } from './corpus/load';
 export type FallbackReason = 'budget' | 'rate' | 'off-topic' | 'provider' | 'unguarded';
 
 export interface FallbackBlock {
-  kicker: string;
+  /**
+   * Set only when the block announces itself. `null` means the caller should dress this
+   * like any other answer, with the stop's ordinary answer kicker.
+   */
+  kicker: string | null;
   title: string;
   body: string;
   cites: string[];
+  /**
+   * Whether the visitor is being told something about the site rather than about MJK.
+   * True only for a deliberate refusal.
+   */
+  announced: boolean;
 }
 
 /** hero has no memories of its own (the corpus schema forbids it) and is authored-only. */
 const DEFAULT_STOP: StopId = 'now';
 
 /**
- * Kicker and title per reason. Title is fixed copy, in voice, independent of which stop
- * it accompanies -- only `body` and `cites` vary with `stopId`. `off-topic`'s title is
- * quoted verbatim from `content/system-prompt.md`'s corpus-approved refusal, not
- * reworded here, for the same reason nothing else in this file paraphrases the corpus.
+ * The one reason that speaks for itself. Quoted from `content/system-prompt.md`'s
+ * refusal rather than reworded, so the visitor hears one sentence whether it came from
+ * the model or from here; `evals/tier-a/security.test.ts` asserts they cannot drift.
  */
-const COPY: Record<FallbackReason, { kicker: string; title: string }> = {
-  budget: {
-    kicker: '§ RESTING',
-    title: 'The mind is resting for today. Here is what it would have said.',
-  },
-  rate: {
-    kicker: '§ SLOW DOWN',
-    title: 'That is too many, too fast. Here is what it would have said.',
-  },
-  'off-topic': {
-    kicker: '§ NOT HERE',
-    title: 'Not my lane. Ask what I’ve built.',
-  },
-  provider: {
-    kicker: '§ QUIET',
-    title: 'The mind is quiet right now. Here is what it would have said.',
-  },
-  unguarded: {
-    kicker: '§ VERIFIED',
-    title: 'That didn’t check out. Here’s what’s verified instead.',
-  },
-};
+const REFUSAL = { kicker: '§ NOT HERE', title: 'Not my lane. Ask what I’ve built.' };
 
 /**
  * @param preferIds memory ids in priority order (typically the retrieval hits for the
@@ -68,7 +67,6 @@ export function fallbackBlock(
   reason: FallbackReason,
   preferIds: readonly string[] = [],
 ): FallbackBlock {
-  const { kicker, title } = COPY[reason];
   const resolvedStop: StopId = stopId && stopId !== 'hero' ? stopId : DEFAULT_STOP;
 
   const onStop = memoriesForStop(resolvedStop);
@@ -82,11 +80,21 @@ export function fallbackBlock(
   // whose lead memory is a single short sentence still reads as a real answer rather
   // than a fragment.
   const memories = ordered.slice(0, 2);
+  const body = memories.map((m) => m.body).join('\n\n');
+  const cites = memories.map((m) => m.id);
 
+  if (reason === 'off-topic') {
+    return { ...REFUSAL, body, cites, announced: true };
+  }
+
+  // Everything else is simply an answer. It takes the leading memory's own title, so it
+  // is indistinguishable from a generated one -- which is the point, because it is just
+  // as true and rather better written.
   return {
-    kicker,
-    title,
-    body: memories.map((m) => m.body).join('\n\n'),
-    cites: memories.map((m) => m.id),
+    kicker: null,
+    title: memories[0]?.title ?? 'From the record',
+    body,
+    cites,
+    announced: false,
   };
 }

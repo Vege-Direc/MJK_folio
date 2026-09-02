@@ -79,12 +79,16 @@ function stopLabel(stopId: StopId): string {
 
 const DEFAULT_STOP: StopId = 'now';
 
+/**
+ * An unannounced fallback wears the stop's ordinary answer kicker, so corpus prose
+ * arrives looking like what it is: an answer. Only a refusal carries its own kicker.
+ */
 function envelopeFromFallback(stopId: StopId | null, block: FallbackBlock): EnvelopeData {
   const resolved = stopId && stopId !== 'hero' ? stopId : DEFAULT_STOP;
   return {
     stopId: resolved,
     index: stopById(resolved).index,
-    kicker: block.kicker,
+    kicker: block.kicker ?? `§ ANSWER · ${stopLabel(resolved)}`,
     title: block.title,
     cards: [],
     cites: block.cites,
@@ -150,9 +154,13 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
     return fallback(retrieved.stopId, ADMIT_REASON_TO_FALLBACK[admitted.reason]);
   }
 
-  // Not confident means the corpus has nothing that answers this. No model call: a model
-  // asked to answer from thin air is exactly how the old site fabricated.
-  if (!retrieved.confident || !retrieved.stopId || retrieved.stopId === 'hero') {
+  // Refuse only when the question is not about MJK at all. It used to refuse whenever
+  // retrieval was not CONFIDENT, which conflated two different things: "there is nothing
+  // here to say" and "two stops tied". A real question that merely landed between stops
+  // was told "not my lane", which is the rudest thing this site can do and was doing it
+  // to people asking in good faith. Ambiguity is not grounds for a refusal -- the model
+  // still gets real licences, and the guard still checks what it writes.
+  if (!retrieved.topical || !retrieved.stopId || retrieved.stopId === 'hero') {
     return fallback(retrieved.stopId, 'off-topic');
   }
 
@@ -231,13 +239,15 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         console.error('[api/ask] result.text rejected:', error);
       }
 
+      // The envelope's own kicker is already `§ ANSWER · <STOP>`, so an unannounced block
+      // keeps it and the swap is invisible to the visitor, which is the intent.
       const replaceWith = (block: FallbackBlock) =>
         writer.write({
           type: 'data-envelope',
           id: 'envelope',
           data: {
             ...envelope,
-            kicker: block.kicker,
+            kicker: block.kicker ?? envelope.kicker,
             title: block.title,
             status: 'replaced',
             body: block.body,

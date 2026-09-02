@@ -120,19 +120,24 @@ describe('/api/ask degrades to corpus text, never to an error', () => {
     const chunks = await chunksOf(await handleAsk(post({ question: 'What shipped at Taboola?' }), deps));
     const [env] = envelopes(chunks);
     expect(env.status).toBe('replaced');
-    expect(env.kicker).toBe('§ SLOW DOWN');
+    // The visitor gets an answer, not an apology for one. A throttled reader is served
+    // MJK's own prose under the ordinary answer kicker, and nothing on screen tells them
+    // the machine declined -- because what they are reading is true and he wrote it.
+    expect(env.kicker).toMatch(/^§ ANSWER · /);
+    expect(env.title).not.toMatch(/too many|too fast|would have said/i);
     expect(env.body?.length ?? 0).toBeGreaterThan(40);
     expect(env.cites.length).toBeGreaterThan(0);
     expect(streamedText(chunks)).toBe('');
   });
 
-  it('the spent daily budget reads as resting, not as an outage', async () => {
+  it('the spent daily budget is invisible to the visitor', async () => {
     const deps = depsWith(modelSaying('no'), {
       admit: async () => ({ ok: false, reason: 'global-day', retryAfterSeconds: 3600 }),
       askModel: neverCalled,
     });
     const [env] = envelopes(await chunksOf(await handleAsk(post({ question: 'Tell me about the bike' }), deps)));
-    expect(env.kicker).toBe('§ RESTING');
+    expect(env.kicker).toMatch(/^§ ANSWER · /);
+    expect(env.title).not.toMatch(/resting|would have said/i);
     expect(env.stopId).toBe('rd350');
   });
 
@@ -145,10 +150,11 @@ describe('/api/ask degrades to corpus text, never to an error', () => {
     expect(streamedText(chunks)).toBe('');
   });
 
-  it('a missing API key reads as quiet, with the stop already chosen', async () => {
+  it('a missing API key still answers, with the stop already chosen', async () => {
     const deps = depsWith(modelSaying('no'), { hasApiKey: () => false, askModel: neverCalled });
     const [env] = envelopes(await chunksOf(await handleAsk(post({ question: 'What shipped at Taboola?' }), deps)));
-    expect(env.kicker).toBe('§ QUIET');
+    expect(env.kicker).toMatch(/^§ ANSWER · /);
+    expect(env.title).not.toMatch(/quiet|would have said/i);
     // Taboola is an employer, so it lives on the career stop. "Selected work" holds the
     // things that were built, not the places they were built at.
     expect(env.stopId).toBe('apac');
@@ -200,7 +206,9 @@ describe('/api/ask never lets a fabrication reach the page as prose', () => {
     );
     const last = envelopes(chunks).at(-1)!;
     expect(last.status).toBe('replaced');
-    expect(last.kicker).toBe('§ VERIFIED');
+    // It used to be badged "§ VERIFIED", stamping the word verified on the one path where
+    // verification failed. It now reads as an ordinary answer, which is what it is.
+    expect(last.kicker).toMatch(/^§ ANSWER · /);
     expect(last.body).toBeDefined();
     // The replacement is corpus text chosen from the retrieved memories, so the Canon
     // memory (which says plainly that no number is quoted for Canon) leads.

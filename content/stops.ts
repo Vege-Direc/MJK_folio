@@ -46,7 +46,7 @@ export const STOPS = [
     compose: 'hero',
     align: 'left',
     title: { strong: 'First I imagine it.', muted: 'Then I learn whatever it takes to build it.' },
-    body: 'Engineer, marketer, builder. Scroll to travel the mind — or ask the dock.',
+    body: 'Engineer, marketer, builder. Scroll to travel the mind — or ask it a question below.',
   },
   {
     id: 'origin',
@@ -108,8 +108,8 @@ export const STOPS = [
     kicker: '§ 07 — Selected work',
     compose: 'cards',
     align: 'left',
-    title: { strong: 'Ask about any of these.' },
-    body: 'Ask the dock and the answer arrives here, under this paragraph, in the stop it belongs to.',
+    title: { strong: 'Things I have built.' },
+    body: 'Agent pipelines, an ERP you talk to, an open-source bridge into Indian accounting, and the growth engines around them. Ask about any of them.',
   },
   {
     id: 'contact',
@@ -117,7 +117,7 @@ export const STOPS = [
     kicker: '§ 08 — Brief me',
     compose: 'contact',
     align: 'left',
-    title: { strong: 'Not a form.', muted: 'Tell the dock what you’re working on.' },
+    title: { strong: 'Not a form.', muted: 'Just tell me what you’re working on.' },
     body: 'Tell it the problem, the timeline, what’s been tried. Or reach me directly:',
   },
 ] as const;

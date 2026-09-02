@@ -41,6 +41,16 @@ export type RetrievalResult = {
   stopId: StopId | null;
   /** Whether the route may answer as if this stop is right. See `MIN_TOP_SCORE`. */
   confident: boolean;
+  /**
+   * Whether the question is about MJK at all, which is a much lower bar than `confident`
+   * and a different decision. `confident` asks "is this the right stop"; `topical` asks
+   * "is there anything here to say". Only the second one may produce a refusal: a real
+   * question the router merely found ambiguous still deserves an answer, and telling
+   * someone "not my lane" because two stops tied is the rudest thing this site can do.
+   * The gap is wide -- the loudest off-topic probe scores about 7, the weakest real
+   * question about 19 -- so the two rarely disagree by accident.
+   */
+  topical: boolean;
   /** BM25+ score of the best hit. Raw, not normalised -- the threshold is calibrated to it. */
   topScore: number;
   hits: RetrievalHit[];
@@ -563,7 +573,9 @@ export function retrieve(question: string, opts: { k?: number } = {}): Retrieval
   if (expansions.length) {
     parts.push({ combineWith: 'OR', queries: expansions, boostTerm: () => ALIAS_WEIGHT });
   }
-  if (!parts.length) return { stopId: null, confident: false, topScore: 0, hits: [], context: '' };
+  if (!parts.length) {
+    return { stopId: null, confident: false, topical: false, topScore: 0, hits: [], context: '' };
+  }
 
   const hits: RetrievalHit[] = index
     .search({ combineWith: 'OR', queries: parts })
@@ -575,9 +587,11 @@ export function retrieve(question: string, opts: { k?: number } = {}): Retrieval
 
   const topScore = hits[0]?.score ?? 0;
   const { stopId, share } = vote(hits);
+  const topical = stopId !== null && topScore >= MIN_TOP_SCORE;
   return {
     stopId,
-    confident: stopId !== null && topScore >= MIN_TOP_SCORE && share >= MIN_SHARE,
+    confident: topical && share >= MIN_SHARE,
+    topical,
     topScore,
     hits,
     context: formatContext(hits),
