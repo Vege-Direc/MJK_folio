@@ -194,3 +194,126 @@
   body: >
     Best Social Media Brand at the Sammies in 2018, silver, for Skechers. Best Integrated Campaign at
     the CMO Asia Awards in 2016, for Tourism Australia.
+
+# ── Added 2026-09-02, verified against the resume (public/resume.pdf) ──────────
+
+- id: nanomark-solutions
+  section: timeline
+  stopId: apac
+  title: Nanomark Solutions
+  tags: [consulting, singapore, founder, media, partnerships]
+  period: 2023-2024
+  body: >
+    I founded Nanomark Solutions in Singapore in June 2023 as a marketing consultancy. Through it I
+    was contracted as Head of Paid Media at The Triad Co, which became the full-time Paid Media and
+    Data Partner role. I partnered with PNL9 India on performance strategies driving subscriptions
+    and installs for Final Round AI and Ultra Jhakaas across Southeast Asia and MENA, negotiated an
+    exclusive Singapore partnership for Asianet News, and built a LinkedIn content strategy for
+    Taran DM.
+
+- id: consulting-2021-2023
+  section: timeline
+  stopId: apac
+  title: Independent consulting
+  tags: [consulting, india, thailand, singapore, edtech]
+  period: 2021-2023
+  body: >
+    From June 2021 to June 2023 I worked as an independent digital marketing consultant across India,
+    Thailand and Singapore. I led market research for GoLearn, a London edtech, to shape its Indian
+    market entry. I planned, launched and optimised Coursera campaigns through the agency Kinnect,
+    and mentored the Kinnect team on digital strategy.
+
+- id: triad-laughing-cow
+  section: projects
+  stopId: apac
+  title: The Laughing Cow
+  tags: [media, brand, southeast-asia, triad]
+  period: 2024
+  body: >
+    Performance and brand marketing for The Laughing Cow across Southeast Asia at The Triad Co,
+    October to December 2024. The measured result was a 5% average lift in brand awareness.
+
+- id: triad-evian
+  section: projects
+  stopId: apac
+  title: Evian
+  tags: [media, performance, southeast-asia, triad]
+  period: 2024
+  body: >
+    Performance and brand marketing for Evian across Southeast Asia at The Triad Co in late 2024.
+    The measured result was 5x return on ad spend.
+
+- id: triad-canon
+  section: projects
+  stopId: apac
+  title: Canon
+  tags: [media, brand, southeast-asia, triad]
+  period: 2024
+  body: >
+    Performance and brand marketing for Canon across Southeast Asia at The Triad Co, October to
+    December 2024. I don't quote a number for Canon. The measured results I share from that period
+    are Evian's and The Laughing Cow's.
+
+- id: triad-spend-growth
+  section: capabilities
+  stopId: apac
+  title: Growing spend at The Triad Co
+  tags: [media, growth, triad]
+  period: 2024
+  body: >
+    Across The Triad Co's clients I grew media spend by 2x during the engagement, by earning the
+    budget with measured performance rather than asking for it.
+
+- id: outreach-engine
+  section: projects
+  stopId: now
+  title: The outreach engine
+  tags: [ai, automation, demand-generation, krunch]
+  period: 2025-present
+  body: >
+    I orchestrated Clay, Attio and other SaaS workflow APIs into a personalised multi-channel
+    outreach engine for a client's demand-generation programme. It is now a repeatable Krunch Labs
+    service.
+
+- id: artha-gtm
+  section: projects
+  stopId: now
+  title: Artha go-to-market
+  tags: [growth, ai, paid-media, launch, krunch]
+  period: 2025-present
+  body: >
+    I owned the go-to-market growth engine for Artha, an AI-commerce SaaS, end to end: comms
+    strategy, generative-AI ad creative, LinkedIn and Google Search campaign management, pixel and
+    tracking setup, and a Looker Studio dashboard. A ground-up brand launch on a lean budget.
+
+- id: mrunn-approval-gate
+  section: projects
+  stopId: now
+  title: MruNN-ERP, approval-gated
+  tags: [ai, erp, mastra, india, safety]
+  body: >
+    MruNN-ERP is built for Indian SMBs on Telegram and the web. Its architecture is approval-gated:
+    no data change ships without a human sign-off. It is GST and HSN compliant for Indian trading
+    businesses.
+
+- id: jewelai-platform
+  section: projects
+  stopId: now
+  title: JewelAI Studio, under the hood
+  tags: [ai, video, langgraph, architecture, krunch]
+  body: >
+    JewelAI Studio is a multi-service AI photography and video platform: Next.js, NestJS, a
+    LangGraph.js orchestration worker and a Cloudflare edge worker, deployed as four independent
+    services. I engineered a multi-reference video-generation technique after evaluating and
+    rejecting three competing AI models.
+
+- id: kinnect-rustomjee
+  section: projects
+  stopId: apac
+  title: Rustomjee at Kinnect
+  tags: [media, lead-generation, real-estate, india]
+  period: 2017-2019
+  body: >
+    At Kinnect I built a data-driven lead-generation strategy for Rustomjee's first project. It won
+    all of their marketing business and drove a 10x increase in ad spend. Other Kinnect clients
+    included Spencers, Skechers, Runwal, Lodha, Hypercity, Safari and Everyuth.
