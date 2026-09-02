@@ -20,7 +20,9 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+# curl is for Coolify's health probe. busybox wget alone resolves `localhost` to ::1 on
+# Alpine and is refused, because Next binds 0.0.0.0; curl falls back to 127.0.0.1.
+RUN apk add --no-cache curl \n && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
