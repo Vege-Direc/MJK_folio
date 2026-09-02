@@ -33,7 +33,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { CFG, PALETTE, detectTier, type Tier } from './config';
 import { clamp, makeCurve, smoothstep, tubeWithTangent, UP } from './curves';
-import { anchorAt, makeReadingLightPass } from './reading-light';
+import { anchorAt, ReadingLightOutputPass } from './reading-light';
 import { buildWaypoints, mulberry32, srand, type Waypoint } from './waypoints';
 
 export type MindOptions = {
@@ -839,6 +839,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     let t3TubeMesh: THREE.Mesh | null = null, t3NodeMesh: THREE.InstancedMesh | null = null, t3PulseMesh: THREE.InstancedMesh | null = null, t3DustMesh: THREE.Points | null = null, t3TubeMat: THREE.ShaderMaterial | null = null;
     const t3PulseData: any[] = [];
     let t3ExciteArr: Float32Array | null = null, t3ExciteAttr: THREE.InstancedBufferAttribute | null = null; // per-node firing (somas light as pulses pass)
+    // Whether any far soma is currently lit. False means the decay loop over ~4,700
+    // entries and the attribute upload it feeds can both be skipped for this frame.
+    let t3ExciteHot = false;
     let pulseMatShared: THREE.ShaderMaterial | null = null; // set by the pulse block below; tier 3 reuses it (identical look)
     function buildTier3(net: { nodes: number[][]; edges: number[][] }){
       const nodes = net.nodes;   // [x, y, z, depthFromRoot, clusterId, rallRadius]
@@ -1297,6 +1300,16 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     // (shared seed) so a gaze target sampled on these tracks the travel direction.
     const spineCurves = nodeConnCurves.map(c => c.curve);
     const _pos = new THREE.Vector3();
+    /**
+     * Scratch for the three per-frame pulse loops. `getPointAt`/`getTangentAt` allocate a
+     * fresh Vector3 per call when handed no target, and between the ambient, triggered and
+     * tier-3 pools that is a few hundred throwaway vectors every frame — young-generation
+     * garbage whose collection is one of the things a phone notices and a desktop does not.
+     * The build-time code already passes targets (see `_np`, `_dp`); these are the loops
+     * that were missed.
+     */
+    const _pp = new THREE.Vector3();
+    const _tt = new THREE.Vector3();
     const _look = new THREE.Vector3();
     const _origin = new THREE.Vector3(0, 0, 0);
     function sampleSeg(u: number, curves: THREE.Curve<THREE.Vector3>[], pts: THREE.Vector3[], target: THREE.Vector3){
@@ -1340,22 +1353,33 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     }
 
     /**
-     * The reading light. Inserted after the bloom so it attenuates the halo the bloom
-     * just produced -- which is the part that actually lands behind a paragraph -- and
-     * before OutputPass so it works in the same linear space as everything upstream.
+     * The reading light, which is now the output pass rather than a pass in front of it.
      *
-     * Off entirely when the caller passes no `textSides`.
+     * It still runs after the bloom, so it attenuates the halo the bloom just produced --
+     * the part that actually lands behind a paragraph -- and still on linear values,
+     * because the attenuation happens before the output transform inside the same shader.
+     * What it no longer does is read and rewrite the whole frame a second time to do it.
+     *
+     * Off entirely when the caller passes no `textSides`, in which case this is a plain
+     * OutputPass and the composer chain is exactly what it always was.
      */
     const sides = opts.textSides ?? [];
-    const readingLight = sides.length ? makeReadingLightPass() : null;
+    const wantLight = sides.length > 0;
+    const outputPass = wantLight ? new ReadingLightOutputPass() : new OutputPass();
+    const readingLight = wantLight ? (outputPass as ReadingLightOutputPass).light : null;
     if (readingLight) {
       // One column on a phone, so the light is centred and spans the whole frame; two
       // columns on desktop, so it sits over one side and is gone by the other.
-      readingLight.uniforms.uSpan.value = isMobile ? 1.15 : 0.78;
-      readingLight.uniforms.uAmount.value = isMobile ? 0.55 : 0.70;
-      composer.addPass(readingLight);
+      readingLight.uSpan.value = isMobile ? 1.15 : 0.78;
+      // Deliberately unchanged by the mobile scroll-performance work. The coarse-pointer
+      // halo in app/globals.css drops its two widest text-shadow layers, and the obvious
+      // move was to lean this harder to make up for them — but what survives there still
+      // reaches 22px on body text and 48px on a title, so the pool is still a pool, and
+      // the trim measured no worse than deleting the halo outright. Turning the light up
+      // would have changed how the scene looks, to pay for a problem that isn't there.
+      readingLight.uAmount.value = isMobile ? 0.55 : 0.70;
     }
-    composer.addPass(new OutputPass());
+    composer.addPass(outputPass);
     composer.setSize(viewW, viewH);
 
     /**
@@ -1447,7 +1471,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
 
       // Slide the reading light to the side this stop puts its words on. Eased between
       // stops so it drifts across with the camera rather than snapping at a boundary.
-      if (readingLight) readingLight.uniforms.uAnchor.value = anchorAt(u, sides);
+      if (readingLight) readingLight.uAnchor.value = anchorAt(u, sides);
       const stop = clamp(Math.round(u * (M - 1)), 0, M - 1);
       if (stop !== currentStop){
         currentStop = stop;
@@ -1508,7 +1532,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             if (tt < 0.2) fireNode(pd.origin, env, t);
             if (tt > 0.8) fireNode(pd.dest, env, t);
           }
-          const p = pd.curve.getPointAt(tt);
+          const p = pd.curve.getPointAt(tt, _pp);
           if (p && isFinite(p.x)){
             dummy.position.copy(p);
             dummy.scale.setScalar(env); // 0 in gap / at nodes -> draws nothing
@@ -1517,7 +1541,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             // Analytic tangent at tt drives the contained sphere's tiny leading/
             // trailing taper axis, so the glow reads as light traveling ALONG the wire
             // at all angles incl. the tortuous sub-branch bends.
-            const tan = pd.curve.getTangentAt(tt);
+            const tan = pd.curve.getTangentAt(tt, _tt);
             if (tan && isFinite(tan.x)){
               const k = i * 3;
               tna[k] = tan.x; tna[k+1] = tan.y; tna[k+2] = tan.z;
@@ -1558,7 +1582,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             if (tt > 0.8) fireNode(td.dest, env, t);
           }
           const pt = td.dir > 0 ? tt : 1 - tt; // reverse for backward fallback
-          const p = td.curve.getPointAt(pt);
+          const p = td.curve.getPointAt(pt, _pp);
           if (p && isFinite(p.x)){
             dummy.position.copy(p);
             dummy.scale.setScalar(env); // 0 at both nodes -> smooth emerge/absorb, no pop
@@ -1568,7 +1592,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             // (curve-accurate direction). dir<0 = backward travel (last-node
             // fallback) => negate the curve's forward tangent so the taper points
             // along the actual travel direction.
-            const tan = td.curve.getTangentAt(pt);
+            const tan = td.curve.getTangentAt(pt, _tt);
             if (tan && isFinite(tan.x)){
               if (td.dir < 0) tan.negate();
               const k = s * 3; tna[k] = tan.x; tna[k+1] = tan.y; tna[k+2] = tan.z;
@@ -1663,10 +1687,23 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       // drive their clocks so far sway/shimmer/breathing/twinkle stay in sync.
       if (t3TubeMat){ t3TubeMat.uniforms.uSwayTime.value = clock.elapsedTime; t3TubeMat.uniforms.uTime.value = clock.elapsedTime; }
       if (t3DustMesh) (t3DustMesh!.material as THREE.ShaderMaterial).uniforms.uTime.value = clock.elapsedTime;
-      // decay tier-3 soma firing (framerate-independent, same law as the main cluster)
-      if (t3ExciteArr){
+      // decay tier-3 soma firing (framerate-independent, same law as the main cluster).
+      // The far field is ~4,700 somas and only a handful are lit at once, so both the
+      // decay loop and the 19 KB attribute upload it feeds are skipped outright once
+      // every one of them has fallen under a level no display can show — which, between
+      // sparse far-field pulses, is most frames. `t3ExciteHot` goes true again the
+      // instant the pulse loop below fires a soma.
+      let t3ExciteFlush = false;
+      if (t3ExciteArr && t3ExciteHot){
         const d = Math.exp(-cfg.exciteDecay * dt);
-        for (let i = 0; i < t3ExciteArr.length; i++) t3ExciteArr[i] *= d;
+        let peak = 0;
+        for (let i = 0; i < t3ExciteArr.length; i++){
+          const v = t3ExciteArr[i] * d;
+          t3ExciteArr[i] = v;
+          if (v > peak) peak = v;
+        }
+        // 1/512 of full brightness: below the 8-bit floor of anything downstream.
+        if (peak < 0.002){ t3ExciteArr.fill(0); t3ExciteHot = false; t3ExciteFlush = true; }
       }
 
       // Tier-3 ambient pulses: same cycle/envelope/analytic-tangent logic as the
@@ -1698,22 +1735,25 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             const fi = tt < 0.2 ? pd.a : (tt > 0.8 ? pd.b : -1);
             if (fi >= 0 && fi < t3ExciteArr.length){
               t3ExciteArr[fi] = 1 - (1 - t3ExciteArr[fi]) * (1 - env * 0.9);
+              t3ExciteHot = true;
             }
           }
-          const p = pd.curve.getPointAt(tt);
+          const p = pd.curve.getPointAt(tt, _pp);
           if (p && isFinite(p.x)){
             dummy.position.copy(p);
             dummy.scale.setScalar(env);
             dummy.updateMatrix();
             t3PulseMesh.setMatrixAt(i, dummy.matrix);
-            const tan = pd.curve.getTangentAt(tt);
+            const tan = pd.curve.getTangentAt(tt, _tt);
             if (tan && isFinite(tan.x)){ const k = i * 3; tna[k] = tan.x; tna[k+1] = tan.y; tna[k+2] = tan.z; }
           }
         }
         t3PulseMesh.instanceMatrix.needsUpdate = true;
         t3PulseMesh.geometry.attributes.aTangent.needsUpdate = true;
       }
-      if (t3ExciteAttr) t3ExciteAttr.needsUpdate = true; // push far soma firing to the GPU
+      // Push far soma firing to the GPU only while some of it is actually lit, plus the
+      // one upload that carries the final zeroing out to it.
+      if (t3ExciteAttr && (t3ExciteHot || t3ExciteFlush)) t3ExciteAttr.needsUpdate = true;
 
       composer.render();
 
@@ -1837,6 +1877,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       if (particleMesh){ particleMesh.geometry.dispose(); (particleMesh.material as THREE.Material).dispose(); if (pulseTex) pulseTex.dispose(); }
       if (trigMesh){ trigMesh.geometry.dispose(); } // material + texture shared with particleMesh, disposed above
       if (bloomPass) bloomPass.dispose();
+      // EffectComposer.dispose() frees its two render targets and its copy pass, and
+      // nothing else — the passes it was given are the caller's to release.
+      outputPass.dispose();
       composer.dispose?.();
       renderer.dispose();
     }

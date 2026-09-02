@@ -113,6 +113,59 @@
 }
 
 /**
+ * The same halo on a phone, with its two widest layers taken off. This is the fix for
+ * "the whole background neural layer animations seems to lag really badly on mobile
+ * when scrolling", and the layers above are not where it looked like it would be.
+ *
+ * Measured four ways at 375x812, CPU throttled 4x and 6x, scrolling the whole page at
+ * 1000px/s — not at rest, because at rest is not the complaint. 95th-percentile frame,
+ * 4x: as deployed 100.0ms; with the reading-light pass removed 98.4ms; with bloom forced
+ * on 98.9ms (it is already off on mobile, verified on the running build, so "bloom
+ * disabled" IS the shipped state); with the 4,664-node far network never loaded 90.4ms;
+ * with the entire three.js scene never created 83.8ms. The scene is not the cause. With
+ * the scene running and only THIS token neutralised: 16.9ms.
+ *
+ * A `text-shadow` is a Gaussian blur of the glyph, rasterised on the CPU, once per
+ * layer, and it expands the paint bounds of that text by the blur radius in every
+ * direction. Ten layers reaching 76px on body text and eight reaching 170px on a title
+ * means every line of prose repaints a band far taller than itself, and every tile the
+ * scroll uncovers is re-rastered through all of them. In the trace that was 7.3 seconds
+ * of RasterTask inside a 10-second scroll, in chunks of 120-166ms — which is the stutter
+ * he is describing, arriving on the raster threads where no amount of shader work would
+ * have touched it.
+ *
+ * Blur cost goes with the SQUARE of the radius, so the outermost layer of each token is
+ * most of its price: 76px is 69% of the body halo's total r², and 170px is 69% of the
+ * display halo's. Dropping the widest two per token and changing nothing else measured
+ * p95 17.3ms — inside the noise of deleting the halo outright (16.9ms). Trimming harder,
+ * back to a 16px maximum, measured 16.9ms and bought nothing, so it is not done: what
+ * survives here is eight of the ten body layers out to 22px, six of the eight display
+ * layers out to 48px, and eight of the nine mono layers out to 24px. The pool that keeps
+ * a bright cluster behind a paragraph from shimmering between the lines is still a pool.
+ *
+ * Keyed on `pointer: coarse`, not a width, to match `detectTier` in lib/mind/config.ts:
+ * this and the scene's own tier are the same decision about the same machine, and a
+ * decision made from a resizable number is a decision that goes stale.
+ */
+@media (pointer: coarse) {
+  :root {
+    --halo:
+      0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+      0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
+      0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86);
+
+    --halo-display:
+      0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
+      0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62);
+
+    --halo-mono:
+      0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+      0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
+      0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76);
+  }
+}
+
+/**
  * The reset lives in `@layer base` and this is not cosmetic.
  *
  * Unlayered CSS beats every layered rule in the cascade, whatever the specificity — so
