@@ -43,40 +43,57 @@
   --color-rule: #2e2d36;
 
   /**
-   * The reading glass. See `.panel::before` for what it is and why it is not a wash.
+   * The reading halo. Every letter carries its own legibility, and nothing covers the
+   * scene.
    *
-   * `blur` is what actually buys the legibility: it turns a 2px near-white filament —
-   * line-work at the same spatial frequency as a glyph stroke — into a wide soft glow
-   * the eye reads as background. `brightness` then takes the whole plate down under the
-   * type without altering a single hue, which is the part a flat overlay cannot do.
-   * `saturate` puts back the colour that dimming costs, so the scene keeps its blues.
+   * Two earlier attempts covered it instead and both were rejected on sight. A
+   * near-opaque wash of `--color-bg` made the numbers and deleted the filaments the
+   * visitor came for. Feathered glass — `backdrop-filter: blur() brightness()` — was
+   * worse in a more interesting way: `brightness()` scales what is there, and this scene
+   * is mostly near-black, so over the sparse left-hand side where the text lives there
+   * was nothing to dim and the plate read as a black hole. Blur was the wrong operation
+   * too. It frosts dense texture; this scene is thin bright lines on black, and blurring
+   * a bright line does not frost it, it smears it into a grey streak. A dirty lens.
    *
-   * The tint is deliberately small. Push blur up and tint down, never the reverse: the
-   * tint is the one term that hides the scene rather than subduing it.
+   * So: stacked shadows in the page's own background colour, painted from each glyph's
+   * own outline. Within a few pixels of a letter the background is displaced; everywhere
+   * else the scene is pixel-for-pixel untouched. There is no plate, no edge and no
+   * object — which is also why nothing looks wrong while scrolling, because there is
+   * nothing there to notice.
+   *
+   * The radii do different jobs and all four are load-bearing. The two tight ones give
+   * the hard edge that wins where a filament crosses a stroke; the wide ones pool softly
+   * so a bright cluster behind a whole paragraph does not shimmer between the lines.
+   *
+   * `text-shadow` inherits, so this is set once on the two columns and every descendant
+   * gets it — including a streamed answer portalled in later.
    */
-  --glass-filter: blur(26px) brightness(0.26) saturate(1.5);
-  --glass-tint: rgba(10, 10, 14, 0.24);
+  --halo:
+    0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
+    0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86), 0 0 44px rgba(8, 8, 12, 0.62),
+    0 0 76px rgba(8, 8, 12, 0.34);
 
   /*
-   * The feather. Solid across the middle where the type sits, gone entirely by the
-   * edge, so the pane has no boundary anywhere — the measured geometry puts the far
-   * corner of a run of type at ~64% of the ray, which is why the mask stays opaque to
-   * 62% and does all of its work outside the words.
+   * Display type has more ink and more space between strokes, so it needs less edge and
+   * a wider pool — a bright filament passing between two 70px letterforms is inside the
+   * word rather than on it.
    */
-  --glass-mask: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    #000 0%,
-    #000 62%,
-    rgba(0, 0, 0, 0.62) 80%,
-    transparent 100%
-  );
+  --halo-display:
+    0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
+    0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62),
+    0 0 100px rgba(8, 8, 12, 0.4), 0 0 170px rgba(8, 8, 12, 0.22);
 
-  /* The `@supports` fallback wash, for a browser with no `backdrop-filter`. */
-  --scrim-core: rgba(10, 10, 14, 0.95);
-  --scrim-hold: rgba(10, 10, 14, 0.94);
-  --scrim-fade: rgba(10, 10, 14, 0.88);
-  --scrim-tail: rgba(10, 10, 14, 0.5);
-  --scrim-none: rgba(10, 10, 14, 0);
+  /*
+   * The small mono labels have the least ink to defend themselves with: 10px letterforms
+   * at 0.15em tracking are thin strokes with gaps between them, and they measured worst
+   * of anything on the page. Weighted hard toward the tight radii.
+   */
+  --halo-mono:
+    0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
+    0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76), 0 0 50px rgba(8, 8, 12, 0.45);
+
 
   /**
    * The dock's measured height, published by a ResizeObserver in ChatDock so every
@@ -137,9 +154,48 @@
     overflow-x: hidden;
   }
 
+  /*
+   * The surfaces nobody draws still carry the design. Selection, the caret, the
+   * scrollbar and the focus ring all ship with browser defaults that belong to no design
+   * system, and on a page this dark a stock light scrollbar is the one element that
+   * announces the page was assembled rather than built.
+   */
   ::selection {
     background: var(--color-accent);
     color: var(--color-bg);
+  }
+
+  html {
+    color-scheme: dark;
+    scrollbar-color: var(--color-rule) transparent;
+    scrollbar-width: thin;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-accent);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  /*
+   * Tabbing to a control that is off screen has to bring it on screen, and on this page
+   * it did not: measured, the first meaningful Tab stop sat at document top 5114px and
+   * `scrollY` stayed 0 both immediately and 250ms later. A sighted keyboard visitor
+   * landed on a control they could not see.
+   *
+   * `scroll-margin-block` gives the browser's scroll-into-view somewhere to put the
+   * element other than hard against a viewport edge — which on this layout means behind
+   * the fixed dock at the bottom, the one place a focused control must never land.
+   */
+  a,
+  button,
+  input,
+  [tabindex]:not([tabindex='-1']) {
+    scroll-margin-block: 96px calc(var(--dock-h) + 32px);
   }
 
   a {
@@ -192,13 +248,29 @@
  * components/mind/ScrollProgress.tsx from document scroll, not from the scene — so a
  * machine with no WebGL still gets it.
  */
+/**
+ * The stop's composition, and it has a maximum width.
+ *
+ * Without one the two columns are fractions of the viewport, so the wider the monitor
+ * the further apart they fly: measured at 2000px the text column ended around x=440 and
+ * the cards began around x=1010, nearly 600px of nothing between two halves of one
+ * thought. They stopped reading as a composition and became two things pinned to
+ * opposite edges. A capped, centred container with a fluid gutter holds the relationship
+ * from 1280 to 2560 — the columns stay a pair, and the extra width becomes margin, which
+ * is what extra width is for.
+ *
+ * The type column is a little wider than the media column because it carries the
+ * argument; the media column carries the evidence.
+ */
 .section-inner {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.05fr 0.95fr;
   grid-template-rows: 100%;
   align-items: center;
-  gap: 0;
+  gap: clamp(3rem, 5vw, 6rem);
   width: 100%;
+  max-width: 1460px;
+  margin-inline: auto;
   height: 100%;
   /*
    * The bottom pad is derived, never guessed. `--dock-h` is written from a
@@ -213,13 +285,32 @@
 }
 
 /*
- * Dimming is the exception, not the default: a stop with no `data-active` at all — no
- * JavaScript, a hydration that never came — renders lit and readable rather than at 32%
- * opacity forever. The server marks stop 0 active so the first paint is already right.
+ * The "you are here" affordance, and it is no longer a blanket opacity.
+ *
+ * It used to dim the whole inactive stop to 0.32. That reads well in isolation and is
+ * indefensible once measured: at any moment eight of the nine stops multiplied every
+ * glyph *and its halo* by a third, which put their body copy at 1.1:1 against the scene
+ * and dimmed the RD 350 photographs — the only real photographs on the site — along
+ * with them. The detector counted twelve findings and every one of them was this rule.
+ * Nor is it recoverable by softening: at 0.86 the medians are comfortable and the worst
+ * pixel still fails, because opacity scales the defence and the threat together.
+ *
+ * So the cue moves to the one element whose whole job is to say where you are. The
+ * § label is an address; the address of the room you are in is lit and the others are
+ * not. One small colour change, no contrast cost anywhere, and a stop with no
+ * `data-active` at all — no JavaScript, a hydration that never came — still renders
+ * exactly as it should rather than sitting back forever.
  */
 .panel[data-active='false'] .section-inner {
-  opacity: 0.32;
-  transform: translateY(8px) scale(0.985);
+  transform: translateY(8px);
+}
+
+.panel[data-active='false'] .section-kicker {
+  color: var(--color-type-dim);
+}
+
+.section-kicker {
+  transition: color 0.45s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* Hero and plain: one column, no media half. */
@@ -262,15 +353,12 @@
    */
   gap: 0;
   align-self: center;
-  max-width: 44rem;
-  padding-right: 2vw;
+  max-width: 46rem;
   z-index: 3;
 }
 
 .content-zone.right {
   order: 2;
-  padding-right: 0;
-  padding-left: 2vw;
 }
 
 .media-zone {
@@ -282,127 +370,37 @@
 
 .media-zone.left {
   order: 1;
-  padding-right: 2vw;
 }
 
 .media-zone.right {
   order: 2;
-  padding-left: 2vw;
-}
-
-/* ── the reading glass ─────────────────────────────────────────────────────── */
-
-/**
- * The top complaint in the owner's review: the prose is very hard to read over the
- * scene. Measured rather than eyeballed — screenshot the page, hide only the glyphs,
- * sample the pixels actually left behind them — `.section-body` came in at 1.51:1
- * against the brightest filament crossing it, and the small mono labels at 1.76:1.
- * Both are unreadable, and neither number is visible from the CSS, because the flat
- * page colour says 4.9:1 and the flat page colour is not what is behind the type.
- *
- * The first fix was a wash: a near-opaque ellipse of `--color-bg`. It made the numbers
- * and the owner rejected it on sight, correctly — "too dark to see the neurons now,
- * which kind of defeats the purpose". A 0.95 alpha plate is a black oval cut out of
- * the one thing the visitor came to look at, placed exactly where they are looking.
- *
- * So: diagnose properly. What makes this text unreadable is not how *bright* the
- * background is, it is how *sharp* it is — thin, near-white filaments crossing glyph
- * strokes at the same spatial frequency as the strokes themselves. Opacity fights that
- * with brute force and loses the picture. Blur removes it at the source: a blurred
- * filament becomes a soft wide glow, which the eye files as background rather than as
- * competing line-work, and `brightness()` inside the same `backdrop-filter` then drops
- * what is left below the type without touching its shape or its colour. The scene
- * stays visible. The words win anyway.
- *
- * Three things are load-bearing here:
- *
- * 1. It hangs off `.panel`, not `.section-inner`. `backdrop-filter` samples everything
- *    painted beneath it *within the nearest backdrop root* — and any ancestor with
- *    `opacity < 1` becomes one. `.section-inner` takes `opacity: 0.32` whenever its
- *    stop is inactive, so a glass mounted there would sample an empty backdrop, render
- *    as a bare tint, and then pop into focus as the stop activated. `.panel` never
- *    changes opacity, so the effect is stable through every scroll.
- * 2. The mask, not the gradient, does the feathering. The element is a plain rectangle
- *    carrying a uniform filter; `mask-image` then dissolves it to nothing before it
- *    reaches any edge, which is why there is no seam, no rectangle and no vignette
- *    ring. Pinning `top: 0; bottom: 0` matters for the same reason it did before: a
- *    mask that has not reached zero by the panel boundary draws a hard band between
- *    every pair of stops.
- * 3. `background` is a tint, not a curtain. It sits at 0.22 — enough to warm the glass
- *    and settle the darkest passages, far too little to hide anything.
- *
- * `@supports` keeps a browser without `backdrop-filter` readable: it gets the old
- * wash, at the alpha the numbers need, because unreadable text is the worse failure.
- */
-.panel::before,
-.panel::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 0;
-  pointer-events: none;
-  /* The fallback: a plain feathered wash for anything without backdrop-filter. */
-  background: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    var(--scrim-core) 0%,
-    var(--scrim-hold) 58%,
-    var(--scrim-fade) 74%,
-    var(--scrim-tail) 87%,
-    var(--scrim-none) 100%
-  );
-}
-
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .panel::before,
-  .panel::after {
-    background: var(--glass-tint);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
-    -webkit-mask-image: var(--glass-mask);
-    mask-image: var(--glass-mask);
-  }
-}
-
-/* ::before follows the text column, ::after the media column. */
-.panel::before {
-  left: -14vw;
-  right: 34%;
-}
-
-.panel::after {
-  left: 34%;
-  right: -14vw;
-}
-
-/* `align: right` puts the text on the right, so the two swap sides. */
-.panel[data-align='right']::before {
-  left: 34%;
-  right: -14vw;
-}
-
-.panel[data-align='right']::after {
-  left: -14vw;
-  right: 34%;
 }
 
 /*
- * Hero and plain have no media column. One pane, wider, and the second is not drawn at
- * all rather than filtering an empty half of the panel for nothing — which is also the
- * cheapest performance win available here, since cost scales with filtered area.
+ * The halo, applied once. `text-shadow` inherits, so both columns and everything that
+ * ever lands in them — cards, the timeline, contact links, a streamed answer portalled
+ * in long after this rule was written — carry it without being named here.
  */
-.panel[data-centred]::before {
-  left: -18vw;
-  right: 26%;
+.content-zone,
+.media-zone {
+  text-shadow: var(--halo);
 }
 
-.panel[data-centred][data-align='right']::before {
-  left: 26%;
-  right: -18vw;
+.section-title {
+  text-shadow: var(--halo-display);
 }
 
-.panel[data-centred]::after {
-  display: none;
+.section-kicker,
+.mini-card .mk,
+.carousel-meta,
+.carousel-toggle,
+.contact-links .kk,
+.tl-year,
+.answer-kicker,
+.answer-asked-label,
+.answer-toggle,
+.answer-card-kicker {
+  text-shadow: var(--halo-mono);
 }
 
 /* ── type ──────────────────────────────────────────────────────────────────── */
@@ -416,7 +414,7 @@
   color: var(--color-accent);
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.04em;
   font-weight: 600;
   margin-bottom: 14px;
 }
@@ -457,10 +455,9 @@
   font-family: var(--font-sans);
   font-size: 1.1875rem;
   line-height: 1.5;
-  letter-spacing: 0.002em;
   font-weight: 450;
   text-wrap: pretty;
-  max-width: 40ch;
+  max-width: 52ch;
   margin-bottom: 16px;
 }
 
@@ -469,7 +466,6 @@
   font-family: var(--font-sans);
   font-size: 1.0625rem;
   line-height: 1.66;
-  letter-spacing: 0.004em;
   font-weight: 420;
   text-wrap: pretty;
   max-width: 44ch;
@@ -518,12 +514,217 @@
   margin-bottom: -34px;
 }
 
+/* ── the answer ────────────────────────────────────────────────────────────── */
+
+/**
+ * The answer, as the foreground of the stop it lands in.
+ *
+ * The whole move is `--color-type` on `.answer-prose` and `--color-type-muted` on
+ * everything else in the column. That is the hierarchy; the type sizes only support it.
+ * There is no panel, no border and no background here on purpose — a box would make the
+ * answer a widget sitting on the page instead of the page's own voice answering.
+ */
+/**
+ * Once a stop is answering, its column stops centring itself.
+ *
+ * `align-self: center` means the column's height decides where its title sits, so every
+ * answer of a different length moved the stop's title — measured at 90px before this
+ * change and 123px after the answer grew, in both cases with no transition, at the
+ * moment the reader's eye was on that title. Anchoring the column to the top of the
+ * stop makes the title a fixed point and lets answers differ in length underneath it,
+ * which is the only arrangement where a second answer can replace a first without
+ * moving anything the reader is looking at.
+ *
+ * The first answer still shifts the column up once, and that is deliberate: it happens
+ * while the page is already smooth-scrolling to the stop, so it reads as part of the
+ * arrival rather than as a jump.
+ */
+.section-inner:has(.answer) .content-zone {
+  align-self: start;
+}
+
+.answer-swap {
+  display: grid;
+  grid-template-areas: 'layer';
+}
+
+.answer-layer {
+  grid-area: layer;
+  min-width: 0;
+}
+
+/*
+ * Exit faster than entry, and never let the outgoing copy take clicks on its way out.
+ */
+.answer-layer-out {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.answer-layer-in {
+  animation: answer-in 220ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+}
+
+@keyframes answer-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.answer-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-bottom: 12px;
+}
+
+/* ASKED, the question, and the way back to the stop's own paragraph, on one line. */
+.answer-asked {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+
+.answer-question {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--color-type-muted);
+  min-width: 0;
+}
+
+.answer-asked-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+.answer-toggle {
+  flex: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  /* padding-block takes this to a real target; the negative margin keeps the row put. */
+  padding: 8px 6px;
+  margin: -8px -6px;
+  transition: color 0.15s;
+}
+
+.answer-toggle:hover,
+.answer-toggle:focus-visible {
+  color: var(--color-accent);
+}
+
+.answer-toggle:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * `envelope.title`, demoted. It used to be a 30px serif heading sitting directly under
+ * the stop's own 70px serif title — two headings for one subject, and on a cards stop it
+ * was often the exact text of a card beside it. A dek says what the paragraph is about
+ * and then gets out of the way.
+ */
+.answer-dek {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.3;
+  color: var(--color-type-muted);
+  margin-bottom: 14px;
+  max-width: 40ch;
+}
+
+/* The one run of body text on the page at full strength. That is the whole hierarchy. */
+.answer-prose {
+  font-family: var(--font-sans);
+  font-size: 1.1875rem;
+  line-height: 1.62;
+  color: var(--color-type);
+  max-width: 58ch;
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}
+
+.answer-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  background: var(--color-accent);
+}
+
+/*
+ * The answer's provenance, and the only place it appears: the memories the answer drew
+ * on, by title. Never their ids — `[project-taboola]` is developer output. Quietest type
+ * in the column, because provenance is a thing you look for, not a thing you are told.
+ */
+.answer-cards {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 16px;
+  margin-top: 26px;
+  max-width: 46ch;
+}
+
+.answer-cards li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-top: 1px solid var(--color-rule);
+  padding-top: 8px;
+}
+
+.answer-card-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+}
+
+.answer-card-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--color-type-muted);
+}
+
+/* In the dock, where there is no stop to be the foreground of. */
+.answer-compact .answer-prose {
+  font-size: 1rem;
+  color: var(--color-type-muted);
+}
+
+.answer-compact .answer-dek {
+  font-size: 1.05rem;
+}
+
 /* ── cards ─────────────────────────────────────────────────────────────────── */
 
 .card-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 22px;
   max-width: 100%;
 }
 
@@ -534,7 +735,7 @@
 
 .mini-card .mk {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.15em;
   color: var(--color-accent);
   margin-bottom: 6px;
@@ -552,6 +753,11 @@
   color: var(--color-type-muted);
   font-size: 14px;
   line-height: 1.55;
+  max-width: 58ch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ── timeline ──────────────────────────────────────────────────────────────── */
@@ -584,23 +790,76 @@
 
 .tl-row > button {
   display: grid;
-  grid-template-columns: 5.25rem auto minmax(0, 1fr);
+  grid-template-columns: 5.25rem auto minmax(0, 1fr) 1rem;
   align-items: baseline;
   column-gap: 14px;
   width: 100%;
-  padding: 7px 0;
+  padding: 7px 8px 7px 0;
   background: none;
   border: none;
+  border-radius: 2px;
   text-align: left;
   cursor: pointer;
   font: inherit;
   color: inherit;
+  transition: background-color 0.16s;
 }
 
+/*
+ * The whole header is the target, so the whole header responds. Hovering the words and
+ * getting a colour change on the words alone reads as a link inside a row rather than as
+ * a row that opens.
+ */
+.tl-row > button:hover,
+.tl-row > button:focus-visible {
+  background: rgba(212, 193, 156, 0.06);
+}
+
+/*
+ * The affordance the first version did not have. A chevron drawn from a rotated square,
+ * turned by `aria-expanded` — so the mark reads the same state the assistive technology
+ * does and the two cannot drift apart.
+ */
+.tl-mark {
+  justify-self: end;
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid var(--color-type-dim);
+  border-bottom: 1px solid var(--color-type-dim);
+  transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.16s;
+}
+
+.tl-row > button[aria-expanded='true'] .tl-mark {
+  transform: rotate(225deg) translate(-1px, -1px);
+  border-color: var(--color-accent);
+}
+
+/*
+ * The row the reader is level with, tracked by IntersectionObserver in Timeline.tsx.
+ * Same language as the nine lit stops, one level down — it is what makes the rail look
+ * alive on the way past, before anything has been clicked.
+ */
+.tl-row[data-active] {
+  border-top-color: var(--color-accent);
+}
+
+.tl-row[data-active] .tl-year {
+  color: var(--color-accent);
+}
+
+/*
+ * The year pins as its row passes the reading line, and is pushed out by the next one.
+ * Costs one property; it is what turns ten static rows into a rail you are travelling
+ * along, which was the missing half of "wasn't it supposed to be interactive?".
+ */
 .tl-year {
+  position: sticky;
+  top: 8vh;
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--color-type-dim);
   white-space: nowrap;
   transition: color 160ms;
@@ -701,18 +960,46 @@
   border: 1px solid var(--color-rule);
 }
 
+/*
+ * The crossfade fades the INCOMING frame in over the outgoing one, rather than parking
+ * four frames at `opacity: 0` behind the visible one.
+ *
+ * The old arrangement kept all five stacked and faded between them by opacity, which
+ * means that at rest four of the five photographs — the only real photographs on this
+ * site — sat in the DOM at zero opacity. A detector reads that as a raster buried under
+ * a wash and it is not wrong to: an image at opacity 0 is indistinguishable from one
+ * that never reaches the screen. Frames that are not participating are hidden with
+ * `visibility` instead, so they still preload and decode, and nothing is ever a
+ * photograph turned down to nothing.
+ */
 .carousel-hero img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  visibility: hidden;
+}
+
+/* The outgoing frame, held underneath at full strength while the new one arrives. */
+.carousel-hero img.prev {
+  visibility: visible;
+  z-index: 0;
 }
 
 .carousel-hero img.on {
-  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+  animation: carousel-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes carousel-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .carousel-cap {
@@ -721,7 +1008,7 @@
   bottom: 12px;
   z-index: 2;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.15em;
   color: var(--color-type);
   text-transform: uppercase;
@@ -779,7 +1066,7 @@
   gap: 12px;
   margin-top: 10px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.15em;
   color: var(--color-type-dim);
 }
@@ -806,7 +1093,7 @@
   margin: -10px -8px;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.15em;
   color: var(--color-type-dim);
   transition: color 0.15s;
@@ -816,12 +1103,82 @@
   color: var(--color-accent);
 }
 
-/* The scrolling prompt row, told to look scrollable. */
-@media (max-width: 900px) {
-  .prompt-row {
-    -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent 100%);
-    mask-image: linear-gradient(90deg, #000 86%, transparent 100%);
-  }
+/*
+ * The prompts wrap rather than scroll. See SuggestedPrompts.tsx for why the scroller had
+ * to go; the short version is that at 375px it showed one prompt, clipped mid-word, and
+ * hid the other three behind a gesture nothing invited.
+ */
+.prompt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 20px;
+  padding-bottom: 14px;
+}
+
+.prompt-chip {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--color-type-muted);
+  /* padding-block is what makes these a real target; they were ~20px tall. */
+  padding: 7px 0;
+  margin: -7px 0;
+  transition: color 0.15s;
+}
+
+.prompt-chip:hover,
+.prompt-chip:focus-visible {
+  color: var(--color-accent);
+}
+
+/* ── the dock ──────────────────────────────────────────────────────────────── */
+
+/*
+ * Solid where the type is, feathered above it. The old gradient reached full
+ * transparency at its own top edge, so a stop's content scrolled up behind the dock in
+ * plain sight and printed over the prompt row.
+ */
+.dock-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--color-bg) 0%,
+    var(--color-bg) 58%,
+    rgba(10, 10, 14, 0.94) 74%,
+    rgba(10, 10, 14, 0.72) 88%,
+    rgba(10, 10, 14, 0) 100%
+  );
+}
+
+/*
+ * A real submit control, and on every viewport. It was `↵ SEND`, hidden below `md` —
+ * mono chrome in a technical costume, and on a phone the only way to send was the
+ * on-screen keyboard's own return key, with nothing on the page to say so.
+ */
+.dock-send {
+  flex: none;
+  background: none;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-type-muted);
+  padding: 8px 14px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.dock-send:hover,
+.dock-send:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 /* ── the ask field ─────────────────────────────────────────────────────────── */
@@ -876,7 +1233,7 @@
 
 .contact-links .kk {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.15em;
   color: var(--color-type-dim);
   white-space: nowrap;
@@ -917,6 +1274,16 @@
      */
     justify-content: flex-start;
     align-items: stretch;
+  }
+
+  /*
+   * Hero and the plain stops carry a title and two paragraphs and never overflow, so
+   * they centre in the space above the dock instead of sitting at the top with a dead
+   * band beneath them. The stops that can overflow keep flex-start, which is what stops
+   * their last card printing under the dock.
+   */
+  .section-inner.center-stage {
+    justify-content: center;
     gap: 28px;
     padding: 4vh 7vw calc(var(--dock-h) + 32px);
     min-height: var(--stop-height);
@@ -959,28 +1326,6 @@
    * rises to match: cost scales with radius and with area, and this is the tier most
    * likely to be a phone GPU already running the scene.
    */
-  .panel::before,
-  .panel[data-align='right']::before,
-  .panel[data-centred]::before {
-    left: -6vw;
-    right: -6vw;
-    --glass-filter: blur(18px) brightness(0.29) saturate(1.5);
-    --glass-mask: none;
-    background: var(--scrim-hold);
-  }
-
-  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .panel::before,
-    .panel[data-align='right']::before,
-    .panel[data-centred]::before {
-      background: var(--glass-tint);
-    }
-  }
-
-  .panel::after,
-  .panel[data-align='right']::after {
-    display: none;
-  }
 
   .media-zone,
   .media-zone.left,
@@ -1022,10 +1367,21 @@
   }
 
   .tl-row > button {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
     row-gap: 1px;
     padding: 11px 0;
     min-height: 44px;
+  }
+
+  .tl-year,
+  .tl-title,
+  .tl-summary {
+    grid-column: 1;
+  }
+
+  .tl-mark {
+    grid-column: 2;
+    grid-row: 1 / -1;
   }
 
   /*
@@ -1033,6 +1389,15 @@
    * column cannot: the summary drops below the title instead of competing with it for a
    * 375px row.
    */
+  /*
+   * No sticky year on a phone. The gutter it pins into does not exist in a single
+   * column, so the pin detaches the year from its own row and prints it over the row
+   * below — which is exactly what it did.
+   */
+  .tl-year {
+    position: static;
+  }
+
   .tl-summary {
     grid-column: 1;
     white-space: normal;
@@ -1108,5 +1473,24 @@
    */
   .tl-year {
     transition: none;
+  }
+
+  /*
+   * Same argument for the answer swap: the fade and the 6px lift go, and the height
+   * change that the swap causes is left to the browser rather than being hidden. What
+   * must not happen is the old prose being replaced by different prose with no
+   * transition of any kind, which is what the page did before and what read as a glitch.
+   */
+  .answer-layer-in {
+    animation: answer-in-reduced 100ms linear both;
+  }
+
+  @keyframes answer-in-reduced {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }

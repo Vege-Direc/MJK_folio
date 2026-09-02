@@ -3,27 +3,29 @@
 import { suggestedPrompts } from '@/content/static-copy';
 
 /**
- * Four ways in. On a phone they run as one horizontally scrollable row so the dock stays
- * about a hundred pixels tall; from `md` up they wrap as before.
+ * Four ways in.
+ *
+ * They used to run as one horizontally scrollable row. At 375px that showed exactly one
+ * prompt, clipped mid-word — "…aircraft to age" — with the other three off-screen and
+ * nothing to say they existed. A scroller with no affordance is a scroller nobody
+ * scrolls, and the edge mask was not enough to rescue it: the first prompt is wider than
+ * the viewport on its own, so there was never a second one peeking to imply more.
+ *
+ * They wrap now. That costs height, and height stopped being expensive when the dock
+ * began publishing `--dock-h` from a ResizeObserver: every stop reserves whatever the
+ * dock actually is, so this row can be as tall as it needs and nothing ends up
+ * underneath it. All four visible, none clipped, no affordance required.
+ *
+ * `TRY` is gone. It was mono chrome wearing a technical costume — the register the
+ * timeline's years and the § labels earn and the dock's furniture does not — and on a
+ * phone it also spent 40px of a 327px row saying what four questions already say by
+ * being questions.
  */
 export default function SuggestedPrompts({ onPick }: { onPick: (p: string) => void }) {
   return (
-    // The row scrolls horizontally on a phone with no affordance and no edge fade, so
-    // prompts 2-4 were undiscoverable and the first one clipped mid-word. The mask says
-    // there is more to the right without adding a control to a bar that has no room.
-    <div className="prompt-row pb-3 flex items-baseline gap-x-6 gap-y-1 overflow-x-auto md:overflow-visible md:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <span className="font-mono text-[10px] tracking-[0.15em] text-[color:var(--color-type-dim)] shrink-0">
-        TRY
-      </span>
+    <div className="prompt-row">
       {suggestedPrompts.map((p) => (
-        // `padding-block` is what takes these from ~20px tall to a real target; the
-        // negative margin keeps the row the height it was.
-        <button
-          key={p}
-          type="button"
-          onClick={() => onPick(p)}
-          className="py-[6px] -my-[6px] text-sm text-[color:var(--color-type-muted)] hover:text-[color:var(--color-accent)] focus-visible:text-[color:var(--color-accent)] transition-colors whitespace-nowrap shrink-0 md:whitespace-normal md:shrink"
-        >
+        <button key={p} type="button" onClick={() => onPick(p)} className="prompt-chip">
           {p}
         </button>
       ))}

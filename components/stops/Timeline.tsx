@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
 import type { TimelineEntry } from './timeline-entry';
 import { periodLabel } from './timeline-entry';
 
@@ -44,7 +44,43 @@ const onServer = () => false;
 export default function Timeline({ entries }: { entries: TimelineEntry[] }) {
   const collapsed = useSyncExternalStore(subscribe, onClient, onServer);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
+
+  /**
+   * Which row the reader is level with, tracked the way the page already tracks stops.
+   *
+   * The owner's complaint about the first version was "wasn't it supposed to be
+   * interactive?" — and it was, and gave no sign of it until you clicked. Ten identical
+   * static rows read as a printed table. This is the same `data-active` idiom
+   * `ScrollProgress` applies to the nine stops, one level down: the row nearest the
+   * reading line lights its year and its rule, so the rail is visibly alive on the way
+   * past and the affordance is discovered before anything is clicked.
+   *
+   * An IntersectionObserver rather than a scroll handler, because this is a question
+   * about what is on screen and that is what the observer is for — no listener running
+   * on every frame of a scroll-driven page that already has a camera to feed.
+   */
+  useEffect(() => {
+    const rows = Array.from(listRef.current?.querySelectorAll<HTMLElement>('.tl-row') ?? []);
+    if (!rows.length) return;
+    const seen = new Map<string, number>();
+    const io = new IntersectionObserver(
+      (entriesIn) => {
+        for (const e of entriesIn) seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0);
+        let bestId: string | null = null;
+        let best = 0;
+        for (const [id, ratio] of seen) {
+          if (ratio > best) { best = ratio; bestId = id; }
+        }
+        setActiveId(bestId);
+      },
+      // A band across the middle of the viewport: the reading line, not the whole screen.
+      { rootMargin: '-42% 0px -42% 0px', threshold: [0, 0.5, 1] },
+    );
+    for (const r of rows) io.observe(r);
+    return () => io.disconnect();
+  }, [entries]);
 
   const isOpen = (id: string) => !collapsed || openId === id;
 
@@ -84,7 +120,13 @@ export default function Timeline({ entries }: { entries: TimelineEntry[] }) {
         return (
           // The row's id IS the memory's id, exactly as the cards already do, so a
           // citation or a pulse can address the row an answer came from.
-          <li className="tl-row" id={entry.id} key={entry.id} data-open={open || undefined}>
+          <li
+            className="tl-row"
+            id={entry.id}
+            key={entry.id}
+            data-open={open || undefined}
+            data-active={activeId === entry.id || undefined}
+          >
             <button
               type="button"
               data-tl-header=""
@@ -96,6 +138,9 @@ export default function Timeline({ entries }: { entries: TimelineEntry[] }) {
               <span className="tl-year">{periodLabel(entry.period)}</span>
               <span className="tl-title">{entry.title}</span>
               <span className="tl-summary">{entry.summary}</span>
+              {/* The affordance. Rotated by CSS off aria-expanded, so the mark and the
+                  state cannot disagree. */}
+              <span className="tl-mark" aria-hidden="true" />
             </button>
             <div id={`tl-p-${entry.id}`} role="region" aria-labelledby={`tl-b-${entry.id}`}>
               <div className="tl-panel-inner">

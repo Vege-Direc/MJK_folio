@@ -12,6 +12,14 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  /*
+   * Next's default is `['image/webp']`, so the carousel was serving WebP to browsers
+   * that would have taken AVIF — measured at 221.6 KB across its ten requests. AVIF
+   * first, WebP for anything that cannot take it.
+   */
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
   // `next dev` writes AGENTS.md and CLAUDE.md into the repo root and rewrites them on
   // every run. Neither was asked for, and a CLAUDE.md that appears by itself is a file
   // people edit and then lose. Turn it back on deliberately if the repo wants one.
