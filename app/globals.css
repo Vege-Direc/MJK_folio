@@ -25,13 +25,32 @@
  */
 
 @theme {
-  /* Warm-outside DOM palette. The whole of it. */
+  /**
+   * Warm-outside DOM palette. The whole of it.
+   *
+   * `--color-type-muted` and `--color-type-dim` were raised (from #a8a49a and #7a776d) in
+   * the same pass that added the reading scrim below. Measured against the brightest
+   * pixel actually rendered behind them — not against the flat page colour — the old
+   * pair came in at 2.49:1 and 2:1 over a lit filament. The scrim does most of the work;
+   * these two carry the rest, and they are the numbers that decide whether the small
+   * mono labels and the citation chips are readable at all.
+   */
   --color-bg: #0a0a0e;
   --color-type: #f5f3ee;
-  --color-type-muted: #a8a49a;
-  --color-type-dim: #7a776d;
+  --color-type-muted: #c9c5b8;
+  --color-type-dim: #a5a196;
   --color-accent: #d4c19c;
-  --color-rule: #24232a;
+  --color-rule: #2e2d36;
+
+  /**
+   * The reading scrim, as tokens so the text column and the media column stay in step
+   * and a single number tunes both. See `.content-zone::before` for what they do.
+   */
+  --scrim-core: rgba(10, 10, 14, 0.96);
+  --scrim-hold: rgba(10, 10, 14, 0.95);
+  --scrim-fade: rgba(10, 10, 14, 0.9);
+  --scrim-tail: rgba(10, 10, 14, 0.68);
+  --scrim-none: rgba(10, 10, 14, 0);
 
   --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
   --font-serif: var(--font-fraunces), 'Fraunces', Georgia, serif;
@@ -178,19 +197,20 @@
 }
 
 .content-zone {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 24px;
   align-self: center;
   max-width: 44rem;
-  padding-right: 3vw;
+  padding-right: 2vw;
   z-index: 3;
 }
 
 .content-zone.right {
   order: 2;
   padding-right: 0;
-  padding-left: 3vw;
+  padding-left: 2vw;
 }
 
 .media-zone {
@@ -202,12 +222,106 @@
 
 .media-zone.left {
   order: 1;
-  padding-right: 3vw;
+  padding-right: 2vw;
 }
 
 .media-zone.right {
   order: 2;
-  padding-left: 3vw;
+  padding-left: 2vw;
+}
+
+/* ── the reading scrim ─────────────────────────────────────────────────────── */
+
+/**
+ * The top complaint in the owner's review: the prose is very hard to read over the
+ * scene. Measured rather than eyeballed — screenshot the page, hide only the glyphs,
+ * sample the pixels actually left behind them — `.section-body` came in at 1.51:1
+ * against the brightest filament crossing it, and the small mono labels at 1.76:1.
+ * Both are unreadable, and neither number is visible from the CSS, because the flat
+ * page colour says 4.9:1 and the flat page colour is not what is behind the type.
+ *
+ * The fix is a scrim, not a panel. Two ellipses of the page's own background colour,
+ * one under each column, each inscribed in a box that overscans its column generously
+ * — so the wash is dense where the type is and reaches zero alpha exactly at the box
+ * edge. There is no border, no blur, no rectangle and no seam anywhere; the filaments
+ * above, below and outside the columns are untouched, and the scene still shows
+ * through faintly across the whole plate, because 0.95 is not 1.
+ *
+ * They hang off `.section-inner`, not off the two zones, and this is the whole trick.
+ * The first attempt put each scrim on its own column as a `z-index: -1` pseudo-element,
+ * which looks right in the CSS and is wrong on screen: a grid item with a z-index
+ * establishes a stacking context, so the text column's scrim — buried at -1 inside a
+ * context at 3 — still painted over the entire media column at 2, and greyed out every
+ * card on the right-hand side of the stop. Hung here instead, both scrims sit at 0,
+ * below both columns, and the fact that they overlap in the gutter stops mattering:
+ * overlap only adds density under content that is painted later anyway.
+ *
+ * Geometry, since the numbers are not self-evident. `ellipse 50% 50%` makes the ray
+ * reach the box edge on both axes, which is what puts the zero exactly there — and it
+ * is why the boxes are pinned `top: 0; bottom: 0` rather than overscanned vertically:
+ * a scrim taller than its panel is a scrim clipped at ~0.9 alpha by `.panel`'s
+ * `overflow: hidden`, which draws a hard horizontal band between every pair of stops.
+ * Horizontally each box runs 14vw off its own outer edge and across to 34%, which puts
+ * the far corner of a run of type near 68% of the ray. That is why the profile still
+ * holds 0.90 out to 72%. Alpha 0.90 over a pure-white filament resolves to
+ * rgb(35,35,38) — the worst case the contrast numbers below are measured against.
+ */
+.section-inner::before,
+.section-inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    var(--scrim-core) 0%,
+    var(--scrim-hold) 55%,
+    var(--scrim-fade) 72%,
+    var(--scrim-tail) 84%,
+    var(--scrim-none) 100%
+  );
+}
+
+/* ::before follows the text column, ::after the media column. */
+.section-inner::before {
+  left: -14vw;
+  right: 34%;
+}
+
+.section-inner::after {
+  left: 34%;
+  right: -14vw;
+}
+
+/* `align: right` puts the text on the right, so the two swap sides. */
+.section-inner[data-align='right']::before {
+  left: 34%;
+  right: -14vw;
+}
+
+.section-inner[data-align='right']::after {
+  left: -14vw;
+  right: 34%;
+}
+
+/*
+ * Hero and plain have no media column. One scrim, wider and softer, and the second is
+ * not drawn at all rather than washing an empty half of the panel for nothing.
+ */
+.center-stage::before {
+  left: -18vw;
+  right: 26%;
+}
+
+.center-stage[data-align='right']::before {
+  left: 26%;
+  right: -18vw;
+}
+
+.center-stage::after {
+  display: none;
 }
 
 /* ── type ──────────────────────────────────────────────────────────────────── */
@@ -518,6 +632,18 @@ html[data-scrolled='true'] .scroll-hint {
     max-width: none;
     padding: 0;
     gap: 18px;
+  }
+
+  /*
+   * One column, so the scrim has almost no horizontal room to feather in: 14vw of a
+   * 375px phone is 52px, which would put the edge of the text at three-quarters of the
+   * ray. Widen the overscan and shorten it vertically, where a stacked stop is long and
+   * the two scrims would otherwise overlap into one continuous plate down the page.
+   */
+  .content-zone::before,
+  .media-zone::before,
+  .center-stage .content-zone::before {
+    inset: -14vh -30vw;
   }
 
   .media-zone,
