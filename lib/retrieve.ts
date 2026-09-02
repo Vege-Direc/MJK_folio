@@ -166,6 +166,23 @@ const MIN_TOP_SCORE = 8;
 /** The winning stop must hold half the weighted mass, or the router is guessing. */
 const MIN_SHARE = 0.5;
 
+/**
+ * Requests to do the visitor's work, refused on their shape rather than on their score.
+ *
+ * "Review my code" is not a question about MJK, but it is made of words the corpus is full
+ * of, so it scored 13.2 the moment a memory about directing coding agents was added -- well
+ * clear of MIN_TOP_SCORE -- and the site would have cheerfully answered it. Raising the
+ * threshold to outrun it is the wrong instrument: it would climb again with the next
+ * memory, and it would start refusing real questions that happen to score modestly.
+ *
+ * Intent is the honest test. These are second-person imperatives aimed at the visitor's own
+ * material, which is exactly what content/system-prompt.md tells the model to decline. The
+ * possessive is what keeps it narrow: "review my code" matches, "how do you review
+ * architecture" does not.
+ */
+const WORK_REQUEST =
+  /\b(write|review|fix|debug|refactor|optimi[sz]e|translate|summari[sz]e|proofread|edit|rewrite|solve|grade|critique)\s+(me\s+)?(my|our|this|these)\b/i;
+
 /** `ANSWERABLE_STOP_IDS` as a membership test that accepts any `StopId`, `hero` included. */
 const ANSWERABLE = new Set<string>(ANSWERABLE_STOP_IDS);
 
@@ -587,7 +604,7 @@ export function retrieve(question: string, opts: { k?: number } = {}): Retrieval
 
   const topScore = hits[0]?.score ?? 0;
   const { stopId, share } = vote(hits);
-  const topical = stopId !== null && topScore >= MIN_TOP_SCORE;
+  const topical = stopId !== null && topScore >= MIN_TOP_SCORE && !WORK_REQUEST.test(question);
   return {
     stopId,
     confident: topical && share >= MIN_SHARE,

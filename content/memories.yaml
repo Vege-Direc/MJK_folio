@@ -120,10 +120,45 @@
   section: capabilities
   stopId: work
   title: External assessment
-  tags: [credential, ai, engineering, third-party]
+  tags: [credential, ai, engineering, third-party, paxel, architect]
+  period: 2026
   body: >
-    My agent orchestration work was independently assessed by Y Combinator's Paxel as showing
-    "unusually strong architectural judgment," operating "at a strong engineering level."
+    Y Combinator's Paxel read twenty of my working sessions and reported back in July 2026. Its
+    summary: "You turn Claude Code into a shipping system, steering agents through architecture,
+    deploys, money bugs, and production smoke." It classified me as The Architect, on the grounds
+    that 78% of my sessions include architecture discussions. On the work itself it said I steer
+    Claude Code with "unusually strong architectural judgment," and that I am "operating at a strong
+    engineering level: your best work is not raw implementation, it is the judgment you apply while
+    directing Claude Code through architecture, deployment, product, and workflow decisions."
+
+- id: paxel-numbers
+  section: capabilities
+  stopId: work
+  title: What that looked like in numbers
+  tags: [credential, paxel, volume, depth, measurement, agents]
+  period: 2026
+  body: >
+    The same assessment measured the work rather than describing it. 208,803 lines shipped across
+    993 commits. 154 hours logged. 67 deep sessions, averaging 183 minutes of uninterrupted focus,
+    with a longest single stretch of 16 hours and a longest streak of 28 consecutive days shipping
+    something. Prompts averaging 143 words, about 30 of them a session, which it called
+    conversational rather than instructional.
+
+- id: how-i-work-with-agents
+  section: capabilities
+  stopId: now
+  title: How I actually direct an agent
+  tags: [ai, agents, method, architecture, judgement, claude-code]
+  period: 2026
+  body: >
+    The Paxel assessment classified 172 of my decisions and found 150 of them were architectural. The
+    named patterns are the ones I would have picked myself. Full Stop and Investigate, thirty times:
+    I halt the agent when a premise looks unsafe or under-evidenced. Audit Completeness, thirteen
+    times: I check whether it skipped a document or a source it needed. Codify the Lesson, eleven
+    times: I turn a one-off correction into a project rule so it cannot recur. Then Correct the Tool
+    Choice and Challenge the Constraint, eight times each. The report's phrase for the shape of it
+    was that I treat delivery as a gated system. That is the job. The model writes the code; the
+    judgement about what is worth building, and when to stop, is still mine.
 
 - id: project-tallybridge
   section: projects
