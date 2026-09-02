@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { setMind } from '@/lib/mind/controller';
+import { STOPS } from '@/content/stops';
 import type { MindHandle } from '@/lib/mind/scene';
 
 /**
@@ -19,6 +20,12 @@ import type { MindHandle } from '@/lib/mind/scene';
  * stays exactly what it already is: a full-viewport rectangle of --color-bg. There is no
  * error state to design because the failure mode is the background.
  */
+/**
+ * -1 where the stop puts its text on the left, +1 where it puts it on the right.
+ * Computed once at module scope: STOPS is a literal and this never changes.
+ */
+const TEXT_SIDES = STOPS.map((s) => (s.align === 'right' ? 1 : -1));
+
 export default function MindCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -62,6 +69,11 @@ export default function MindCanvas() {
         if (cancelled || !canvas) return;
         handle = createMind(canvas, {
           reducedMotion: motion.matches,
+          // Where each stop puts its words, so the reading light can sit on that side.
+          // Read from the authored stop table rather than guessed at: `align` is the
+          // same field the DOM lays the columns out with, so the light and the type
+          // cannot disagree about which half of the frame is being read.
+          textSides: TEXT_SIDES,
           // Deliberately no `onArriveAtStop` here. The scene arrives on its own clock —
           // displayProgress eases toward the pushed value over ~125ms — and the DOM's
           // lit stop is written from scroll by ScrollProgress. Wiring both to the same

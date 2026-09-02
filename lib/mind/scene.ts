@@ -33,6 +33,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { CFG, PALETTE, detectTier, type Tier } from './config';
 import { clamp, makeCurve, smoothstep, tubeWithTangent, UP } from './curves';
+import { anchorAt, makeReadingLightPass } from './reading-light';
 import { buildWaypoints, mulberry32, srand, type Waypoint } from './waypoints';
 
 export type MindOptions = {
@@ -44,6 +45,12 @@ export type MindOptions = {
   tier?: Tier;
   /** Tier 3 topology. Fetched after the scene is already running. */
   farNetworkUrl?: string;
+  /**
+   * Which side each stop puts its text on: -1 left, +1 right, one per stop. Drives
+   * the reading light. Omitted, the light is off and the scene renders as it always
+   * did — this module has no opinion about where the words are, and should not.
+   */
+  textSides?: readonly number[];
   onArriveAtStop?: (stopIndex: number) => void;
   /** Replaces the prototype's per-500ms write to `#fps`. */
   onFps?: (fps: number) => void;
@@ -1331,6 +1338,23 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       );
       composer.addPass(bloomPass);
     }
+
+    /**
+     * The reading light. Inserted after the bloom so it attenuates the halo the bloom
+     * just produced -- which is the part that actually lands behind a paragraph -- and
+     * before OutputPass so it works in the same linear space as everything upstream.
+     *
+     * Off entirely when the caller passes no `textSides`.
+     */
+    const sides = opts.textSides ?? [];
+    const readingLight = sides.length ? makeReadingLightPass() : null;
+    if (readingLight) {
+      // One column on a phone, so the light is centred and spans the whole frame; two
+      // columns on desktop, so it sits over one side and is gone by the other.
+      readingLight.uniforms.uSpan.value = isMobile ? 1.15 : 0.78;
+      readingLight.uniforms.uAmount.value = isMobile ? 0.55 : 0.70;
+      composer.addPass(readingLight);
+    }
     composer.addPass(new OutputPass());
     composer.setSize(viewW, viewH);
 
@@ -1421,6 +1445,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       lookTarget(clamp(u + 0.05, 0, 1), _look);
       camera.lookAt(_look);
 
+      // Slide the reading light to the side this stop puts its words on. Eased between
+      // stops so it drifts across with the camera rather than snapping at a boundary.
+      if (readingLight) readingLight.uniforms.uAnchor.value = anchorAt(u, sides);
       const stop = clamp(Math.round(u * (M - 1)), 0, M - 1);
       if (stop !== currentStop){
         currentStop = stop;
