@@ -1,28 +1,33 @@
-import Hero from '@/components/sections/Hero';
-import Capabilities from '@/components/sections/Capabilities';
-import Story from '@/components/sections/Story';
-import Timeline from '@/components/sections/Timeline';
-import Projects from '@/components/sections/Projects';
-import Contact from '@/components/sections/Contact';
-import MindScene from '@/components/mind/MindScene';
+import MindCanvas from '@/components/mind/MindCanvas';
+import ScrollProgress from '@/components/mind/ScrollProgress';
+import StopSection from '@/components/stops/StopSection';
+import { STOPS } from '@/content/stops';
 
+/**
+ * The page: one canvas, nine stops, and a scroll listener that tells the canvas where
+ * the reader is.
+ *
+ * Nine sections of prose, rendered on the server, are the content. The canvas is
+ * ambience that loads afterwards. That order is the whole architecture — it is why
+ * `<MindCanvas/>` renders an inert `<canvas>` and imports three.js from an idle callback
+ * rather than being wrapped in `next/dynamic`, and why nothing on this page holds
+ * per-frame state in React.
+ */
 export default function Home() {
   return (
     <>
-      {/* WebGL mind — fixed beneath all content, scroll drives camera path */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <MindScene />
-      </div>
+      <MindCanvas />
+      <ScrollProgress count={STOPS.length} />
 
-      <main className="relative">
-        <Hero />
-        <Capabilities />
-        <Story />
-        <Timeline />
-        <Projects />
-        <Contact />
+      <main className="scroll-root">
+        {STOPS.map((stop) => (
+          <StopSection key={stop.id} stop={stop} />
+        ))}
       </main>
 
+      <p className="scroll-hint" aria-hidden="true">
+        Scroll to travel
+      </p>
     </>
   );
 }
