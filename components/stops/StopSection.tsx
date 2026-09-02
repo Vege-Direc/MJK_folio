@@ -4,6 +4,8 @@ import { memoriesForStop } from '@/lib/corpus/load';
 import type { Memory } from '@/lib/corpus/schema';
 import AuthoredBody from './AuthoredBody';
 import Carousel from './Carousel';
+import Timeline from './Timeline';
+import { timelineEntries } from './timeline-data';
 
 /**
  * One stop, server-rendered. Nine of these are the page.
@@ -169,6 +171,8 @@ function media(stop: Stop): ReactNode {
   switch (stop.compose satisfies Compose) {
     case 'cards':
       return <Cards stop={stop} />;
+    case 'timeline':
+      return <Timeline entries={timelineEntries()} />;
     case 'carousel':
       return <Carousel />;
     case 'contact':

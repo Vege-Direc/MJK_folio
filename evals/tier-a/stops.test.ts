@@ -8,6 +8,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ComposeKind } from '../../content/stops';
 import { ANSWERABLE_STOP_IDS, STOPS, STOP_IDS, stopById } from '../../content/stops';
+import { timelineEntries } from '../../components/stops/timeline-data';
+import { loadMemories } from '../../lib/corpus/load';
+import { parsePeriod } from '../../lib/corpus/schema';
 
 /**
  * The compose kinds the renderer knows how to draw, from the authoritative design in
@@ -17,7 +20,14 @@ import { ANSWERABLE_STOP_IDS, STOPS, STOP_IDS, stopById } from '../../content/st
  * still type-checks (it is a subset), so the runtime assertion below stays the thing
  * that catches it — but delete a kind the renderer still needs and tsc says so.
  */
-const RENDERABLE_COMPOSE: readonly ComposeKind[] = ['hero', 'plain', 'cards', 'carousel', 'contact'];
+const RENDERABLE_COMPOSE: readonly ComposeKind[] = [
+  'hero',
+  'plain',
+  'cards',
+  'carousel',
+  'contact',
+  'timeline',
+];
 
 describe('STOPS', () => {
   it('has nine stops', () => {
@@ -58,5 +68,63 @@ describe('STOPS', () => {
 
   it('throws on an unknown id rather than returning undefined', () => {
     expect(() => stopById('nope' as never)).toThrow(/unknown stopId/);
+  });
+});
+
+/**
+ * The timeline is the one part of the page whose content is a *rule* rather than a list:
+ * every `timeline` memory carrying a `period`, oldest first. That is what lets someone
+ * add a job to content/memories.yaml and have it appear without touching a component —
+ * and it is also what makes it worth testing, because a rule can go wrong silently in
+ * ways a hard-coded list cannot. A period that stops parsing sorts to year 0 and the
+ * entry quietly leads the career; a memory that loses its period vanishes off the page.
+ */
+describe('the §04 timeline', () => {
+  const entries = timelineEntries();
+
+  it('is what the apac stop composes', () => {
+    expect(stopById('apac').compose).toBe('timeline');
+  });
+
+  it('draws every dated timeline memory, and only those', () => {
+    const expected = loadMemories().filter((m) => m.section === 'timeline' && m.period);
+    expect(entries).toHaveLength(expected.length);
+    expect(entries.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(entries.map((e) => e.id))).toEqual(new Set(expected.map((m) => m.id)));
+  });
+
+  it('gives every entry a period that parses', () => {
+    for (const e of entries) {
+      expect(e.period.trim().length, `${e.id} has no period`).toBeGreaterThan(0);
+      expect(parsePeriod(e.period), `${e.id} period "${e.period}" does not parse`).not.toBeNull();
+      // Year 0 is the selector's floor for an unparseable period. Reaching it means the
+      // entry is on the page but no longer placed in time.
+      expect(e.start, `${e.id} fell back to the unplaceable year`).toBeGreaterThan(1900);
+    }
+  });
+
+  it('runs oldest first', () => {
+    const years = entries.map((e) => e.start);
+    expect(years).toEqual([...years].sort((a, b) => a - b));
+  });
+
+  it('crosses stop boundaries, because a career does not stop at one', () => {
+    // The education and Krunch Labs entries live on `engineering` and `now`. A selector
+    // narrowed to `apac` would silently clip both ends of the career.
+    const stops = new Set(
+      entries.map((e) => loadMemories().find((m) => m.id === e.id)?.stopId).filter(Boolean),
+    );
+    expect(stops.size).toBeGreaterThan(1);
+  });
+
+  it('says nothing the corpus does not', () => {
+    for (const e of entries) {
+      const memory = loadMemories().find((m) => m.id === e.id);
+      expect(memory, `${e.id} is not a memory`).toBeDefined();
+      expect(e.title).toBe(memory?.title);
+      // Whitespace is normalised for rendering; the words must still be the memory's.
+      expect(memory?.body.replace(/\s+/g, ' ').trim()).toBe(e.body);
+      expect(e.body.startsWith(e.summary)).toBe(true);
+    }
   });
 });

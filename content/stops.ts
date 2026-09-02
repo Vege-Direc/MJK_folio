@@ -94,7 +94,7 @@ export const STOPS = [
     id: 'apac',
     index: 4,
     kicker: '§ 04 — APAC',
-    compose: 'cards',
+    compose: 'timeline',
     align: 'left',
     title: { strong: 'A decade in paid media', muted: 'across the region.' },
     body: 'Omnicom, Kinnect, Hotstar, Taboola, Nanomark, Triad. The habit started at Kinnect: automate the report nobody wants to build twice.',

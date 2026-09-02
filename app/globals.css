@@ -554,6 +554,137 @@
   line-height: 1.55;
 }
 
+/* ── timeline ──────────────────────────────────────────────────────────────── */
+
+/**
+ * The dated rail on §04.
+ *
+ * One `border-top: 1px solid var(--color-rule)` per row is the entire chrome — the same
+ * vocabulary as `.mini-card` and `.contact-links`, so this introduces no new component
+ * style, only a new arrangement. No boxes, no fills: it sits over the scene and the
+ * reading glass on `.panel` is what makes it legible, exactly as the cards it replaced.
+ */
+/*
+ * Ten rows and one open panel have to fit a media column that is about 620px tall on a
+ * 900px viewport once the stop's padding and the dock reserve are taken out. Two-line
+ * rows made that 880px, and the stop clipped its first and last entries — so the closed
+ * row is one line: period, employer, and as much of the first sentence as the column
+ * has room for. It reads as a résumé index, which is the right register for a rail whose
+ * whole job is to be scanned.
+ */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tl-row {
+  border-top: 1px solid var(--color-rule);
+}
+
+.tl-row > button {
+  display: grid;
+  grid-template-columns: 5.25rem auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 14px;
+  width: 100%;
+  padding: 7px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.tl-year {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--color-type-dim);
+  white-space: nowrap;
+  transition: color 160ms;
+}
+
+.tl-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--color-type);
+}
+
+/*
+ * The first sentence, on the closed row. Clamped to one line: ten rows have to fit a
+ * media column beside a stop title, and a summary that wraps turns a scannable rail into
+ * a wall. The whole body is one click away and that is what the click is for.
+ */
+/*
+ * The first sentence, on the closed row and on the same line. Clamped: the whole body is
+ * one click away and that is what the click is for, so the rail spends its height on
+ * showing every entry rather than on showing one of them twice.
+ */
+.tl-summary {
+  grid-column: 3;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-type-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/*
+ * `grid-template-rows: 0fr -> 1fr` animates a height nobody had to measure. The inner
+ * element carries the `overflow: hidden` the idiom requires.
+ */
+.tl-row > div {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tl-row[data-open] > div {
+  grid-template-rows: 1fr;
+  transition-duration: 260ms;
+}
+
+.tl-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/*
+ * The panel runs the full width of the column rather than the 46ch a body paragraph
+ * would normally take. The longest entry is about 700 characters; at 46ch that is
+ * fifteen lines and the rail overflows its stop, and at the column's own width it is
+ * eleven and it fits. Sixty-odd characters is still inside a comfortable measure.
+ */
+.tl-panel-inner p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-type-muted);
+  padding: 0 0 12px;
+}
+
+/* The one colour change in the component, and it doubles as the "you are here" mark. */
+.tl-row[data-open] .tl-year {
+  color: var(--color-accent);
+}
+
+.tl-row[data-open] .tl-summary {
+  display: none;
+}
+
+.tl-row > button:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tl-row > button:hover .tl-title {
+  color: var(--color-accent);
+}
+
 /* ── carousel ──────────────────────────────────────────────────────────────── */
 
 .carousel {
@@ -881,6 +1012,38 @@
     gap: 16px;
   }
 
+  /*
+   * 44px minimum on the row, which is the touch target. The period moves above the
+   * title rather than beside it: a 5.5rem column is a third of a 375px screen, and
+   * "2021–2023" beside "Independent consulting" leaves the title two words per line.
+   */
+  .timeline {
+    max-width: none;
+  }
+
+  .tl-row > button {
+    grid-template-columns: 1fr;
+    row-gap: 1px;
+    padding: 11px 0;
+    min-height: 44px;
+  }
+
+  /*
+   * The panel grows on a phone, so the rail can afford the second line the desktop
+   * column cannot: the summary drops below the title instead of competing with it for a
+   * 375px row.
+   */
+  .tl-summary {
+    grid-column: 1;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.45;
+  }
+
+  .tl-title {
+    font-size: 18px;
+  }
+
   .carousel {
     max-width: 100%;
   }
@@ -932,6 +1095,18 @@
   }
 
   .carousel-hero img {
+    transition: none;
+  }
+
+  /*
+   * The timeline keeps its height transition, and that is deliberate. An accordion that
+   * snaps open moves everything below it by 100px with no signal that anything happened
+   * — a discontinuity, which is worse for someone sensitive to motion than a short,
+   * contained one. `prefers-reduced-motion` asks for less movement, not for jumps. What
+   * goes is the colour transition on the year mark, which communicates nothing the
+   * colour itself does not.
+   */
+  .tl-year {
     transition: none;
   }
 }

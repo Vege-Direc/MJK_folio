@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
 
 /**
@@ -130,11 +130,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const [showOriginal, setShowOriginal] = useState(false);
 
-  // A new question is a new subject, so the authored paragraph goes back under.
+  /*
+   * A new question is a new subject, so the authored paragraph goes back under.
+   *
+   * Adjusted during render rather than in an effect. The effect version renders the new
+   * answer once with the *previous* question's `showOriginal` still applied, then
+   * corrects itself — a visible flash of the authored copy under an answer that did not
+   * ask for it, and a cascading render for the linter to object to. Comparing against a
+   * remembered value and setting during render is React's own answer to this.
+   */
   const question = answer?.question ?? null;
-  useEffect(() => {
+  const [lastQuestion, setLastQuestion] = useState(question);
+  if (question !== lastQuestion) {
+    setLastQuestion(question);
     setShowOriginal(false);
-  }, [question]);
+  }
 
   const ask = useCallback(
     (question: string) => {
