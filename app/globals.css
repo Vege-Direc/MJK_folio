@@ -142,6 +142,23 @@
     color: var(--color-bg);
   }
 
+  /*
+   * Tabbing to a control that is off screen has to bring it on screen, and on this page
+   * it did not: measured, the first meaningful Tab stop sat at document top 5114px and
+   * `scrollY` stayed 0 both immediately and 250ms later. A sighted keyboard visitor
+   * landed on a control they could not see.
+   *
+   * `scroll-margin-block` gives the browser's scroll-into-view somewhere to put the
+   * element other than hard against a viewport edge — which on this layout means behind
+   * the fixed dock at the bottom, the one place a focused control must never land.
+   */
+  a,
+  button,
+  input,
+  [tabindex]:not([tabindex='-1']) {
+    scroll-margin-block: 96px calc(var(--dock-h) + 32px);
+  }
+
   a {
     color: var(--color-accent);
     text-decoration: none;

@@ -1,5 +1,6 @@
 import MindCanvas from '@/components/mind/MindCanvas';
 import ScrollProgress from '@/components/mind/ScrollProgress';
+import FocusIntoView from '@/components/stops/FocusIntoView';
 import StopSection from '@/components/stops/StopSection';
 import { STOPS } from '@/content/stops';
 
@@ -18,6 +19,7 @@ export default function Home() {
     <>
       <MindCanvas />
       <ScrollProgress count={STOPS.length} />
+      <FocusIntoView />
 
       <main className="scroll-root">
         {STOPS.map((stop) => (
