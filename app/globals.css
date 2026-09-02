@@ -37,20 +37,35 @@
    */
   --color-bg: #0a0a0e;
   --color-type: #f5f3ee;
-  --color-type-muted: #c9c5b8;
-  --color-type-dim: #a5a196;
+  --color-type-muted: #b8b4a8;
+  --color-type-dim: #918d83;
   --color-accent: #d4c19c;
   --color-rule: #2e2d36;
 
   /**
    * The reading scrim, as tokens so the text column and the media column stay in step
-   * and a single number tunes both. See `.content-zone::before` for what they do.
+   * and a single number tunes both. See `.section-inner::before` for what they do.
+   *
+   * The plateau is what the contrast numbers rest on; the tail is what keeps the scene.
+   * Measured geometry, not guesswork: the far corner of a run of type sits at ~64% of
+   * the gradient's ray, so holding 0.94 to 58% and 0.88 to 74% covers every glyph, and
+   * everything past 74% is margin the type never reaches — which is why the tail can
+   * fall away as fast as it does without costing a single point of contrast.
    */
-  --scrim-core: rgba(10, 10, 14, 0.96);
-  --scrim-hold: rgba(10, 10, 14, 0.95);
-  --scrim-fade: rgba(10, 10, 14, 0.9);
-  --scrim-tail: rgba(10, 10, 14, 0.68);
+  --scrim-core: rgba(10, 10, 14, 0.95);
+  --scrim-hold: rgba(10, 10, 14, 0.94);
+  --scrim-fade: rgba(10, 10, 14, 0.88);
+  --scrim-tail: rgba(10, 10, 14, 0.5);
   --scrim-none: rgba(10, 10, 14, 0);
+
+  /**
+   * The dock's measured height, published by a ResizeObserver in ChatDock so every
+   * stop can clear it. Two hard-coded numbers used to guess at this and both were
+   * wrong: the verdict line under an answer rendered at y=810 against a dock top of
+   * 727, i.e. inside the dock's own black gradient, which is the single reason the
+   * citations looked broken. This value is the fallback before the observer fires.
+   */
+  --dock-h: 173px;
 
   --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
   --font-serif: var(--font-fraunces), 'Fraunces', Georgia, serif;
@@ -165,7 +180,13 @@
   gap: 0;
   width: 100%;
   height: 100%;
-  padding: 8vh 5vw;
+  /*
+   * The bottom pad is derived, never guessed. `--dock-h` is written from a
+   * ResizeObserver on the dock itself, so a stop's last line clears the dock's black
+   * gradient whatever the dock happens to be that viewport — which is what stops the
+   * verdict line and the citation chips rendering inside it.
+   */
+  padding: 8vh 5vw calc(var(--dock-h) + 32px);
   position: relative;
   text-align: left;
   transition: opacity 0.5s cubic-bezier(0.2, 0, 0, 1), transform 0.5s cubic-bezier(0.2, 0, 0, 1);
@@ -191,16 +212,35 @@
   padding: 8vh 6vw;
 }
 
+/*
+ * `align-self: center` on a shrink-wrapping flex child made the authored
+ * `align: left | right` alternation completely inert on the four one-column stops:
+ * the title's left edge was a function of how long the copy happened to be, and the
+ * first five stops measured 272, 488, 457, 488 and 82px — five different margins,
+ * none of them chosen. Stretching the column and pushing it with `margin-inline`
+ * gives the page a spine: a left rail, or a right one, and nothing in between.
+ */
 .center-stage .content-zone {
-  max-width: 56rem;
+  align-self: stretch;
+  max-width: 46rem;
+  margin-inline: 0;
   padding: 0;
+}
+
+.center-stage[data-align='right'] .content-zone {
+  margin-inline-start: auto;
 }
 
 .content-zone {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  /*
+   * Was a single 24px gap doing three different jobs — kicker to title, title to body,
+   * body to answer all got the same interval, so nothing in the column had more weight
+   * than anything else. The intervals are authored individually below instead.
+   */
+  gap: 0;
   align-self: center;
   max-width: 44rem;
   padding-right: 2vw;
@@ -277,9 +317,9 @@
   background: radial-gradient(
     ellipse 50% 50% at 50% 50%,
     var(--scrim-core) 0%,
-    var(--scrim-hold) 55%,
-    var(--scrim-fade) 72%,
-    var(--scrim-tail) 84%,
+    var(--scrim-hold) 58%,
+    var(--scrim-fade) 74%,
+    var(--scrim-tail) 87%,
     var(--scrim-none) 100%
   );
 }
@@ -326,21 +366,36 @@
 
 /* ── type ──────────────────────────────────────────────────────────────────── */
 
+/*
+ * 11px at 0.22em in a mono face fragments a short label into loose glyphs —
+ * "§ 0 4 — A P A C" reads as a serial number rather than a section marker. Slightly
+ * larger, tracked less, weighted more.
+ */
 .section-kicker {
   color: var(--color-accent);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  margin-bottom: 14px;
 }
 
+/*
+ * Light type on a dark, *moving* ground needs compensating on all three axes: a touch
+ * more leading, a touch of tracking, and a touch more weight than the same face would
+ * need on paper. Inter is variable here, so 420 costs nothing.
+ */
 .section-title {
   font-family: var(--font-serif);
   font-weight: 400;
   font-size: clamp(2.2rem, 4.8vw, 4.4rem);
-  line-height: 1.02;
+  /* 1.02 put the descenders of "imagine", "parallel" and "region" into the next cap-line. */
+  line-height: 1.06;
   letter-spacing: -0.015em;
   color: var(--color-type);
+  text-wrap: balance;
+  padding-bottom: 0.06em;
+  margin-bottom: 30px;
 }
 
 .section-title .muted {
@@ -350,8 +405,11 @@
 .section-body {
   color: var(--color-type-muted);
   font-family: var(--font-sans);
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 1.0625rem;
+  line-height: 1.66;
+  letter-spacing: 0.004em;
+  font-weight: 420;
+  text-wrap: pretty;
   max-width: 44ch;
 }
 
@@ -363,7 +421,39 @@
 .section-body-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  /* The answer is a new movement, not the next paragraph. */
+  gap: 34px;
+}
+
+/**
+ * The authored paragraph, collapsing to make way for an answer.
+ *
+ * `grid-template-rows: 1fr -> 0fr` animates a height nobody had to measure, which is
+ * the only way to do this without a ResizeObserver and a layout read per frame. The
+ * inner element carries the `overflow: hidden` the idiom needs.
+ *
+ * The height transition survives `prefers-reduced-motion` on purpose — see the
+ * reduced-motion block at the foot of this file for why a silent jump is the worse
+ * option — so only opacity is dropped there.
+ */
+.authored-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 160ms ease-out;
+  opacity: 1;
+}
+
+.authored-body-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.authored-body[data-collapsed] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  /* Exit faster than entry, and do not hold the gap open once it is gone. */
+  transition: grid-template-rows 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 120ms ease-out;
+  margin-bottom: -34px;
 }
 
 /* ── cards ─────────────────────────────────────────────────────────────────── */
@@ -383,7 +473,7 @@
 .mini-card .mk {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   color: var(--color-accent);
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -398,8 +488,8 @@
 
 .mini-card .mb {
   color: var(--color-type-muted);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 /* ── carousel ──────────────────────────────────────────────────────────────── */
@@ -439,7 +529,7 @@
   z-index: 2;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   color: var(--color-type);
   text-transform: uppercase;
   padding: 4px 8px;
@@ -497,7 +587,7 @@
   margin-top: 10px;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   color: var(--color-type-dim);
 }
 
@@ -511,14 +601,20 @@
  * gate, and the interval outlived the element. A visible control is the part that
  * cannot be got wrong by accident.
  */
+/*
+ * It measured 60x19px, seven pixels inside the dock's gradient — the least visible
+ * element on the stop, and it is the control that exists specifically to satisfy SC
+ * 2.2.2. Negative margins keep the enlarged hit area from moving the row it sits in.
+ */
 .carousel-toggle {
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: 10px 8px;
+  margin: -10px -8px;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   color: var(--color-type-dim);
   transition: color 0.15s;
 }
@@ -563,7 +659,7 @@
 .contact-links .kk {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   color: var(--color-type-dim);
   white-space: nowrap;
 }
@@ -574,27 +670,6 @@
   overflow-wrap: anywhere;
 }
 
-/* ── scroll hint ───────────────────────────────────────────────────────────── */
-
-/* bottom:128px clears the chat dock, exactly as the prototype did (:111). */
-.scroll-hint {
-  position: fixed;
-  left: 50%;
-  bottom: 128px;
-  transform: translateX(-50%);
-  z-index: 2;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-type-dim);
-  pointer-events: none;
-  transition: opacity 0.6s;
-}
-
-html[data-scrolled='true'] .scroll-hint {
-  opacity: 0;
-}
 
 /* ── mobile: the restack the prototype never had ───────────────────────────── */
 
@@ -615,35 +690,61 @@ html[data-scrolled='true'] .scroll-hint {
   .section-inner.center-stage {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /*
+     * `center` printed the last card of every cards stop underneath the dock. The
+     * reserve below is correct and was never the bug: when content exceeds
+     * `min-height`, centring pushes the overflow out symmetrically — through the
+     * reserved padding at the bottom and off the top. Starting at the top is what
+     * makes the reserve do the job it was written to do.
+     */
+    justify-content: flex-start;
     align-items: stretch;
     gap: 28px;
-    /* The dock is fixed and full-width, and with its four suggested prompts stacked it
-       is about 205px tall at 375px. Reserving that is what keeps a stop's own content
-       out from under it; the panel grows rather than clipping when it still does not
-       fit, which is why `.panel` gives up `overflow: hidden` at this width. */
-    padding: 4vh 7vw 208px;
+    padding: 4vh 7vw calc(var(--dock-h) + 32px);
     min-height: var(--stop-height);
   }
 
   .content-zone,
-  .content-zone.right {
+  .content-zone.right,
+  .center-stage .content-zone {
     order: 1;
     max-width: none;
+    margin-inline: 0;
     padding: 0;
-    gap: 18px;
+    gap: 0;
   }
 
   /*
-   * One column, so the scrim has almost no horizontal room to feather in: 14vw of a
-   * 375px phone is 52px, which would put the edge of the text at three-quarters of the
-   * ray. Widen the overscan and shorten it vertically, where a stacked stop is long and
-   * the two scrims would otherwise overlap into one continuous plate down the page.
+   * One column and a panel that grows, so the desktop geometry does not transfer: a
+   * scrim pinned to a 1200px-tall stacked panel would put its plateau in the middle and
+   * leave the top and bottom of the column uncovered. Both scrims become one
+   * full-width wash instead, feathered at every edge — there are no margins on a phone
+   * for the scene to glow through anyway.
    */
-  .content-zone::before,
-  .media-zone::before,
-  .center-stage .content-zone::before {
-    inset: -14vh -30vw;
+  .section-inner::before,
+  .section-inner[data-align='right']::before,
+  .center-stage::before {
+    left: -20vw;
+    right: -20vw;
+    background: linear-gradient(
+      to right,
+      var(--scrim-none) 0%,
+      var(--scrim-hold) 18%,
+      var(--scrim-hold) 82%,
+      var(--scrim-none) 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 5%,
+      #000 95%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%);
+  }
+
+  .section-inner::after {
+    display: none;
   }
 
   .media-zone,
@@ -653,8 +754,11 @@ html[data-scrolled='true'] .scroll-hint {
     padding: 0;
   }
 
+  /* 30.4px against a 16px body is only a 1.9x step; the display face needs more. */
   .section-title {
-    font-size: clamp(1.9rem, 8vw, 2.6rem);
+    font-size: clamp(2.05rem, 8.8vw, 2.8rem);
+    line-height: 1.14;
+    margin-bottom: 22px;
   }
 
   .section-body {
@@ -693,11 +797,6 @@ html[data-scrolled='true'] .scroll-hint {
     align-items: flex-start;
     gap: 4px;
   }
-
-
-  .scroll-hint {
-    display: none;
-  }
 }
 
 /* ── reduced motion ────────────────────────────────────────────────────────── */
@@ -709,6 +808,16 @@ html[data-scrolled='true'] .scroll-hint {
 
   .section-inner {
     transition: none;
+  }
+
+  /*
+   * The old reset was `.section-inner { transform: none }` at specificity (0,1,0),
+   * which lost outright to `.panel[data-active='false'] .section-inner` at (0,2,1) —
+   * so the 8px lift and the 1.5% scale still ran under `prefers-reduced-motion`. It
+   * has to be reset in the same selector to win. The opacity change stays: it is the
+   * whole "you are here" affordance, and it does not move anything.
+   */
+  .panel[data-active='false'] .section-inner {
     transform: none;
   }
 

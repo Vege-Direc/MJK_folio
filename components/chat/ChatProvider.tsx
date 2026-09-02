@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
 
 /**
@@ -31,6 +31,17 @@ type ChatContextValue = {
   asking: boolean;
   error: Error | undefined;
   ask: (question: string) => void;
+  /**
+   * The visitor has asked for the stop's own paragraph back.
+   *
+   * It restores the authored copy *alongside* the answer rather than instead of it —
+   * nothing is discarded, so there is nothing to restore from and no second copy of the
+   * answer to keep anywhere. The answer already lives in the message list; this is one
+   * boolean about what is on screen, and it resets on the next question because the
+   * next question is a new subject.
+   */
+  showOriginal: boolean;
+  setShowOriginal: (v: boolean) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -117,6 +128,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return { question, envelope, text, streaming: asking, shown };
   }, [messages, asking]);
 
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  // A new question is a new subject, so the authored paragraph goes back under.
+  const question = answer?.question ?? null;
+  useEffect(() => {
+    setShowOriginal(false);
+  }, [question]);
+
   const ask = useCallback(
     (question: string) => {
       const q = question.trim();
@@ -127,8 +146,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<ChatContextValue>(
-    () => ({ answer, asking, error: error ?? undefined, ask }),
-    [answer, asking, error, ask],
+    () => ({ answer, asking, error: error ?? undefined, ask, showOriginal, setShowOriginal }),
+    [answer, asking, error, ask, showOriginal],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

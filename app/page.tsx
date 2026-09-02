@@ -24,10 +24,6 @@ export default function Home() {
           <StopSection key={stop.id} stop={stop} />
         ))}
       </main>
-
-      <p className="scroll-hint" aria-hidden="true">
-        Scroll to travel
-      </p>
     </>
   );
 }
