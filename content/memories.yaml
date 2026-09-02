@@ -28,7 +28,7 @@
 
 - id: project-jewel-ai
   section: projects
-  stopId: now
+  stopId: work
   title: JewelAI Studio
   tags: [ai, agents, creative, langgraph]
   body: >
@@ -37,7 +37,7 @@
 
 - id: project-mrunn-erp
   section: projects
-  stopId: now
+  stopId: work
   title: MruNN-ERP — chat-native ERP
   tags: [ai, ops, mastra, agents]
   body: >
@@ -46,10 +46,10 @@
     used forces the human to translate their intent into a form.
 
 - id: project-taboola
-  section: projects
-  stopId: work
-  title: Taboola product work
-  tags: [product, payments, security, apac]
+  section: timeline
+  stopId: apac
+  title: Taboola
+  tags: [taboola, product, payments, security, apac, thailand, employment]
   period: 2020-2021
   body: >
     Media Product Specialist at Taboola, based in Thailand. I led product rollouts including
@@ -106,10 +106,10 @@
 # ── Added 2026-08-26, verified against the resume ──────────────────────────────
 
 - id: krunch-labs
-  section: projects
+  section: timeline
   stopId: now
   title: Krunch Labs
-  tags: [ai, consulting, singapore, founder]
+  tags: [ai, consulting, singapore, founder, employment]
   period: 2025-present
   body: >
     I founded Krunch Labs in January 2025 in Singapore, building AI systems for consumer and B2B
@@ -127,7 +127,7 @@
 
 - id: project-tallybridge
   section: projects
-  stopId: now
+  stopId: work
   title: TallyBridge
   tags: [ai, open-source, mcp, accounting]
   body: >
@@ -137,7 +137,7 @@
 
 - id: project-photoshoot-pipeline
   section: projects
-  stopId: now
+  stopId: work
   title: The multi-agent photoshoot
   tags: [ai, agents, creative]
   body: >
@@ -159,13 +159,17 @@
 - id: omnicom-years
   section: timeline
   stopId: apac
-  title: The Omnicom years
-  tags: [omnicom, media, india, strategy, phd, omd]
+  title: Omnicom Group
+  tags: [omnicom, media, india, strategy, phd, omd, resolution, employment]
   period: 2013-2017
   body: >
-    Four years at Omnicom in India. Media strategy for Hindustan Unilever across eight categories at
-    PHD; digital strategy for Parle, Tourism Australia and Visa at OMD; SEM, social and display for
-    Hindustan Unilever at Resolution Media.
+    Four years at Omnicom in India, across three of its agencies. Senior Media Planner at PHD from May
+    2013 to May 2014, building media strategy for Hindustan Unilever across eight categories and
+    reporting competitive activity back to the brand. Digital Business Manager at OMD from January 2015
+    to May 2016, developing digital business for Parle, Tourism Australia, Visa, Bank Bazaar, Bunge's
+    Dalda and 101 India across display, social and mobile. Digital Media Manager at Resolution Media
+    from May 2016 to January 2017, running SEM, social and display for Hindustan Unilever. The gap in
+    the middle, from June to December 2014, is when I went home and built the motorcycle.
 
 - id: build-rd350
   section: story
@@ -181,10 +185,14 @@
   section: timeline
   stopId: engineering
   title: Education
-  tags: [education, aerospace, mechanical]
+  tags: [education, aerospace, mechanical, brunel, bits, school]
+  period: 2004-2012
   body: >
-    MSc Aerospace Engineering, Brunel University London, 2012, Merit. BEng Mechanical Engineering,
-    BITS Pilani Dubai, 2010, First Class Honours.
+    MSc Aerospace Engineering, Brunel University London, 2012, Merit. The taught modules were design
+    and analysis of aerospace vehicles, advanced aerodynamics, propulsion systems and space mechanics,
+    aircraft structures and loads, and strategic management. BEng Mechanical Engineering, BITS Pilani
+    Dubai, 2010, First Class with a 7.17 CGPA. Before that, The Choice School in Kochi: 86.8% in the
+    CBSE Class XII exams in 2006 and 90.6% in Class X in 2004.
 
 - id: awards
   section: capabilities
@@ -266,7 +274,7 @@
 
 - id: outreach-engine
   section: projects
-  stopId: now
+  stopId: work
   title: The outreach engine
   tags: [ai, automation, demand-generation, krunch]
   period: 2025-present
@@ -277,7 +285,7 @@
 
 - id: artha-gtm
   section: projects
-  stopId: now
+  stopId: work
   title: Artha go-to-market
   tags: [growth, ai, paid-media, launch, krunch]
   period: 2025-present
@@ -288,7 +296,7 @@
 
 - id: mrunn-approval-gate
   section: projects
-  stopId: now
+  stopId: work
   title: MruNN-ERP, approval-gated
   tags: [ai, erp, mastra, india, safety]
   body: >
@@ -298,7 +306,7 @@
 
 - id: jewelai-platform
   section: projects
-  stopId: now
+  stopId: work
   title: JewelAI Studio, under the hood
   tags: [ai, video, langgraph, architecture, krunch]
   body: >
@@ -381,7 +389,9 @@
     down. I had spent months reading about cafe racers and custom builds, so I took time off to rebuild
     it myself, with half an idea of starting a custom garage with this bike as the first build. I
     stripped it and rebuilt it as a cafe racer of my own design, self-taught fabrication included. The
-    build ran from May 2014 to January 2015, one continuous build from bare frame to finished bike. Then
+    build ran from May 2014 to January 2015, back home in Kerala, one continuous build from bare frame
+    to finished bike. I taught myself design, mechanics and electronics as I went, and made the seat,
+    the tank, the handlebar and the headlight bracket in-house by trial and error. Then
     reality: Indian regulations are not friendly to custom vehicles, and a garage was not viable. I went
     back to Mumbai and rejoined Omnicom. The bike was the proof that I could imagine something and get
     there with my own hands.
@@ -397,3 +407,101 @@
     single source of truth, outreach engines, creative pipelines. Alongside that, web design and
     development, and paid media and growth work, because I know that side from the inside. Based in
     Singapore, with clients across Southeast Asia and India.
+
+# ── Added 2026-09-02 from the older resume versions MJK supplied: the Feb 2025 and
+# ── Dec 2016 PDFs and the June 2013 Word document. These fill the career timeline and
+# ── the pre-media years, which the latest one-page resume compresses out. ──────────────
+
+- id: eng-internships
+  section: timeline
+  stopId: engineering
+  title: Trainee engineer
+  tags: [engineering, fabrication, steel, shipbuilding, dubai, internship]
+  period: 2008-2011
+  body: >
+    Three engineering jobs before marketing ever came up. Eversendai Engineering in Dubai in the
+    summer of 2008, then ETA Ascon in Dubai from August 2009 to January 2010, both in structural steel
+    fabrication: cutting, bending, welding, sanding, painting, robotic and CNC plasma cutting, and
+    non-destructive testing for quality control. At the end of the ETA Ascon stint I presented on
+    activity-based costing as a way to improve plant efficiency. Then Master Shipyard in India from
+    September 2010 to May 2011, building flat-bottom barges and a sailing yacht. That is where I
+    learned what it costs to actually make a thing, rather than draw one.
+
+- id: kinnect-years
+  section: timeline
+  stopId: apac
+  title: Kinnect India
+  tags: [kinnect, media, india, leadership, employment, adtech]
+  period: 2017-2019
+  body: >
+    Senior Manager, then Account Director, at Kinnect in India from January 2017 to February 2019. I
+    ran ROI-driven performance and branding campaigns for Spencers, Skechers, Runwal, Lodha, Rustomjee,
+    Hypercity, Safari and Everyuth. I built and led the media team, ran the agency and vendor
+    relationships, and evaluated emerging ad tech for the agency to adopt: programmatic platforms,
+    data management platforms and automation tools.
+
+- id: triad-engagement
+  section: timeline
+  stopId: apac
+  title: The Triad Co
+  tags: [triad, media, singapore, southeast-asia, employment]
+  period: 2024
+  body: >
+    Paid Media and Data Partner at The Triad Co in Singapore, October to December 2024. I came in
+    through Nanomark as contracted Head of Paid Media and converted to the full-time partner role,
+    running performance and brand marketing for Canon, The Laughing Cow, Evian and others across
+    Southeast Asia.
+
+- id: taboola-rollouts
+  section: projects
+  stopId: apac
+  title: Three rollouts at Taboola
+  tags: [taboola, product, payments, 2fa, ads-interface, apac, rollout]
+  period: 2020-2021
+  body: >
+    The payment expansion opened new payment methods in Korea and Indonesia, which meant driving the
+    integrations and the finance operations behind them. The Ads Interface rollout took a rebuilt,
+    user-centric interface across APAC, with language support as a first-class requirement, shaped by
+    usability testing and client feedback. The two-factor authentication launch went to advertiser
+    accounts globally, carried by training material, a communication plan and hands-on support so that
+    security arrived without disrupting the people using it. Alongside those I collected product
+    enhancement requests from advertisers and argued for them in the quarterly product planning cycle.
+
+- id: origin-competitions
+  section: story
+  stopId: origin
+  title: Competing, early
+  tags: [origin, aerospace, competitions, school, guitar]
+  period: 2004-2009
+  body: >
+    The interest showed up early and competitively. First place at an inter-school aerospace
+    competition in 2004, fourth the following year. First place at Enginuity 2009, a national
+    inter-college technical festival in Dubai. Somewhere in the same years I was playing guitar on
+    stage and once on a Christmas radio show in the UAE. Aero modelling was the constant.
+
+- id: career-overview
+  section: timeline
+  stopId: apac
+  title: The career, in order
+  tags: [career, employment, work-experience, history, cv, resume, jobs, roles]
+  body: >
+    Every role, in order. Trainee engineer in steel fabrication and shipbuilding from 2008
+    to 2011. Omnicom in India from 2013 to 2017, across PHD, OMD and Resolution Media. Kinnect in India
+    from 2017 to 2019, as Senior Manager then Account Director. Disney+ Hotstar from 2019 to 2020, in
+    client success and ad operations. Taboola in Thailand from 2020 to 2021, as Media Product
+    Specialist. Independent consulting across India, Thailand and Singapore from 2021 to 2023. Nanomark
+    Solutions in Singapore from 2023 to 2024. The Triad Co in Singapore in late 2024, as Paid Media and
+    Data Partner. Krunch Labs in Singapore since January 2025, as founder.
+
+- id: build-overview
+  section: projects
+  stopId: work
+  title: What I have built
+  tags: [projects, built, shipped, portfolio, systems, work, software]
+  body: >
+    The things I have shipped, rather than the jobs I have held. JewelAI Studio, a multi-service AI
+    photography and video platform. MruNN-ERP, a chat-native ERP for Indian SMBs. TallyBridge, an
+    open-source bridge from Indian accounting software to an AI assistant. A multi-agent photoshoot
+    pipeline for an apparel client. A multi-channel outreach engine built on Clay and Attio. The
+    go-to-market engine for Artha. And this site, which answers questions about me from a corpus it is
+    not allowed to contradict.

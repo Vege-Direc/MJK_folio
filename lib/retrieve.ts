@@ -183,6 +183,26 @@ const ANSWERABLE = new Set<string>(ANSWERABLE_STOP_IDS);
  * can do the same job, because they cannot be fitted to anything.
  */
 export const ALIASES: Record<string, string[]> = {
+  /* career -- the commonest question a recruiter asks, and the one this site answered worst.
+   * "work experience" and "where have you worked" both landed on the CONTACT stop, because the
+   * words "work" and "working" are all over the contact copy while nothing was tagged as
+   * employment; "tell me about your career" retrieved nothing at all. */
+  'work experience': ['career', 'employment', 'roles', 'omnicom', 'kinnect', 'taboola', 'hotstar'],
+  'work history': ['career', 'employment', 'roles'],
+  'employment history': ['career', 'employment', 'roles'],
+  employment: ['career', 'roles'],
+  career: ['employment', 'roles'],
+  'career path': ['employment', 'roles', 'career'],
+  'where have you worked': ['career', 'employment', 'roles'],
+  'who have you worked for': ['career', 'employment', 'roles', 'clients'],
+  'past roles': ['career', 'employment', 'roles'],
+  'previous roles': ['career', 'employment', 'roles'],
+  'job history': ['career', 'employment', 'roles'],
+  jobs: ['career', 'employment', 'roles'],
+  background: ['career', 'employment', 'roles'],
+  experience: ['career', 'employment', 'roles'],
+  timeline: ['career', 'employment', 'roles'],
+
   /* contact -- how a visitor asks to work with me */
   hire: ['contact', 'brief', 'proposal'],
   'hire you': ['contact', 'brief', 'proposal'],
@@ -203,6 +223,9 @@ export const ALIASES: Record<string, string[]> = {
   available: ['contact', 'brief', 'proposal'],
   availability: ['contact', 'brief', 'proposal'],
   freelance: ['contact', 'brief', 'proposal'],
+  // "can I get your cv" is a request for the PDF, which lives on the contact stop. The
+  // career-history reading of the same question is covered by the `career` block above
+  // ("work experience", "background", "jobs"), so this stays pointed at the download.
   cv: ['contact', 'brief'],
   resume: ['contact', 'brief'],
   engagement: ['contact', 'brief', 'proposal'],
@@ -281,7 +304,9 @@ export const ALIASES: Record<string, string[]> = {
   langgraph: ['ai', 'agent', 'orchestration'],
   mastra: ['ai', 'agent', 'erp'],
   rag: ['ai', 'agent'],
-  'ai work': ['ai', 'agent', 'krunch'],
+  // "the AI work" means the things that were built, not the capability statement that
+  // lists the frameworks. One of the four prompts we ship says exactly this.
+  'ai work': ['built', 'shipped', 'projects', 'jewelai', 'mrunn', 'tallybridge'],
   'these days': ['krunch', 'ai', 'agent', '2025'],
   currently: ['krunch', 'ai', 'agent', '2025'],
   nowadays: ['krunch', 'ai', 'agent', '2025'],

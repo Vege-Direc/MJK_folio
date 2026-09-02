@@ -82,7 +82,7 @@ describe('retrieval', () => {
 
   it('formats context as [stopId/id] title, body -- the shape the route hands the model', async () => {
     const result = retrieve('taboola');
-    expect(result.context).toMatch(/^\[work\/project-taboola\] Taboola product work\n/);
+    expect(result.context).toMatch(/^\[apac\/project-taboola\] Taboola\n/);
     // The deprecated shim exists only so app/api/ask/route.ts keeps compiling until the
     // route is rewired. If it ever stops agreeing with `context`, the route is being lied to.
     await expect(retrieveMemories('taboola')).resolves.toBe(result.context);

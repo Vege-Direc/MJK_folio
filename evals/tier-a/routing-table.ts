@@ -24,20 +24,26 @@ const cases = (stopId: StopId, ...questions: string[]): RoutingCase[] =>
   questions.map((question) => ({ question, stopId }));
 
 export const ROUTING_TABLE: RoutingCase[] = [
-  // -- work: the things that shipped --------------------------------------
+  // -- work: the things that got built -------------------------------------
+  // The stop is "Selected work", so it holds the built things, not the employers.
+  // Taboola's rollouts moved to `apac` with the rest of the employment record when the
+  // career timeline was introduced; a question about a job goes to the career, a
+  // question about a product goes here.
   ...cases(
     'work',
-    'what did you ship at taboola',
-    'What actually shipped at Taboola?',
-    '2fa rollout',
-    'tell me about the two-factor authentication launch',
+    "what's mrunn",
+    'tell me about jewelai studio',
+    'do you build multi agent systems',
+    "what's tallybridge",
+    'who is artha',
+    'show me the ai work',
+    'what have you built',
     'which awards have you won',
     'what did paxel say about your engineering',
-    'did you launch payments in korea and indonesia',
     'who assessed your agent orchestration',
   ),
 
-  // -- apac: the media decade ---------------------------------------------
+  // -- apac: the career, and the media decade ------------------------------
   ...cases(
     'apac',
     'who did you work for at omnicom',
@@ -50,20 +56,29 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'what did you do at the triad co',
     'rustomjee real estate leads',
     'what did you do at disney',
+    'what did you ship at taboola',
+    'What actually shipped at Taboola?',
+    '2fa rollout',
+    'tell me about the two-factor authentication launch',
+    'did you launch payments in korea and indonesia',
+    // The questions a recruiter actually opens with. Every one of these used to land on
+    // the contact stop, because "work" and "working" saturate the contact copy.
+    "can you tell me about mathew's work experience",
+    'what is your work experience',
+    'tell me about your career',
+    'where have you worked',
+    'employment history',
+    'what jobs have you had',
+    'walk me through the timeline',
   ),
 
-  // -- now: Krunch Labs and the AI systems ---------------------------------
+  // -- now: Krunch Labs, and what I do today -------------------------------
   ...cases(
     'now',
-    'show me the ai work',
     "what's krunch labs",
-    "what's mrunn",
-    'tell me about jewelai studio',
     'what are you building these days',
-    'do you build multi agent systems',
-    "what's tallybridge",
     'what ai agent frameworks do you use',
-    'who is artha',
+    'what is your stack',
   ),
 
   // -- origin: the aircraft, and the exit from it --------------------------

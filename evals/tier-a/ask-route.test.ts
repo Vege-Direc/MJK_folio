@@ -149,7 +149,9 @@ describe('/api/ask degrades to corpus text, never to an error', () => {
     const deps = depsWith(modelSaying('no'), { hasApiKey: () => false, askModel: neverCalled });
     const [env] = envelopes(await chunksOf(await handleAsk(post({ question: 'What shipped at Taboola?' }), deps)));
     expect(env.kicker).toBe('§ QUIET');
-    expect(env.stopId).toBe('work');
+    // Taboola is an employer, so it lives on the career stop. "Selected work" holds the
+    // things that were built, not the places they were built at.
+    expect(env.stopId).toBe('apac');
   });
 });
 

@@ -54,7 +54,9 @@ const SECTIONS_FOR_STOP: Record<Exclude<StopId, 'hero'>, readonly Section[]> = {
   pivot: ['story', 'timeline'],
   apac: ['timeline', 'projects', 'capabilities'],
   rd350: ['story'],
-  now: ['story', 'projects', 'capabilities'],
+  // `timeline` belongs on `now` because the current role is the last row of the career
+  // timeline the apac stop renders, and it lives here rather than there.
+  now: ['story', 'projects', 'capabilities', 'timeline'],
   work: ['timeline', 'projects', 'capabilities'],
   contact: ['contact'],
 };
