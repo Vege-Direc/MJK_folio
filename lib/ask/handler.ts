@@ -97,8 +97,22 @@ function envelopeFromFallback(stopId: StopId | null, block: FallbackBlock): Enve
   };
 }
 
+/**
+ * Names, in a response header, what actually happened.
+ *
+ * The visitor is deliberately never told that a fallback fired -- corpus prose is a real
+ * answer and apologising for it disparages MJK's own writing. But making it invisible to
+ * the visitor made it invisible to HIM, and the first consequence was that the model
+ * stopped being called at all and the site looked fine: every answer arrived in half a
+ * second, correct and well written, and nothing said the model had been skipped.
+ *
+ * A header is the right place for that. It reaches curl, devtools and any monitor, and
+ * reaches no reader.
+ */
+const DIAGNOSTIC = 'x-mjk-answer';
+
 /** A complete UI message stream that carries one envelope and no model output. */
-function fallbackResponse(envelope: EnvelopeData): Response {
+function fallbackResponse(envelope: EnvelopeData, diagnostic: string): Response {
   const stream = createUIMessageStream<AskUIMessage>({
     execute({ writer }) {
       writer.write({ type: 'start' });
@@ -111,7 +125,7 @@ function fallbackResponse(envelope: EnvelopeData): Response {
       writer.write({ type: 'finish' });
     },
   });
-  return createUIMessageStreamResponse({ stream });
+  return createUIMessageStreamResponse({ stream, headers: { [DIAGNOSTIC]: diagnostic } });
 }
 
 const ADMIT_REASON_TO_FALLBACK: Record<Exclude<AdmitResult, { ok: true }>['reason'], FallbackReason> = {
@@ -147,11 +161,14 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   const admitted = await deps.admit(clientIp(req.headers));
   const retrieved = deps.retrieve(question);
   const hitIds = retrieved.hits.map((h) => h.memory.id);
-  const fallback = (stopId: StopId | null, reason: FallbackReason) =>
-    fallbackResponse(envelopeFromFallback(stopId, deps.fallbackBlock(stopId, reason, hitIds)));
+  const fallback = (stopId: StopId | null, reason: FallbackReason, detail: string = reason) =>
+    fallbackResponse(
+      envelopeFromFallback(stopId, deps.fallbackBlock(stopId, reason, hitIds)),
+      `no-model:${detail}`,
+    );
 
   if (!admitted.ok) {
-    return fallback(retrieved.stopId, ADMIT_REASON_TO_FALLBACK[admitted.reason]);
+    return fallback(retrieved.stopId, ADMIT_REASON_TO_FALLBACK[admitted.reason], admitted.reason);
   }
 
   // Refuse only when the question is not about MJK at all. It used to refuse whenever
@@ -168,7 +185,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   const stop = stopById(stopId);
 
   if (!deps.hasApiKey()) {
-    return fallback(stopId, 'provider');
+    return fallback(stopId, 'provider', 'no-api-key');
   }
 
   const licences = retrieved.hits.map((h) => h.memory);
@@ -292,5 +309,8 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
     },
   });
 
-  return createUIMessageStreamResponse({ stream });
+  // The verdict is not known until the stream ends, so the header can only say that the
+  // model was reached. What it said, and whether the guard kept it, is on the last
+  // envelope. `model-called` versus any `no-model:` value is the distinction that matters.
+  return createUIMessageStreamResponse({ stream, headers: { [DIAGNOSTIC]: 'model-called' } });
 }

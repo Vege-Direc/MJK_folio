@@ -129,12 +129,16 @@ describe('admit', () => {
     }
   });
 
-  it('admits 40 calls from one IP in a day, then blocks the 41st (ip-day)', async () => {
+  it('admits a day of calls from one IP, then blocks the next (ip-day)', async () => {
     const ip = '203.0.113.20';
     const IP_BURST_POINTS = 6; // mirrors lib/security/limits.ts; burst is not under test here
+    // Mirrors IP_DAY_POINTS. Raised from 40 after the ceiling silently stopped the model
+    // being called at all on the live site: the owner testing his own work crossed it in an
+    // afternoon, and because a fallback is deliberately invisible to a reader, nothing said so.
+    const IP_DAY_POINTS = 120;
     const results: Awaited<ReturnType<typeof admit>>[] = [];
 
-    for (let i = 0; i < 41; i++) {
+    for (let i = 0; i < IP_DAY_POINTS + 1; i++) {
       // Reset the burst window every 6 calls (by advancing the fake clock past its
       // 60-second duration) so only the day ceiling is ever the one that trips.
       if (i > 0 && i % IP_BURST_POINTS === 0) {
@@ -143,10 +147,11 @@ describe('admit', () => {
       results.push(await admit(ip));
     }
 
-    expect(results.slice(0, 40).every((r) => r.ok), 'the first 40 calls in a day should all be admitted').toBe(
-      true,
-    );
-    const last = results[40];
+    expect(
+      results.slice(0, IP_DAY_POINTS).every((r) => r.ok),
+      'every call up to the day ceiling should be admitted',
+    ).toBe(true);
+    const last = results[IP_DAY_POINTS];
     expect(last.ok).toBe(false);
     if (!last.ok) {
       expect(last.reason).toBe('ip-day');

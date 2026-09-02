@@ -52,7 +52,15 @@ export type AdmitResult =
 const IP_BURST_POINTS = 6;
 const IP_BURST_DURATION_SECONDS = 60;
 
-const IP_DAY_POINTS = 40;
+/**
+ * Raised from 40. Forty was set against an imagined visitor asking a handful of questions
+ * and is far too tight for a real one: MJK testing his own site, or anyone genuinely
+ * reading it, crosses it in an afternoon, and every question after that silently stops
+ * reaching the model. The global daily budget is what actually protects the account
+ * (`ASK_DAILY_BUDGET`, default 800, under OpenRouter's 1000); this ceiling only stops one
+ * visitor from eating it, and at 120 it still takes seven busy visitors to threaten it.
+ */
+const IP_DAY_POINTS = 120;
 const DAY_SECONDS = 24 * 60 * 60;
 
 const DEFAULT_GLOBAL_DAILY_BUDGET = 800;
