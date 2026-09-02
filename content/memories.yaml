@@ -317,3 +317,78 @@
     At Kinnect I built a data-driven lead-generation strategy for Rustomjee's first project. It won
     all of their marketing business and drove a 10x increase in ad spend. Other Kinnect clients
     included Spencers, Skechers, Runwal, Lodha, Hypercity, Safari and Everyuth.
+
+# ── Added 2026-09-02 from MJK's own account, his 2012 statement of purpose, his Brunel
+# ── dissertation and Airbus design report, and the Krunch Labs deck ────────────────────
+
+- id: origin-why-aircraft
+  section: story
+  stopId: origin
+  title: Why aircraft
+  tags: [origin, aerospace, childhood, flying]
+  body: >
+    One of my earliest memories is flying alone as a child, Trivandrum to Cochin, not yet ten. I was
+    scared and I cried. The crew kept me busy: a bag of chocolates, a phone call to my parents that was
+    almost certainly the intercom, and then the cockpit. The pilot, the instruments, the clouds through
+    the windscreen. That view has faded but it never left. I have wanted to fly since. Somewhere along
+    the way it narrowed to fighter jets. I have not made it happen yet. The plan now is a private
+    pilot's licence, at the very least.
+
+- id: engineering-what-stuck
+  section: story
+  stopId: engineering
+  title: What the engineering years left behind
+  tags: [engineering, aerospace, mechanical, method, fabrication]
+  period: 2006-2012
+  body: >
+    Mechanical engineering at BITS Pilani Dubai from 2006 to 2010, because there was no aeronautical
+    course and mechanical was the broadest way in. AutoCAD, SAE and ASME, eight months of steel
+    fabrication internships in the UAE, and a final-year project that simulated internal combustion
+    engines in Visual Basic. Then the aerospace masters at Brunel in London, 2011 to 2012. The Airbus
+    design project was a dual-role airliner: 100 passengers on short European routes or 28 in business
+    class across continents, operating out of London City. My dissertation compared single and double
+    chamber synthetic jet actuators for active flow control; the double chamber design ran quieter and
+    more efficiently, at jet speeds around 20 m/s. Between 2010 and 2011 I applied to the air force
+    twice and did not make the cut. No reason was given. What stuck is the way of thinking: define the
+    problem, model it, build it, measure it. It is why I still build things.
+
+- id: pivot-how-it-happened
+  section: story
+  stopId: pivot
+  title: How the pivot to media happened
+  tags: [pivot, media, omnicom, analysis]
+  period: 2012-2013
+  body: >
+    After the masters I could not find design work in India. The market wanted computation, CFD and the
+    like, and I had specialised in design. I applied for a doctorate at IIT Bombay; the thesis proposal
+    was not accepted. I wanted to be working, so I walked into an interview at Omnicom on a family
+    referral and started as a trainee in May 2013. Six months later I was confirmed as a senior planner.
+    The engineering habits carried straight over: break the problem down, model it, measure what changed.
+    Media ran on spreadsheets and instinct. I brought analysis.
+
+- id: rd350-the-build
+  section: story
+  stopId: rd350
+  title: Building the RD 350
+  tags: [bike, fabrication, self-taught, mumbai, cafe-racer]
+  body: >
+    I have always loved motorcycles. The 1986 Yamaha RD 350 was my uncle's; I lived with him when I
+    first moved from Cochin to Mumbai, and I rode it to work every day. A year into the job it broke
+    down. I had spent months reading about cafe racers and custom builds, so I took time off to rebuild
+    it myself, with half an idea of starting a custom garage with this bike as the first build. I
+    stripped it and rebuilt it as a cafe racer of my own design, self-taught fabrication included. Then
+    reality: Indian regulations are not friendly to custom vehicles, and a garage was not viable. I went
+    back to Mumbai and rejoined Omnicom. The bike was the proof that I could imagine something and get
+    there with my own hands.
+
+- id: contact-what-i-take-on
+  section: contact
+  stopId: contact
+  title: What I take on
+  tags: [cta, scope, krunch, services]
+  body: >
+    Through Krunch Labs I take on solutions and automations, with or without AI: custom systems that fit
+    the stack you already have. Agentic workflows, custom ERPs, analytics dashboards that become the
+    single source of truth, outreach engines, creative pipelines. Alongside that, web design and
+    development, and paid media and growth work, because I know that side from the inside. Based in
+    Singapore, with clients across Southeast Asia and India.
