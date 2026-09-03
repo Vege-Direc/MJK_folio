@@ -1239,22 +1239,47 @@ html[data-flying] .answer-layer-in {
 }
 
 /*
- * There is deliberately no fade on the entry text, and this is the second attempt.
+ * The text fades in behind the opening row rather than arriving at full strength.
  *
- * The row animates its height from `0fr` to `1fr` — which is what lets it animate a
- * height nobody had to measure — and the paragraph inside is at full opacity while the
- * clip is still moving, so the effect is a shutter passing over finished text rather than
- * an entry opening. Fading the paragraph behind the edge fixes that and was built,
- * measured at 0.49 mid-open against 1.0 settled, and reverted.
+ * The row animates its height from `0fr` to `1fr`, which is what lets it animate a height
+ * nobody had to measure — but the paragraph inside was already at full opacity while the
+ * clip was still moving, so the effect was a shutter passing over finished text rather
+ * than an entry opening. 180ms behind a 90ms delay puts the words a third of a beat
+ * behind the edge. Measured at 0.49 mid-open and 1.0 settled.
  *
- * The reason is what it does at rest. A closed row's paragraph would sit at `opacity: 0`
- * permanently, and with twelve closed rows that is 4,104 of the page's 7,903 characters
- * — 52% of the text on the page — held at zero opacity in the resting document. The
- * `impeccable` detector reads exactly that as a failed reveal, and a crawler can read it
- * as hidden text. Clipping content to zero height is a disclosure; setting half a page's
- * words to invisible is a different claim about the document, and it is not worth 180ms
- * of polish on a site that wants to be found.
+ * This was built, reverted, and restored, and the round trip is worth recording. It was
+ * reverted on the belief that resting a closed row's paragraph at `opacity: 0` was what
+ * pushed `impeccable detect` from two anti-patterns to three by holding half the page's
+ * text invisible. That was wrong, and measuring both builds is what showed it: hidden
+ * text is byte-identical at 5,087 characters with the fade and without it, because the
+ * collapsed row is already clipped to zero height and counted. The detector's threshold
+ * was crossed by the ratio moving, not by this rule.
+ *
+ * The real finding underneath it is still true and belongs to the accordion rather than
+ * to this fade: 4,104 characters — the twelve collapsed entry bodies — are the bulk of
+ * the page's prose, and a crawler sees them the way the detector does. That is a
+ * discoverability decision about the timeline, not a reason to skip a transition.
+ *
+ * Opacity only. The row is one of a dozen in a column, and a transform here would move
+ * text inside a box that is itself resizing.
  */
+.tl-panel-inner p {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.tl-row[data-open] .tl-panel-inner p {
+  opacity: 1;
+  transition-delay: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-panel-inner p,
+  .tl-row[data-open] .tl-panel-inner p {
+    transition: none;
+    opacity: 1;
+  }
+}
 
 
 .tl-panel-inner {

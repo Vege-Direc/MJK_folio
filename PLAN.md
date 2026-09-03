@@ -70,6 +70,15 @@ injected into all nine stops, CPU throttled 4×: baseline p95 24.6ms, static SVG
 92ms and framerate down 11%. The budget rule is that blur radius squared times area is
 what costs, and geometry is free.
 
+**Half the page's prose is inside collapsed timeline entries.** Measured on the rendered
+page: 4,104 characters sit in the twelve closed rows of §04 and another 983 in their
+summaries, against 7,903 characters of page text in total. `impeccable detect` crossed its
+threshold on that ratio during this round and now reports it as a third anti-pattern
+against a baseline of two — verified by building the pre-session commit and running the
+same detector against it. The mechanism is the accordion itself and is unchanged; nothing
+this round put text into it. Whether a career's detail should be one tap away from a
+crawler is a decision about the timeline, and it is MJK's.
+
 **Five of nine sections run past the dock on a phone**, measured at 390×844 with a 214px
 dock. Spill past the dock's top edge, with the section scrolled to the top of the
 viewport:
