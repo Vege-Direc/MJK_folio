@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * The RD 350, stock and rebuilt, in one frame — as two photographs, not as one.
@@ -60,11 +60,60 @@ const AFTER_ALT =
 /** The media column is 42vw on desktop and the full column below 900px. */
 const SIZES = '(max-width: 900px) 86vw, 42vw';
 
+/**
+ * How close the stock frame is allowed to be before it is fetched.
+ *
+ * Generous, because the cost of being early is one 66 kB request and the cost of being
+ * late is a visitor pressing the control and watching an empty box decode.
+ */
+const NEAR_MARGIN = '600px';
+
 export default function BeforeAfter({ className }: { className?: string }) {
   const [stock, setStock] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * MEASURED, because the stylesheet asserts the opposite and is wrong.
+   *
+   * `.ba-stock` is clipped to zero width with `clip-path: inset(0 100% 0 0)`, and the
+   * comment beside that rule says "Clipped, the raster still decodes". It does not.
+   * Isolated in a bare page -- three images in one viewport, one plain, one clipped, one
+   * `visibility: hidden`, all `loading="lazy"` -- the plain and the hidden ones reach
+   * naturalWidth 780 and the clipped one sits at 0 indefinitely. Chrome takes a zero-area
+   * visual rect as "not visible" and never releases the lazy load.
+   *
+   * So the photograph a visitor sees when they press "stock" was never fetched, and the
+   * press is answered by an empty frame while the network runs. On the section whose whole
+   * argument is a before and an after.
+   *
+   * The clip itself stays: the reason it was chosen over `visibility` still holds, since a
+   * carousel frame that is not showing hides the whole `.ba`, and a child set back to
+   * `visible` would punch through it. What changes is that the frame stops being lazy once
+   * the carousel is within reach -- flipping the attribute is enough, verified in the same
+   * harness, naturalWidth 0 -> 780 on the flip.
+   */
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setNear(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        // One way. Scrolling past and back must not un-fetch it.
+        setNear(true);
+        observer.disconnect();
+      },
+      { rootMargin: NEAR_MARGIN },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className={className ? `ba ${className}` : 'ba'}>
+    <div ref={rootRef} className={className ? `ba ${className}` : 'ba'}>
       {/*
         The rebuilt bike is the base layer; the stock bike is drawn over it and clipped
         away when it is not wanted. Neither is ever an image at zero opacity — a raster
@@ -89,7 +138,7 @@ export default function BeforeAfter({ className }: { className?: string }) {
         width={COMPARE_W}
         height={COMPARE_H}
         sizes={SIZES}
-        loading="lazy"
+        loading={near ? 'eager' : 'lazy'}
       />
 
       {/*
