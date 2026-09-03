@@ -26,6 +26,26 @@
     everything — a cafe racer from an RD350, a chat-native ERP, a multi-agent creative pipeline for
     jewellery, a website that behaves like a mind.
 
+- id: project-mrunn-erp
+  section: projects
+  stopId: work
+  title: MruNN-ERP — chat-native ERP
+  tags: [ai, ops, mastra, agents]
+  body: >
+    An ERP you talk to: purchase orders, invoices and stock queries through a Mastra multi-agent
+    system that also renders traditional forms when they are the right tool. Built because every ERP I've
+    used forces the human to translate their intent into a form.
+
+- id: project-tallybridge
+  section: projects
+  stopId: work
+  title: TallyBridge
+  tags: [ai, open-source, mcp, accounting]
+  body: >
+    An open-source project, MIT licensed, that syncs Indian accounting software into a queryable
+    database and puts an AI assistant in front of it — 27 MCP tools for plain-English financial
+    queries.
+
 - id: project-jewel-ai
   section: projects
   stopId: work
@@ -34,16 +54,6 @@
   body: >
     A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
     for jewellery brands. LangGraph orchestration, custom retouching agents, brand-voice guardrails.
-
-- id: project-mrunn-erp
-  section: projects
-  stopId: work
-  title: MruNN-ERP — chat-native ERP
-  tags: [ai, ops, mastra, agents]
-  body: >
-    An ERP you talk to. Purchase orders, invoices, stock queries — all through a Mastra multi-agent
-    system that also renders traditional forms when they're the right tool. Built because every ERP I've
-    used forces the human to translate their intent into a form.
 
 - id: project-taboola
   section: timeline
@@ -85,14 +95,18 @@
   stopId: now
   title: AI agents
   tags: [ai]
-  body: Mastra, LangGraph, Vercel AI SDK. Multi-agent systems for ERP, creative pipelines, and this site.
+  body: >
+    Multi-agent systems on Mastra, LangGraph and the Vercel AI SDK, for ERPs, creative pipelines
+    and this site.
 
 - id: cap-full-stack
   section: capabilities
   stopId: now
   title: Full-stack builds
   tags: [engineering]
-  body: Next.js, TypeScript, three.js, Postgres, Redis. From marketing automations to production ERPs.
+  body: >
+    From marketing automations through to production ERPs: Next.js, TypeScript, three.js, Postgres
+    and Redis.
 
 # ── Added 2026-08-26, verified against the resume ──────────────────────────────
 
@@ -150,16 +164,6 @@
     Choice and Challenge the Constraint, eight times each. The report's phrase for the shape of it
     was that I treat delivery as a gated system. That is the job. The model writes the code; the
     judgement about what is worth building, and when to stop, is still mine.
-
-- id: project-tallybridge
-  section: projects
-  stopId: work
-  title: TallyBridge
-  tags: [ai, open-source, mcp, accounting]
-  body: >
-    An open-source project, MIT licensed, that syncs Indian accounting software into a queryable
-    database and puts an AI assistant in front of it — 27 MCP tools for plain-English financial
-    queries.
 
 - id: project-photoshoot-pipeline
   section: projects

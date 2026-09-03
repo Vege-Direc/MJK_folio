@@ -51,7 +51,7 @@ export const STOPS = [
     kicker: 'MATHEW JOHN KONDEKERIL · SINGAPORE',
     compose: 'hero',
     align: 'left',
-    title: { strong: 'First I imagine it.', muted: 'Then I learn whatever it takes to build it.' },
+    title: { strong: 'I build AI systems', muted: 'for people who have a business problem, not an AI problem.' },
     /*
      * `lede` is the introduction the hero was missing, and it is a separate field
      * rather than a longer `body` so the three jobs can be typeset apart: the tagline
@@ -60,8 +60,8 @@ export const STOPS = [
      * (name, the two engineering degrees, the decade of paid media across India and
      * Southeast Asia, Krunch Labs in Singapore since January 2025).
      */
-    lede: 'Engineer by training, marketer by trade, builder by habit.',
-    body: 'I trained in aerospace, spent a decade running paid media across India and Southeast Asia, and now build AI systems at Krunch Labs in Singapore. Scroll to travel the mind. Or type a question at the bottom.',
+    lede: 'Krunch Labs, Singapore. Multi-agent pipelines, custom ERPs, and the analytics to say whether any of it worked.',
+    body: 'Before that: aerospace engineering at Brunel, then a decade running paid media across India and Southeast Asia for Hindustan Unilever, Visa, Skechers and Evian. Scroll to travel the mind, or ask it something at the bottom of the page.',
   },
   {
     id: 'origin',
@@ -69,8 +69,8 @@ export const STOPS = [
     kicker: '§ 01 — Origin',
     compose: 'plain',
     align: 'right',
-    title: { strong: 'It started with', muted: 'wanting to fly.' },
-    body: 'Not any aircraft — the fast ones. That is not the story people ask about first. It is the one that explains the rest.',
+    title: { strong: 'I wanted to fly', muted: 'fighter jets.' },
+    body: 'I flew alone for the first time before I was ten, Trivandrum to Cochin, and cried most of the way. The crew kept me busy with a bag of chocolates, and then I was in the cockpit, looking at the instruments and the clouds through the windscreen. I have wanted to fly ever since, and I have not made it happen yet.',
   },
   {
     id: 'engineering',
@@ -94,8 +94,8 @@ export const STOPS = [
      */
     compose: 'figure',
     align: 'left',
-    title: { strong: 'Mechanical, then', muted: 'aerospace.' },
-    body: 'Mechanical engineering to get in the door. An aerospace design masters in the UK, because you cannot design what you do not understand. By the time it was finished, the market that needed those drawings was not hiring.',
+    title: { strong: 'I drew an airliner', muted: 'called the MJK-101.' },
+    body: 'BITS Pilani had no aeronautical course, so I read mechanical and came to aerospace afterwards, at Brunel. It was the Airbus design project there: 100 passengers on short European routes, or 28 in business class across continents, sized for London City’s short runway. The UK aerospace market had stopped hiring by the time I finished it.',
   },
   {
     id: 'pivot',
@@ -103,8 +103,8 @@ export const STOPS = [
     kicker: '§ 03 — Pivot',
     compose: 'plain',
     align: 'right',
-    title: { strong: 'So I rebuilt', muted: 'the toolkit.' },
-    body: 'Marketing was the closest system to engineering that would take an aerospace graduate with no media experience. I brought engineering — code, automation, systems thinking — to a place that ran on spreadsheets.',
+    title: { strong: 'I started over', muted: 'as a media trainee.' },
+    body: 'After the masters I could not find design work in India — the market wanted computation and CFD, and I had specialised in design. My doctorate proposal at IIT Bombay was turned down. A family referral got me the interview at Omnicom; I started in May 2013 and was confirmed as a senior planner six months later.',
   },
   {
     id: 'apac',
@@ -112,17 +112,17 @@ export const STOPS = [
     kicker: '§ 04 — APAC',
     compose: 'timeline',
     align: 'left',
-    title: { strong: 'A decade in paid media', muted: 'across the region.' },
-    body: 'Omnicom, Kinnect, Hotstar, Taboola, Nanomark, Triad. The habit started at Kinnect: automate the report nobody wants to build twice.',
+    title: { strong: 'A decade in paid media', muted: 'across India and Southeast Asia.' },
+    body: 'At Hotstar I ran client relations for ICICI Lombard, Redbull and Apple through the 2019 IPL and Cricket World Cup, at a then-record 25 million concurrent viewers. Before that, at Kinnect, I automated the reporting with Supermetrics and Looker Studio and cut report generation time by half.',
   },
   {
     id: 'rd350',
     index: 5,
-    kicker: '§ 05 — Aside',
+    kicker: '§ 05 — The RD 350',
     compose: 'carousel',
     align: 'left',
-    title: { strong: 'In parallel,', muted: 'a motorcycle.' },
-    body: 'A 1986 Yamaha RD 350, stripped to the frame and rebuilt as a cafe racer of my own design. Self-taught fabrication, learned in the doing. Same loop as everything else — imagine, learn, build, keep going.',
+    title: { strong: 'I rebuilt a 1986 Yamaha RD 350', muted: 'as a cafe racer of my own design.' },
+    body: 'The bike was my uncle’s. I rode it to work in Mumbai until it broke down, then took the gap between two Omnicom jobs — June to December 2014 — and rebuilt it at home in Kerala, bare frame to finished bike. I taught myself as I went: the seat, the tank, the handlebar and the headlight bracket were all made in-house, by trial and error. It is the proof that I can imagine something and get there with my own hands.',
   },
   {
     id: 'now',
@@ -131,7 +131,7 @@ export const STOPS = [
     compose: 'cards',
     align: 'right',
     title: { strong: 'Building the systems', muted: 'I used to run.' },
-    body: 'Krunch Labs. MruNN — a chat-native ERP on Mastra. JewelAI — a LangGraph creative pipeline for jewellery. This site — Next.js, three.js, streaming.',
+    body: 'Krunch Labs has run out of Singapore since January 2025: multi-agent pipelines, custom ERPs, automation, and the analytics to say whether any of it worked. Most engagements start as one automation and turn into the system around it. I still take paid media work, because I ran that side for a decade.',
   },
   {
     id: 'work',
@@ -140,7 +140,7 @@ export const STOPS = [
     compose: 'proof',
     align: 'left',
     title: { strong: 'Things I have built.' },
-    body: 'Agent pipelines, an ERP you talk to, an open-source bridge into Indian accounting, and the growth engines around them. Ask about any of them.',
+    body: 'JewelAI Studio never tells the model in words what a piece looks like. It asks for three to five photographs of one piece, shot from different angles, and sends the whole set with every image it generates — because describing a ring in text is how you get a different ring back.',
   },
   {
     id: 'contact',
@@ -148,8 +148,8 @@ export const STOPS = [
     kicker: '§ 08 — Brief me',
     compose: 'contact',
     align: 'left',
-    title: { strong: 'Not a form.', muted: 'Just tell me what you’re working on.' },
-    body: 'Tell it the problem, the timeline, what’s been tried. Or reach me directly:',
+    title: { strong: 'Tell me the problem,', muted: 'when you need it, and what has been tried.' },
+    body: 'I come back within a day with a scoped proposal or an honest no, and I say no about as often as yes. Ask below, or reach me directly:',
   },
 ] as const;
 
