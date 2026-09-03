@@ -57,6 +57,9 @@ const COMMON = new Set([
   'out', 'up', 'down', 'over', 'under', 'every', 'each', 'all', 'both', 'other', 'next',
   'last', 'first', 'second', 'third', 'best', 'most', 'more', 'less', 'no', 'not',
   'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  // Interrogatives, which open a great many of this corpus's titles: "What that looked
+  // like in numbers", "How I actually direct an agent", "How an engagement starts".
+  'what', 'how', 'why', 'who', 'whom', 'whose', 'which',
 ]);
 
 /**
@@ -125,6 +128,29 @@ export function buildGazetteer(memories: Memory[]): Gazetteer {
     for (const token of key.split(' ')) if (token.length > 1) gaz.tokens.add(token);
   };
 
+  /*
+   * A capitalised run that opens a sentence and is made only of ordinary words is not a
+   * name, and must not become one. `extractEntities` already refuses to treat such a run
+   * as a claim -- "English capitalises sentence openers; that is not a claim" -- but the
+   * BUILD had no such rule, so the word went into the gazetteer and every later lookup
+   * found it there before the opener check could fire.
+   *
+   * The cost was not theoretical. `paxel-numbers` is titled "What that looked like in
+   * numbers", so `what` became an entity, every sentence in that memory was bound to it,
+   * and the guard then rejected MJK's own figures with "208,803 is licensed, but only
+   * about what". An entire memory of numbers was unquotable, and the site answered a
+   * question about the report by deleting the report. That is the same failure this
+   * repository has already paid for once, when a year with a comma after it was read as a
+   * count and took his bachelors degree out of every answer about his education.
+   *
+   * Only runs made ENTIRELY of common words are skipped, and only sentence-initial ones.
+   * "Taboola" opens plenty of sentences and is still learned; "What" is not.
+   */
+  const addRun = (run: { key: string; initial: boolean }) => {
+    if (run.initial && run.key.split(' ').every((w) => COMMON.has(w))) return;
+    add(run.key);
+  };
+
   for (const group of ALIAS_GROUPS) {
     for (const spelling of group) {
       gaz.aliases.set(normalise(spelling), normalise(group[0]));
@@ -135,11 +161,11 @@ export function buildGazetteer(memories: Memory[]): Gazetteer {
   for (const memory of memories) {
     for (const word of memory.id.split('-')) if (word.length > 1) gaz.tokens.add(word);
     for (const tag of memory.tags) for (const word of normalise(tag).split(/[\s-]+/)) if (word.length > 1) gaz.tokens.add(word);
-    for (const run of runsIn(memory.title)) add(run.key);
-    for (const sentence of sentences(memory.body)) for (const run of runsIn(sentence)) add(run.key);
+    for (const run of runsIn(memory.title)) addRun(run);
+    for (const sentence of sentences(memory.body)) for (const run of runsIn(sentence)) addRun(run);
     for (const fact of memory.facts ?? []) {
       for (const entity of fact.entities) add(entity);
-      for (const sentence of sentences(fact.text)) for (const run of runsIn(sentence)) add(run.key);
+      for (const sentence of sentences(fact.text)) for (const run of runsIn(sentence)) addRun(run);
     }
   }
 
