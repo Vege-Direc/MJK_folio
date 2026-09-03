@@ -383,7 +383,24 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         stripped = text !== raw;
         if (stripped) console.warn('[api/ask] stripped model housekeeping from the answer');
         const meta = await result.response;
-        console.info(`[api/ask] ${meta.modelId} answered ${stopId} in ${Date.now() - startedAt} ms`);
+        /*
+         * `finishReason` and the output-token count, because without them nobody could
+         * answer the first question MJK asked about this feature: "is that because
+         * you've put a token limit on output?"
+         *
+         * Nothing in this repository sets `maxOutputTokens`, but that is an argument
+         * from absence, and a provider is free to impose its own cap without saying so.
+         * The only evidence that settles it is `finishReason`: `length` means the answer
+         * was cut off mid-thought, `stop` means the model chose to end there. Measured
+         * over 19 real calls on 2026-09-03, every one came back `stop` and none `length`
+         * -- so the brevity is the prompt and the guard, not a cap. That took a rebuild
+         * to find out, which is the reason it is now logged rather than measured again.
+         */
+        const [finishReason, usage] = await Promise.all([result.finishReason, result.usage]);
+        console.info(
+          `[api/ask] ${meta.modelId} answered ${stopId} in ${Date.now() - startedAt} ms ` +
+            `finish=${finishReason} out=${usage.outputTokens ?? '?'} chars=${text.length}`,
+        );
       } catch (error) {
         failed = true;
         console.error('[api/ask] result.text rejected:', error);
@@ -434,6 +451,24 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
           verdict.violations.map((v) => `${v.kind}: ${v.detail}`).join(' | '),
         );
         const kept = deps.salvage(text, verdict);
+        /*
+         * How much of the answer the guard took, not just what it objected to.
+         *
+         * The violation list above says what was wrong; it does not say what the visitor
+         * ended up reading. Measured across 18 model answers on 2026-09-03, salvage was
+         * removing 21% of everything the model wrote, and on one question -- "give me the
+         * full story of the Paxel report" -- 47%, taking two sentences that are
+         * near-verbatim from content/memories.yaml with them. That is the largest single
+         * cause of MJK's "details are cut short", and it was invisible in production
+         * because the only thing on the wire was the verdict, never the magnitude.
+         */
+        if (kept) {
+          console.warn(
+            `[api/ask] salvage kept ${kept.text.length} of ${text.length} chars ` +
+              `(-${Math.round((100 * (text.length - kept.text.length)) / text.length)}%), ` +
+              `${kept.dropped} sentences dropped, ${kept.redacted} redacted`,
+          );
+        }
         if (kept) {
           const parts: string[] = [];
           if (kept.dropped) parts.push(kept.dropped === 1 ? 'one line removed' : `${kept.dropped} lines removed`);

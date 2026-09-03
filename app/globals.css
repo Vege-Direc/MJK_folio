@@ -881,6 +881,12 @@ html[data-flying] {
  * The first answer still shifts the column up once, and that is deliberate: it happens
  * while the page is already smooth-scrolling to the stop, so it reads as part of the
  * arrival rather than as a jump.
+ *
+ * It has to target `.content-zone` rather than `.section-inner`. An earlier attempt set
+ * `align-items` on the container and measured no improvement whatsoever, because the zone
+ * carries `align-self: center` — an item property, which beats the container's. That is
+ * the same declaration that shrank the media column to 132px on phones: this stylesheet
+ * centres from the item in two places, and both have now cost a day.
  */
 .section-inner:has(.answer) .content-zone {
   align-self: start;
@@ -889,6 +895,44 @@ html[data-flying] {
 .answer-swap {
   display: grid;
   grid-template-areas: 'layer';
+}
+
+/*
+ * The answer is not allowed to be the browser's scroll anchor.
+ *
+ * MJK asked whether a visitor can read a long answer "without triggering the background
+ * animation scroll". Measured on a phone at 390x664, the honest answer was worse than the
+ * question: the camera moved WITHOUT the visitor scrolling at all.
+ *
+ * A streaming answer grows the section it is docked in. On a phone `.panel` is
+ * `height: auto`, so that growth is real layout, and CSS scroll anchoring picks a node
+ * inside the growing prose and scrolls the document to keep it visually still. Every one
+ * of those adjustments is document scroll, `ScrollProgress` derives camera progress from
+ * document scroll, and `data-stop` flips at the halfway mark between two section tops —
+ * so the camera flew to the next section while the reader sat still.
+ *
+ * Measured, baseline: 5 of 7 runs drifted 431-554px after the flight had already landed,
+ * and in every one of those `data-stop` went 7 -> 8 with no input. It is invisible as a
+ * jump because it arrives one pixel per frame (worst single-frame move: 1px), which is
+ * exactly why nobody caught it by looking.
+ *
+ * With this rule, 4 of 4 runs held 0px, on answers of 1,482-2,445 characters — longer
+ * than the ones that drifted. The page ends where the flight aimed it (scrollY 6362
+ * against 6854) and the reader starts 484px further up their own answer. Worst
+ * single-frame move afterwards: 2px, so nothing jumps in exchange.
+ *
+ * The whole subtree is named rather than just `.answer-swap`, because any box inside it
+ * can be the anchor candidate and this is the set that was actually measured.
+ *
+ * This does NOT fix scrolling BY HAND to finish reading, which still drives the camera.
+ * That one is a decision about the site's central conceit and it is MJK's — see the
+ * report. This only stops the page moving when he has not touched it.
+ */
+.answer-swap,
+.answer-layer,
+.answer,
+.answer-prose {
+  overflow-anchor: none;
 }
 
 .answer-layer {
@@ -1921,16 +1965,31 @@ html[data-flying] .answer-layer-in {
   gap: 7px;
 }
 
+/*
+ * The frame's edge, as a ring rather than a border, and brighter than the rule colour.
+ *
+ * Measured: the catalogue photograph's own outer pixels sit at 1.49:1 against the page,
+ * and `--color-rule` around it at 1.47:1 — so the frame had no boundary at all, and a
+ * generated interior simply dissolved into the scene. All eighteen generated frames fall
+ * between 1.30 and 2.06:1, so this is the set, not one unlucky file. The inner ring is
+ * 3.65:1 against the page, which clears WCAG 1.4.11's 3:1 for a non-text boundary while
+ * staying above 2.4:1 against both photographs; the outer one is the page's own casing
+ * trick, keeping the ring off the scene.
+ */
 .pair-cell img {
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--color-rule);
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
 }
 
 .pair-meta {
   font-family: var(--font-mono);
-  font-size: 10px;
+  /* 11px, not 10. `DESIGN.md` sets that floor with no argument and no exception, and this
+     rule was quietly under it. */
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-type-dim);
