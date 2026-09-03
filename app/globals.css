@@ -1152,7 +1152,13 @@
  * `visibility` instead, so they still preload and decode, and nothing is ever a
  * photograph turned down to nothing.
  */
-.carousel-hero img {
+/*
+ * A frame is not always an `<img>` any more — the first one is the before-and-after
+ * wipe, which is two of them and a control. The selector moved onto a class so both
+ * kinds stack, hide and cross-fade by the same rule, and so that `.carousel-cap`, which
+ * is also a child of the hero, keeps its own positioning.
+ */
+.carousel-frame {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1162,12 +1168,12 @@
 }
 
 /* The outgoing frame, held underneath at full strength while the new one arrives. */
-.carousel-hero img.prev {
+.carousel-frame.prev {
   visibility: visible;
   z-index: 0;
 }
 
-.carousel-hero img.on {
+.carousel-frame.on {
   visibility: visible;
   z-index: 1;
   animation: carousel-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -1197,9 +1203,16 @@
   backdrop-filter: blur(4px);
 }
 
+/*
+ * `repeat(5, 1fr)` was a count of the frames that happened to exist. Adding the
+ * before-and-after tab and the engine photograph made it six and the sixth wrapped onto
+ * a second row. Columns are derived from the children now, so the strip cannot disagree
+ * with the array again.
+ */
 .carousel-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 6px;
   margin-top: 8px;
 }
@@ -1222,6 +1235,26 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/*
+ * The before-and-after tab's thumbnail. Two halves of the same field, each showing its
+ * own outer edge, so the tab reads as a comparison at 50px rather than as a sixth
+ * photograph of the finished bike.
+ */
+.carousel-thumb-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-thumb-split img:first-child {
+  object-position: 22% center;
+}
+
+.carousel-thumb-split img:last-child {
+  object-position: 78% center;
 }
 
 .carousel-strip button:hover {
@@ -1281,6 +1314,146 @@
 
 .carousel-toggle:hover {
   color: var(--color-accent);
+}
+
+/* ── before / after ────────────────────────────────────────────────────────── */
+
+/*
+ * The wipe. `--ba-split` is written from React as a percentage and is the only number
+ * the whole component moves.
+ */
+.ba {
+  --ba-split: 50%;
+  position: absolute;
+  inset: 0;
+}
+
+.ba-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /*
+   * The pair is composed tight around the motorcycle, and below 900px the hero crops to
+   * 16:10. Biased down the frame so the crop takes background off the top rather than
+   * the ground the bike is standing on — losing the tyres' contact with the floor is
+   * what would make the two frames stop reading as one machine.
+   */
+  object-position: center 55%;
+}
+
+/*
+ * The stock bike is drawn over the finished one and clipped from the right, so the
+ * finished bike is never hidden behind an image at zero opacity and the stock one is
+ * never a raster under a wash. `clip-path` rather than a sized wrapper: no nested
+ * element has to be told the container's width to avoid squashing.
+ */
+.ba-stock {
+  clip-path: inset(0 calc(100% - var(--ba-split)) 0 0);
+  transition: clip-path 0.12s linear;
+}
+
+.ba-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--ba-split);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-accent);
+  transition: left 0.12s linear;
+  /* The input behind it owns every pointer event; this is the drawing, not the control. */
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ba-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  background: rgba(10, 10, 14, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+/* Two chevrons, pointing at the two things the knob moves between. */
+.ba-knob::before,
+.ba-knob::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: 2px solid var(--color-accent);
+  border-width: 2px 2px 0 0;
+}
+
+.ba-knob::before {
+  left: 9px;
+  rotate: -135deg;
+  translate: 0 -50%;
+}
+
+.ba-knob::after {
+  right: 9px;
+  rotate: 45deg;
+  translate: 0 -50%;
+}
+
+/*
+ * A real range input, stretched over the whole photograph and made invisible. The thumb
+ * is transparent because `.ba-line` is the thumb as far as a sighted visitor is
+ * concerned; what the input keeps is everything that is expensive to rebuild — arrow
+ * keys, Home and End, click-to-jump, touch, and a slider role with a value.
+ */
+.ba-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+  z-index: 3;
+}
+
+.ba-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.ba-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.ba-range::-moz-range-track {
+  background: transparent;
+}
+
+/*
+ * The input covers the frame, so its focus ring is the frame's — which is the right
+ * answer anyway: the thing that has focus is the comparison, not a dot on it. Same
+ * accent, same offset as the thumbnails beneath it.
+ */
+.ba-range:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /*
@@ -1656,7 +1829,19 @@
     transform: none;
   }
 
-  .carousel-hero img {
+  .carousel-frame {
+    transition: none;
+  }
+
+  /*
+   * The wipe holds at a static split and the seam stops sliding: the eased 0.12s on the
+   * clip and the line is the only thing in the component that moves on its own once a
+   * value changes, and it is the thing to take out. The control itself stays — a slider
+   * a visitor drags is motion they asked for, and removing it would take the comparison
+   * away from exactly the people least able to work around its absence.
+   */
+  .ba-stock,
+  .ba-line {
     transition: none;
   }
 
