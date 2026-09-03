@@ -218,6 +218,18 @@ that is the answer to whether it is discoverable enough.
 
 "while I agree not all 15, can you still do a few more? one seems way too less."
 
+## 27. A judge panel on the whole page — `doing`
+
+"Please use swarm to visualize, critically evaluate, research, vision and judge panel to
+improve."
+
+Three lenses on the same screenshots, kept separate so they cannot average each other out:
+the prospective client with budget and thirty seconds, the designer, and the engineer and
+sceptic. Real screenshots at 1440x900 and 390x664, described in words before they are
+judged — two performance claims in this project were retracted because they were measured
+under headless software rendering, so the panel reports no timing numbers from headless.
+It ranks by what costs MJK work, and it names what is good and must not be touched.
+
 ---
 
 ## Blocked — needs MJK
