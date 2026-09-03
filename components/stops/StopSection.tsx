@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import type { ReactNode } from 'react';
-import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
+import { figureOf, ledeOf, type Stop, type StopFigure, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
 import type { Memory } from '@/lib/corpus/schema';
 import AuthoredBody from './AuthoredBody';
@@ -79,10 +80,52 @@ function Title({ title, level }: { title: StopTitle; level: 1 | 2 }) {
   );
 }
 
+/**
+ * A stop's own artefact: one image, framed, with a caption. Beside the paragraph on a
+ * desktop and under it on a phone — `.stop-figure` owns which, and why.
+ *
+ * It sits inside `AuthoredBody` rather than after it, so an answer landing on this stop
+ * takes the whole authored block — paragraph and evidence together — and SHOW ORIGINAL
+ * brings both back. Leaving the figure behind would strand a caption belonging to a
+ * paragraph that is no longer there, and hand the answer a column with 300px of image
+ * already in it.
+ *
+ * `sizes` states the width the figure is actually capped at, not the width of the column
+ * it sits in. Asked for the column, next/image would fetch a file about twice the size
+ * anything ever renders at.
+ */
+function Figure({ figure }: { figure: StopFigure }) {
+  return (
+    <figure className="stop-figure">
+      <Image
+        src={figure.src}
+        alt={figure.alt}
+        width={figure.width}
+        height={figure.height}
+        sizes="(max-width: 900px) 86vw, 24rem"
+        loading="lazy"
+      />
+      <figcaption>{figure.caption}</figcaption>
+    </figure>
+  );
+}
+
 function Content({ stop, wide }: { stop: Stop; wide?: boolean }) {
   const lede = ledeOf(stop);
+  const figure = figureOf(stop);
+  // `with-figure` is the switch for the side-by-side arrangement at 901px and up. An
+  // explicit class rather than a `:has()`, so the rule can be found by searching for the
+  // thing that turns it on.
+  const zone = [
+    'content-zone',
+    wide ? '' : stop.align === 'right' ? 'right' : 'left',
+    figure ? 'with-figure' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={wide ? 'content-zone' : `content-zone ${stop.align === 'right' ? 'right' : 'left'}`}>
+    <div className={zone}>
       <p className="section-kicker">{stop.kicker}</p>
       <Title title={stop.title} level={stop.id === 'hero' ? 1 : 2} />
       <div className="section-body-wrap">
@@ -95,6 +138,7 @@ function Content({ stop, wide }: { stop: Stop; wide?: boolean }) {
         <AuthoredBody stopId={stop.id}>
           {lede ? <p className="section-lede">{lede}</p> : null}
           <p className="section-body">{stop.body}</p>
+          {figure ? <Figure figure={figure} /> : null}
         </AuthoredBody>
         {/*
           Where a streamed answer docks, inside the stop it belongs to and in the stop's

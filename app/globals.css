@@ -525,6 +525,83 @@
 }
 
 /**
+ * A stop's own artefact, beside its prose.
+ *
+ * The frame is the carousel hero's — a single hairline in the rule colour — because a
+ * photograph and a screenshot on the same page should be held the same way, and because
+ * a raster on this background needs an edge to stop being a hole in it.
+ *
+ * The caption is set in the body face, not the mono label face. It is a sentence, and
+ * the site's own rule puts tracking on small caps labels and never on prose.
+ *
+ * Stacked under the paragraph is the obvious arrangement and it does not survive
+ * measurement. A `plain` stop is one viewport tall and centred, and the kicker, a
+ * two-line 4.4rem title and the paragraph already take 359 of the ~584px that clears
+ * the chat dock. That leaves under 200px for a 1.56:1 screenshot and its caption, which
+ * is a figure 270px wide — small enough to be decoration rather than evidence. Below
+ * 900px the panel is allowed to grow and the stack fits, so the stack is what a phone
+ * gets; the desktop puts the figure in the column beside the paragraph instead, where
+ * the height it needs is height the paragraph is not using.
+ */
+.stop-figure {
+  margin: 26px 0 0;
+  max-width: 32rem;
+}
+
+/*
+ * The frame is on the image, not on the figure. Drawn around both, its fill sat behind
+ * the caption as a 40%-black plate over the scene — the scrim this project has already
+ * rejected twice, arrived at by accident through a border shorthand. The caption
+ * defends itself the way every other line on the page does, with the halo it inherits
+ * from `.content-zone`.
+ */
+.stop-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-rule);
+  background: rgba(20, 20, 26, 0.4);
+}
+
+.stop-figure figcaption {
+  padding: 10px 1px 0;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-type-muted);
+  text-wrap: pretty;
+}
+
+@media (min-width: 901px) {
+  /*
+   * The column widens only for the stop that has an artefact, and only by the width of
+   * the artefact: the paragraph keeps its 44ch measure and its position on the left
+   * rail, so nothing about the reading changes. A stop with no figure is untouched.
+   */
+  .center-stage .content-zone.with-figure {
+    max-width: 56rem;
+  }
+
+  .content-zone.with-figure .authored-body-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1.75rem, 3vw, 2.75rem);
+    align-items: start;
+  }
+
+  /*
+   * Sized off the viewport's height as well as its width, because height is the
+   * constraint here and a 1280x720 laptop has 180px less of it than the 900 this was
+   * drawn against. The ratio is the image's own, so capping the width caps the height.
+   */
+  .content-zone.with-figure .stop-figure {
+    margin: 4px 0 0;
+    width: min(24rem, 27svh * 1.563);
+    max-width: none;
+  }
+}
+
+/**
  * Where a streamed answer docks. Empty until the chat step fills it, and deliberately
  * inside the stop's own type scale: an answer about Taboola belongs in the Taboola stop,
  * not in a panel bolted to the bottom of the screen.
