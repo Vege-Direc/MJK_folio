@@ -305,3 +305,27 @@ the camera.
 ## 17. Is this actually innovative — `todo`
 
 **Reported:** "This is trying to be an innovative website right? can improve on this?"
+
+
+## 18. Suggestions should follow the section being read — `todo`, my proposal
+
+MJK asked whether the page copy should prime the chat. It should, and there is a second
+half to that which the site is already equipped for and does not use.
+
+The dock shows four fixed suggestions, the same four on every one of the nine sections.
+But the site already knows which section is on screen — `ScrollProgress` writes it to
+`data-stop` on `<html>`, and the ask route already reads it as `viewing` to resolve
+deictic questions like "more on these?". So the suggestion in the dock can be the question
+this section provokes, and change as the visitor travels.
+
+That is the mechanism that makes the authored copy and the chat one thing rather than two.
+Copy that names something specific and stops, and a dock that offers exactly the question
+that specific thing raises. It costs nothing at runtime: the suggestions are authored per
+stop in `content/stops.ts`, and the dock reads the same attribute the router already reads.
+
+Two constraints from what has already been measured: every suggestion still has to fit one
+line at 320px (40 characters, asserted in the tier-A evals), and the rotation must still
+stop the moment the visitor types — a control that changes under a reader's hand is
+unusable. Changing suggestion on scroll is a change under the reader's eye, so it should
+swap only when the active section changes, never mid-read, and never while the field has
+focus.
