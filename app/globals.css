@@ -593,6 +593,64 @@ html[data-flying] {
  * user units and scale with the figure, which is also what you want — a drawing at 581px
  * can carry a heavier line than the same drawing at 351px.
  */
+/*
+ * The engine. Faces are filled with the page's own background, which is what removes the
+ * hidden lines: there is no depth buffer here, the draw order IS the depth sort, chosen
+ * once for a fixed viewpoint. It also means the drawing punches a solid hole through the
+ * network behind it and reads as a solid object rather than as a wireframe laid over one.
+ */
+.ga-eface {
+  fill: var(--color-bg);
+  stroke: var(--color-accent);
+  stroke-width: 1.15;
+  stroke-linejoin: round;
+}
+
+.ga-eline {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 0.82;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/*
+ * The engine holds, then gives way. It does not move while it is doing so — only its
+ * opacity changes — because a drawing this dense is expensive to re-raster and cheap to
+ * fade.
+ */
+.fig-ga[data-phase='scatter'] .ga-engine {
+  transition: opacity 420ms ease-in;
+  opacity: 0;
+}
+
+/*
+ * The particles, and the only moving part of this figure.
+ *
+ * Each dot carries its start and end as custom properties, so crossing the frame is one
+ * `transform` transition per element with a staggered delay — compositor work, no
+ * per-frame JavaScript, and nothing on the raster threads that the text halo already
+ * taxes. They are mounted for about 1.6 seconds and then unmounted: at rest this figure
+ * has no dots in the DOM at all.
+ */
+.ga-dust circle {
+  fill: var(--color-accent);
+  transform: translate(var(--x0), var(--y0));
+  opacity: 0;
+  transition:
+    transform 900ms cubic-bezier(0.42, 0, 0.58, 1) var(--d),
+    opacity 260ms ease-out var(--d);
+}
+
+.fig-ga[data-phase='scatter'] .ga-dust circle {
+  opacity: 1;
+}
+
+.fig-ga[data-phase='fly'] .ga-dust circle {
+  transform: translate(var(--x1), var(--y1));
+  opacity: 1;
+}
+
 .ga-case {
   fill: none;
   stroke: #08080c;
@@ -1616,12 +1674,14 @@ html[data-flying] .answer-layer-in {
   /*
    * Both files are cut to 780x585 — the hero's own 4:3 — so on desktop `cover` is an
    * identity and neither photograph is touched. Below 900px the hero is 16:10 and 16.7%
-   * of the height goes. Biased to the top because the expendable part of both frames is
-   * the bare ground under the tyres: at 15% the window keeps source rows 2.6%–85.9%, and
-   * in the tighter of the two the handlebars sit at 3.4% and the tyres' ground line at
-   * 82.2%. Losing either end is what would stop the two frames reading as one machine.
+   * of the height goes, and there is almost no slack to choose from: in the tighter of
+   * the two frames the handlebars sit at 3.4% of the file and the tyres' ground line at
+   * 82.2%, so the machine alone is 94.6% of the 16:10 window. 20% is where both survive
+   * — the window runs 3.3%–86.6%, which leaves the bars just inside the top and 12px of
+   * floor under the tyres at 390px wide. Losing either end is what would stop the two
+   * frames reading as one machine.
    */
-  object-position: center 15%;
+  object-position: center 20%;
 }
 
 /*
@@ -1652,7 +1712,15 @@ html[data-flying] .answer-layer-in {
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: flex-end;
+  /*
+   * Top right, not bottom right. At 390px the hero is 219px tall and the machine fills
+   * nearly all of it: chips at the bottom sat over the tyres' contact with the floor —
+   * the one part of a photograph of a motorcycle that cannot be covered — and ran into
+   * `.carousel-cap` in the opposite corner of the same 351px row. The top of both frames
+   * is background in both: a wall and a parked car in one, trees and daylight in the
+   * other.
+   */
+  align-items: flex-start;
   justify-content: flex-end;
   gap: 6px;
   padding: 12px;
