@@ -189,15 +189,44 @@ bar, the failure fed back for exactly one retry. The apparel pipeline has five n
 and a critic with a pass mark. A chart is now licensable where it was not, and the question
 should be re-answered on the new material rather than on the old verdict.
 
-## 24. Generative UI, extended — `doing`
+## 24. Generative UI, extended — spec landed, two answers
 
 "if people ask to see more examples can more images be shown from the database with genui?
 similarly can workflows be shown with genui?"
 
 §02 already proves the mechanism: the figure rests on the engine or the aircraft depending
 on which memory licensed the answer, deterministically, with no model authority. The
-question is how far that generalises — to more image pairs on request, and to a workflow
-figure that appears when someone asks how something works.
+question was how far that generalises.
+
+**The line the spec draws, and it is the right one:** a question may change *which*
+authored thing is showing; it may never change *how much* is showing. And anything a
+question can reveal must be reachable without asking — which is what keeps it working
+with JavaScript off, for a crawler, and for a visitor who never types anything.
+
+**More images on request — no.** Not because it is hard, but because it buys nothing. A
+reveal is only worth its complexity when the material is too large to show always, and
+three pairs in a fixed-height stepper is the *same height* as one. The request-driven
+version therefore delivers identical content at identical cost, minus discoverability. It
+would also collide with `FOLLOWUP` in `lib/retrieve.ts`, which already means "the subject
+is on screen" and is asserted in `evals/tier-a/viewport.test.ts`.
+
+**A workflow figure on request — yes.** §07's media column becomes one figure with
+several states rather than a stack: the evidence pair by default, the pipeline when the
+answer was licensed by a pipeline memory. The signal is `cites[0]` — *ordered*, not
+`includes`, because §07 holds eighteen memories of which six are JewelAI's and three the
+photoshoot's, so an `includes` test over six hits would fire on almost everything.
+
+**§07's media column is now a state machine, not a stack, and that is what resolves the
+collision between three tasks.** 22, 24 and 26 were all claiming the same 581px. Measured
+from `globals.css`: at 1440x900 the column has ~581px and the pair plus two cards already
+takes ~627px of it, and `.panel { overflow: hidden }` destroys the excess rather than
+scrolling it. Anything *added* to that column silently deletes something else. Anything
+that is a *state* of it costs nothing.
+
+**Not building:** a lightbox or gallery overlay; a `/how does .* work/` question-shape
+regex, because the corpus already encodes the distinction and a regex would drift from it;
+a new envelope field, because `cites` already carries the signal in order; an interactive
+diagram, since `PLAN.md` §4.4 already counts the one accordion against the site.
 
 ## 25. More detail in the vectors, and the particle field — `doing`
 
@@ -257,7 +286,22 @@ It ranks by what costs MJK work, and it names what is good and must not be touch
 - **The guard cannot read a datasheet.** Telegraphic specification prose trips
   `unlicensed-quantity`, because the noun after a number is taken as its unit. Rewriting as
   prose fixes it, but the limit is real and will bite the next dense memory.
-- **§07's height on a phone**, 1030px against a 147px dock.
+- **§07's height on a phone**, 1030px against a 147px dock. Recorded three different ways
+  across the notes — 1132, 1030, and 1062 at a different viewport. Re-measure before
+  quoting it again.
+- **The §02 figure can flip after the visitor has read the caption.** It reads the latest
+  envelope, and two late paths — a provider failure and a guard verdict with nothing
+  salvageable — rewrite `cites` down to the two memories the fallback prose actually came
+  from. If `mjk-101` was hit three of six it survives the first envelope and not the
+  second, so the aircraft reverts to the engine mid-answer. The narrowing is correct on
+  its own terms: after a replacement the text really is licensed by those two. The figure
+  is what is wrong to read it. Freeze the figure's state from the first envelope of each
+  question. Held until the vectors agent lands, because it owns that file.
+- **`overflow-anchor: none` covers the answer, not the media column.** It names
+  `.answer-swap`, `.answer-layer`, `.answer` and `.answer-prose`. A figure that changes
+  size when an answer lands is uncovered by it, and a growing media column is the same
+  mechanism that was measured moving the camera 431–554px. Any new §07 figure state must
+  be zero-delta by construction; the property is a belt, not the defence.
 
 ---
 
