@@ -105,8 +105,30 @@ font payload, and all fourteen selectors using it render committed content — n
 output or visitor input — so it can carry a `text=` subset of 4–8 kB. Not taken: the risk
 is a glyph outside the declared set falling back silently.
 
-**Per-chunk fade on streamed answers.** See the flowtoken note above. Affordable; not yet
-argued on experience.
+**Per-word fade on streamed answers — decided: no.** MJK asked me to look at the current
+streaming and settle it. Measured:
+
+- At the wire, the stream is already smooth: 117 chunks over 3.34s, gap p50 16ms, p95
+  30ms, median 90 bytes, no compression buffering. `smoothStream` is doing its job.
+- In the DOM, React commits finely too: 556 commits for a 2,379-character answer, about
+  one per four characters, gap p50 0ms.
+
+So there is no lurch at the source to smooth out. Against that, a per-word fade means one
+span per word, and every span inherits the eight-layer halo that is this site's measured
+raster cost — 30.9ms p95 against 14.5ms on a phone at 4x throttle. It would also be
+decoration for sighted users only, since the prose is `aria-hidden` while streaming and a
+visually-hidden live region carries the finished text to a screen reader.
+
+One thing I could NOT measure, and will not pretend otherwise: whether it would *feel*
+better. Headless Chromium has no GPU, so the three.js scene software-renders and saturates
+the main thread — ~22,000ms of long tasks inside a 22,000ms window, and A/B-ing the halo
+changed that by 40ms, which is noise. Any paint-cadence claim from that environment is
+worthless. Asserting an improvement I cannot measure is exactly the "it costs nothing to
+render" mistake this project has already paid for once.
+
+That measurement also corrects an earlier claim of mine: I first reported text arriving in
+206-character slabs 669ms apart. That was a 50ms poll under software rendering, not the
+site's behaviour.
 
 ---
 
