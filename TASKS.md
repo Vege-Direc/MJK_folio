@@ -133,6 +133,32 @@ site's behaviour.
 
 ---
 
+## 21. The section must match the question — `doing`
+
+**Reported:** asking "what can you tell me about his bits education" lands on §02, whose
+title says "I drew an airliner called the MJK-101" and whose figure shows the aircraft.
+Neither is about BITS. MJK: "Either headers should also be dynamically generated to match
+the question for the relevant section or it needs to be more generic. Also in this section
+if the question is about bits then show the engine isometric and if brunel then the
+airplane right? gen ui can help with this? Lets make it properly relevant right?"
+
+He is right, and the second half is the more interesting one. §02's figure ALREADY holds
+both states — it is a two-stroke engine that becomes the MJK-101 — and it simply always
+rests on the aircraft. Letting retrieval choose which state it rests on is generative UI
+of exactly the kind this site allows: the choice comes from the memory ids the answer was
+licensed by, so it is deterministic and the model has no say in it, which is the rule the
+whole architecture is built on.
+
+The heading is the harder half. `DESIGN.md` treats a stop's title as its identity and the
+anchor a flight lands on, so replacing it is not free. The answer already carries a dek
+that was made to match what the answer actually says. The honest options are to swap the
+heading for that dek while an answer is showing, or to write a title general enough to
+cover both halves of the section — and §02 spans a mechanical degree at BITS and an
+aerospace masters at Brunel, so a title naming only the aircraft will always be wrong for
+half the questions it receives.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame

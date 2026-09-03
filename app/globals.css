@@ -328,6 +328,28 @@ html[data-flying] {
   overflow: hidden;
 }
 
+/*
+ * A stop holding an answer is allowed to grow, on every viewport.
+ *
+ * `overflow: hidden` on a fixed-height panel does not hide the end of a long answer, it
+ * DESTROYS it. Measured at 1440x900 on a 1,424-character answer: the last line sits 87px
+ * below the panel's bottom edge at every scroll position — 6300, 6500, 6700, 6900, the
+ * same 87px each time — and a screenshot clipped to that line's own rectangle renders
+ * pure background. The budget was about 1,100 characters, and past it the excess was
+ * unreachable rather than merely off-screen. A phone never had this, because below 900px
+ * the panel has been `height: auto` for weeks; the desktop was the outlier.
+ *
+ * MJK's call, and he made it: let it grow. The cost is that one stop no longer occupies
+ * exactly one viewport on a desktop, so the camera's mapping stops being a clean
+ * stop-per-screen. That mapping already tolerates it — `ScrollProgress` derives each mark
+ * from the section's own `offsetTop` rather than assuming uniform heights, and it now
+ * re-measures when a section changes size, which is the half that makes this safe.
+ */
+.panel:has(.answer) {
+  height: auto;
+  overflow: visible;
+}
+
 /**
  * The only "you are here" affordance the design has (preview.html:30-46): every stop
  * sits back until the camera reaches it. `data-active` is written onto each section by
