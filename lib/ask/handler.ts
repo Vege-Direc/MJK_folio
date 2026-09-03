@@ -220,6 +220,35 @@ function envelopeFromFallback(stopId: StopId | null, block: FallbackBlock): Enve
  */
 const DIAGNOSTIC = 'x-mjk-answer';
 
+/**
+ * The model's error part, dropped before it reaches the page.
+ *
+ * MEASURED, with a deliberately invalid provider key. The stream that went out was
+ * `start`, `data-route`, `data-envelope` (six licensed cites, status `streaming`),
+ * **`error`**, `data-envelope` (the fallback's two cites, status `replaced`), `finish` --
+ * and the browser applied everything up to the error and nothing after it. So the visitor
+ * was left holding the FIRST envelope: a dek reading "Education" with no body under it at
+ * all, on a page whose whole recovery story is that corpus prose is a real answer.
+ *
+ * `toUIMessageStream` emits that part because a provider failure is, to it, the end of the
+ * story. Here it is not: `onError` above has already set `failed`, and the `replaceWith`
+ * path below writes MJK's own prose into a second envelope. The error part's only effect
+ * is to stop that recovery arriving, which makes it strictly worse than nothing.
+ *
+ * Nothing is being hidden. `x-mjk-answer` still names what happened, and it reaches curl,
+ * devtools and any monitor -- which is where a provider outage belongs, rather than in a
+ * blank section a visitor has to interpret.
+ */
+function withoutErrorParts<T extends { type: string }>(source: ReadableStream<T>): ReadableStream<T> {
+  return source.pipeThrough(
+    new TransformStream<T, T>({
+      transform(chunk, controller) {
+        if (chunk.type !== 'error') controller.enqueue(chunk);
+      },
+    }),
+  );
+}
+
 /** A complete UI message stream that carries one envelope and no model output. */
 function fallbackResponse(envelope: EnvelopeData, diagnostic: string): Response {
   const stream = createUIMessageStream<AskUIMessage>({
@@ -375,7 +404,9 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
 
       // Reasoning models think out loud; that text is not the answer and never reaches
       // the page. Only the prose does, and the guard gets the last word on the prose.
-      writer.merge(result.toUIMessageStream({ sendStart: false, sendFinish: false, sendReasoning: false }));
+      writer.merge(
+        withoutErrorParts(result.toUIMessageStream({ sendStart: false, sendFinish: false, sendReasoning: false })),
+      );
 
       const startedAt = Date.now();
       let text = '';
