@@ -8,20 +8,39 @@ Status key: `todo` · `doing` · `done` · `blocked` · `wontfix (with reason)`
 
 ---
 
-## 1. RD 350 image quality — `todo`
+## 1. RD 350 image quality — `done`, with one question for MJK
 
 **Reported:** the before image is squeezed to fit the gallery and distorted. Some images
 are not loading properly.
 
-**Required:**
-- Never distort. Crop the after to the before, or the before to the after, but the aspect
-  ratio of neither may be altered.
-- The registration must match **the whole bike**, not the axles. The two photographs were
-  taken from different angles, so a fit driven by axle positions can be wrong everywhere
-  else, and that is a likely cause of the distortion.
-- Outcome quality is paramount. This is a photograph of his own work.
+**MJK's diagnosis was right, and the cause was exactly where he guessed.** The old wipe
+was built on a homography fitted to six points on the two wheels. Measured back off the
+shipped file, it sampled a 2053x1133 region into a 668x501 frame: a **1.36 aspect
+squeeze**, so the stock bike stood 36% too tall for its length and its wheels were visible
+ellipses. The finished bike beside it was an untouched crop. The distortion was in the
+image preparation, not in any stylesheet.
 
-## 2. §02's figure — `todo`
+**And no registration was ever possible.** Wheelbase divided by summed wheel radii — a
+number no rotation, uniform scale or translation can change — is 2.95 in the stock
+photograph and 2.24 in the finished one, 32% apart. The cameras were not in the same
+place. Match the wheelbase and the stock wheels come out 24% small; match the wheels and
+the rear axle misses by 180px. A full affine needs 38% anisotropy; the four-point
+homography that fits exactly leaves a wheel 32% out of round. Every honest option was a
+bad wipe.
+
+**So it is a cut, not a wipe.** Each photograph is cropped to 4:3 and resized once,
+uniformly — nothing is warped on either axis, both files are 780x585, and the rendered box
+is 579x434, so `object-fit: cover` is an identity and neither photograph is touched.
+Verified on the live site at 1440 and 390: both frames load, both are sharp, the wheels
+are round.
+
+**The one question for MJK.** The rebuilt bike's rear wheel and the tail of the seat unit
+are cut off at the right edge — and that is the photograph, not the crop. `1.png` is the
+only left-side profile of the finished bike and the photographer stood too close. The
+stock frame shows the whole machine; the rebuilt one cannot. **Is there another shot of
+the finished bike, further back?**
+
+## 2. §02's figure — `done`
 
 **Reported:** the engine-simulator screenshot does not fit the site's aesthetic.
 
@@ -31,11 +50,26 @@ render of the aircraft he designed at Brunel, drawn from
 `C:\Users\mathe\OneDrive\Documents\Old Projects\Airbus Presentation.pdf` (the short form
 of `Airbus Design Project.docx`).
 
-**Open question to answer with a measurement, not an opinion:** can this run without
-hurting performance? The site's budget rule is that blur radius squared times area is
-what costs and geometry is free; a perpetual animation measured -11% fps at 4x throttle.
+**Done, as asked.** A two-stroke parallel twin holds for 850ms, gives way to 150
+particles, and they cross the frame and reform as the plan view of the MJK-101. Twelve
+iterations against period Yamaha reference before the engine read as an engine rather than
+as architecture.
 
-## 3. Show the AI work as before and after — `todo`
+**The aircraft is his, not an illustration of an airliner.** The Airbus presentation he
+pointed me at carries his own CAD plan view and a full specification table. The outline is
+traced from that render, the dimensions are read off that table, and both are now in the
+corpus as `mjk-101` — so the site can answer questions about the aircraft too. The trace
+validates against his own numbers: span over length comes out 1.095 against a stated
+110/97 = 1.134.
+
+**On performance, measured rather than asserted.** The sequence runs once, on first sight,
+and the particles are mounted only for the 1.6 seconds they exist — at rest the figure is
+one path, one casing and six dimension lines, and nothing animates for the remainder of
+the visit. Each particle carries both endpoints as custom properties, so the crossing is
+one compositor transition per dot and no per-frame JavaScript touches the raster threads
+the halo already taxes. Reduced motion goes straight to the aircraft.
+
+## 3. Show the AI work as before and after — `doing`
 
 **Required:** in Selected Work or wherever fits better.
 - Clothing: `D:\Projects\Siddhi\Pop Up Supplier Images` (source) →
@@ -153,3 +187,36 @@ tripped seven `unlicensed-quantity` violations on MJK's own authored prose — "
 20 ft." among them — because the noun after a number is taken as its unit and a
 telegraphic sentence gives it nothing to bind to. Rewriting it as prose fixed it and read
 better, but the limit is real and will bite the next dense memory.
+
+
+---
+
+## What reading the JewelAI codebase changed
+
+MJK asked me to go deep rather than take his summary second-hand. Two things came back
+that would otherwise have shipped as errors.
+
+**A claim already on the site was wrong.** `jewelai-platform` said "I engineered a
+multi-reference video-generation technique". The code says the opposite in a comment: the
+pipeline deliberately does NOT pass the reference set to the video model, because the
+element image's own scene gets rendered into the clip. `kling_elements` is typed and never
+populated by any caller — checked at every call site, not taken on report. The technique
+is real and it is in the IMAGE path. Corrected, and the true version is the better story:
+he tried it on the video, diagnosed why it failed, and removed it.
+
+**His three-photographs framing is confirmed and understated.** The whole set travels
+together three separate times, and the model is never told in words what the piece looks
+like — because describing a ring in text is how you get a different ring back. There is no
+mesh and no photogrammetry, so "reads the structure from several angles at once" is right
+and "builds a 3D model" would have been wrong.
+
+**The clothing work is not JewelAI at all.** It is a separate Python pipeline, which is
+what the corpus already called `project-photoshoot-pipeline`. Its own ledger records 107
+runs, 249 jobs, 125 accepted images and 55 rejected, for 27 dollars of model calls — which
+makes the corpus's existing "more than 50 images across 20+ products" true and
+conservative.
+
+**And the staged apparel image has no model in it.** The generated frame rehangs the
+garments on a wooden rack in an invented room. Captioning it "on-model" would contradict
+the picture beside it; the honest reading is stronger anyway, because the print, border
+and tassels survive intact while the entire room is generated.
