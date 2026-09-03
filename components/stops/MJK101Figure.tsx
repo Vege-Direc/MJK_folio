@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAsk } from '../chat/ChatProvider';
-import { ENGINE, FIG_VIEWBOX, MJK101_INNER, MJK101_PATH, MORPH } from './mjk101';
+import { buildDust, runDust, type Dust } from './dust';
+import { ENGINE, FIG_VIEWBOX, MJK101_INNER, MJK101_PATH } from './mjk101';
 
 /**
  * §02's figure: a two-stroke engine that becomes the aircraft he designed.
@@ -43,8 +44,22 @@ import { ENGINE, FIG_VIEWBOX, MJK101_INNER, MJK101_PATH, MORPH } from './mjk101'
  * aeroplane is long enough to notice something happened and too short to watch it.
  */
 const HOLD = 1400; // the engine, alone, long enough to be read as an engine
-const SCATTER = 900; // strokes give way to dots
-const FLY = 1700; // dots cross to the planform
+const SCATTER = 900; // strokes give way to dust
+const FLY = 1700; // the cloud crosses to the planform
+/*
+ * The tail. The cloud used to be cut off the instant the aircraft appeared, and at 150
+ * dots that read as a swap; at 2,000 it read as a pop. So the canvas keeps drawing for
+ * another 420ms, fading, while the outline draws itself on underneath — the two halves
+ * overlap instead of butting together, and the dust looks like it settled INTO the drawing.
+ */
+const SETTLE = 420;
+
+/**
+ * How many particles. Not a taste number: measured at 390x844 under 4x CPU throttle,
+ * canvas 2D holds ~58fps at 2,400 and starts falling off at 3,200 (47fps). 2,000 sits
+ * inside that with room for the wave arithmetic the benchmark did not include.
+ */
+const PARTICLES = 2000;
 
 type Phase = 'engine' | 'scatter' | 'fly' | 'plane';
 
@@ -67,6 +82,16 @@ export default function MJK101Figure() {
   const ref = useRef<HTMLElement>(null);
   const [advanced, setAdvanced] = useState<Phase | null>(null);
   const timers = useRef<number[]>([]);
+
+  /*
+   * The canvas exists only while a run is in flight. At rest the figure is one outline,
+   * a handful of interior curves and a title block — nothing that animates, nothing that
+   * holds a drawing context.
+   */
+  const [running, setRunning] = useState(false);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const dust = useRef<Dust | null>(null);
+  const stopDust = useRef<(() => void) | null>(null);
 
   /*
    * Read through `useSyncExternalStore` rather than in the effect. The preference has to
@@ -101,13 +126,55 @@ export default function MJK101Figure() {
    * memory ids the guard licensed the answer against, so it is deterministic and the model
    * has no say in it — the same rule that governs which section an answer lands in at all.
    */
+  /*
+   * Decided ONCE per question, off the FIRST envelope, and then frozen.
+   *
+   * `answer.envelope` is the latest envelope, and two late server paths deliberately
+   * rewrite `cites` down to the two memories a fallback's prose actually came from — a
+   * provider failure, and a guard verdict with nothing salvageable (`handler.ts`, the
+   * `replaceWith` path). The first envelope carries the full licensed set,
+   * `licences.map(m => m.id)`. So a question that hit `mjk-101` three licences out of six
+   * showed the aircraft, and then, seconds later, reverted to the engine underneath a
+   * caption about the Brunel Airbus project. The narrowing is right on the server's own
+   * terms: those really are the memories that fallback prose came from. Reading it is
+   * what is wrong, because this figure is answering "what is this answer about", not
+   * "which sentences survived".
+   *
+   * Keyed on the question text, not on the envelope or on `answer`: both are fresh
+   * objects on every streamed token, so keying on either would re-latch continuously and
+   * reintroduce the bug. Adjusted during render rather than in an effect, which is the
+   * same bargain `ChatProvider` strikes for `showOriginal` — an effect renders one frame
+   * with the previous question's answer still on screen and then corrects itself, and
+   * here that frame is a visible flip of the whole drawing.
+   */
   const { answer } = useAsk();
-  const cites = answer?.envelope?.stopId === 'engineering' ? answer.envelope.cites : undefined;
-  const rests: Phase | null = !cites?.length
-    ? null
-    : cites.includes(AIRCRAFT_MEMORY)
-      ? 'plane'
-      : 'engine';
+  const question = answer?.question ?? null;
+  const envelope = answer?.envelope ?? null;
+
+  const [latch, setLatch] = useState<{ q: string | null; seen: boolean; at: Phase | null }>({
+    q: null,
+    seen: false,
+    at: null,
+  });
+
+  const read = (): Phase | null => {
+    if (envelope?.stopId !== 'engineering') return null;
+    if (!envelope.cites?.length) return null;
+    return envelope.cites.includes(AIRCRAFT_MEMORY) ? 'plane' : 'engine';
+  };
+
+  let rests = latch.at;
+  if (question !== latch.q) {
+    // A new question is a new subject. Take this envelope if one has already arrived.
+    const next = { q: question, seen: envelope !== null, at: read() };
+    setLatch(next);
+    rests = next.at;
+  } else if (!latch.seen && envelope !== null) {
+    // The first envelope for this question. The only one this figure ever reads.
+    const next = { q: question, seen: true, at: read() };
+    setLatch(next);
+    rests = next.at;
+  }
 
   const phase: Phase = rests ?? (reduced ? 'plane' : (advanced ?? 'engine'));
 
@@ -125,10 +192,53 @@ export default function MJK101Figure() {
   const run = useCallback(() => {
     timers.current.forEach(window.clearTimeout);
     timers.current = [];
+    stopDust.current?.();
+    stopDust.current = null;
     setAdvanced('engine');
-    timers.current.push(window.setTimeout(() => setAdvanced('scatter'), HOLD));
+    setRunning(true);
+
+    /*
+     * Sample both clouds during the hold, not at the transition.
+     *
+     * 2,000 `getPointAtLength` calls across 165 paths is single-digit milliseconds on a
+     * desktop and tens on a throttled phone — cheap, but not cheap enough to spend on the
+     * frame where the engine gives way. The hold is 1,400ms of a figure that is doing
+     * nothing, so the work goes there, one tick after the engine has painted. It is kept
+     * on the ref because the geometry never changes: Replay reuses the same cloud, which
+     * is also why the per-particle phase is a hash of the index rather than a random
+     * number — the second run has to look like the first.
+     */
+    timers.current.push(
+      window.setTimeout(() => {
+        dust.current ??= buildDust(
+          ENGINE.map(([, d]) => d),
+          [MJK101_PATH, ...MJK101_INNER],
+          PARTICLES,
+        );
+      }, 0),
+    );
+
+    timers.current.push(
+      window.setTimeout(() => {
+        setAdvanced('scatter');
+        const el = canvas.current;
+        if (!el || !dust.current) return;
+        stopDust.current = runDust(el, dust.current, {
+          scatter: SCATTER,
+          fly: FLY,
+          settle: SETTLE,
+          // Read off the element rather than hard-coded, so the drawing follows the theme
+          // token the way every stroke in the SVG beside it does.
+          colour:
+            getComputedStyle(el).getPropertyValue('--color-accent').trim() || '#d4c19c',
+        });
+      }, HOLD),
+    );
     timers.current.push(window.setTimeout(() => setAdvanced('fly'), HOLD + SCATTER));
     timers.current.push(window.setTimeout(() => setAdvanced('plane'), HOLD + SCATTER + FLY));
+    timers.current.push(
+      window.setTimeout(() => setRunning(false), HOLD + SCATTER + FLY + SETTLE),
+    );
   }, []);
 
   useEffect(() => {
@@ -149,13 +259,18 @@ export default function MJK101Figure() {
     return () => {
       io.disconnect();
       held.forEach(window.clearTimeout);
+      stopDust.current?.();
     };
   }, [reduced, run]);
 
-  const dots = phase === 'scatter' || phase === 'fly';
-
   return (
     <figure className="fig-ga" ref={ref} data-phase={phase}>
+      {/*
+        The stage exists so the canvas can sit exactly on the drawing. It carries the
+        figure's aspect ratio, the SVG fills it, and the canvas is absolutely positioned
+        over it — one wrapper rather than measuring the SVG's box in JavaScript.
+      */}
+      <div className="fig-ga-stage">
       <svg viewBox={FIG_VIEWBOX} role="img" aria-labelledby="ga-title">
         <title id="ga-title">
           {reduced
@@ -167,33 +282,6 @@ export default function MJK101Figure() {
           <g className="ga-engine" aria-hidden="true">
             {ENGINE.map(([kind, d], i) => (
               <path key={i} className={kind === 'face' ? 'ga-eface' : 'ga-eline'} d={d} />
-            ))}
-          </g>
-        ) : null}
-
-        {dots ? (
-          <g className="ga-dust" aria-hidden="true">
-            {MORPH.map(([x0, y0, x1, y1], i) => (
-              <circle
-                key={i}
-                r={1.15}
-                /*
-                 * Both endpoints ride as custom properties so the whole flight is a single
-                 * CSS transition on `transform`: compositor work, no per-frame JavaScript,
-                 * and nothing that touches the raster threads the halo already taxes. The
-                 * stagger comes off the index rather than a random number, so the cloud
-                 * reads as one body turning rather than as static.
-                 */
-                style={
-                  {
-                    '--x0': `${x0}px`,
-                    '--y0': `${y0}px`,
-                    '--x1': `${x1}px`,
-                    '--y1': `${y1}px`,
-                    '--d': `${(i % 25) * 9}ms`,
-                  } as CSSProperties
-                }
-              />
             ))}
           </g>
         ) : null}
@@ -244,6 +332,9 @@ export default function MJK101Figure() {
         ) : null}
       </svg>
 
+      {running ? <canvas ref={canvas} className="fig-ga-dust" aria-hidden="true" /> : null}
+      </div>
+
       {/*
         The caption follows the figure. Resting on the engine under a caption about an
         airliner would be the same mistake in a different place.
@@ -258,6 +349,22 @@ export default function MJK101Figure() {
           */}
           {!reduced && phase === 'plane' ? (
             <button type="button" className="fig-ga-replay" onClick={run}>
+              {/*
+                MJK's question was "where is loop btw?", which is the answer to whether the
+                control was discoverable: it was 10px of dimmed mono at 0.18em tracking, and
+                he did not see it. What was missing is not size, it is the SIGN that this is
+                a control rather than a label — a word set like a caption reads as caption.
+                The glyph is what fixes that, and it makes one single turn as it arrives, so
+                the thing that says "replayable" happens exactly once, in the corner of the
+                eye, at the moment there is finally something to replay. Not a loop: a
+                perpetual animation on this page measured -11% framerate and took the worst
+                frame from 66ms to 92ms, and this one would sit beside a paragraph someone
+                is trying to read.
+              */}
+              <svg className="fig-ga-replay-mark" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M13.2 6.4A5.6 5.6 0 1 0 13.4 9.9" />
+                <path d="M13.6 2.4v4.2h-4.2" />
+              </svg>
               Replay
             </button>
           ) : null}
