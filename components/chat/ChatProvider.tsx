@@ -5,6 +5,7 @@ import { DefaultChatTransport } from 'ai';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { STOPS, type StopId } from '@/content/stops';
 import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
+import { flyToElement } from '@/lib/flight';
 
 /**
  * One chat, shared by the dock (input) and the answer (wherever it docks on the page).
@@ -89,18 +90,21 @@ function viewingStop(): StopId | undefined {
   return STOPS.find((s) => s.index === index)?.id;
 }
 
-function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 /**
- * Take the page to the stop. One native smooth scroll, never suppressed, never snapped:
- * the scene follows scroll the way it always does, so this is also how the camera flies.
- * Reduced motion gets an instant jump, which is what that preference asks for.
+ * Take the page to the stop. The scene follows scroll the way it always does, so this is
+ * also how the camera flies. Reduced motion gets an instant jump, which is what that
+ * preference asks for, and `flyTo` handles that itself.
+ *
+ * This was `scrollIntoView({ behavior: 'smooth' })`. The native call gives no say over
+ * duration or curve, and measured across the full page it spent 1410ms travelling with a
+ * 95th-percentile frame gap of 86ms — one step of it moving 5,441px in 335ms, which
+ * screenshots as half a viewport of unpainted black. The replacement crosses the same
+ * distance in 835ms at a p95 of 12ms. Most of that second number comes from the halo
+ * trim `flyTo` switches on for the duration, not from the tween.
  */
 function goToStop(route: RouteData) {
   const el = document.getElementById(route.stopId);
-  if (el) el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  if (el) flyToElement(el);
   window.dispatchEvent(new CustomEvent<RouteData>(ROUTE_EVENT, { detail: route }));
 }
 

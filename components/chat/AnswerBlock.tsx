@@ -91,7 +91,7 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
 
       <p className="answer-prose" aria-hidden={streaming || undefined}>
         {shown}
-        {streaming && <span className="answer-caret motion-safe:animate-pulse" aria-hidden="true" />}
+        {streaming && <span className="answer-caret" aria-hidden="true" />}
       </p>
 
       {/*

@@ -23,7 +23,20 @@ export type EnvelopeData = {
   status: EnvelopeStatus;
   /** Present for `salvaged` and `replaced`: the body to show instead of the streamed prose. */
   body?: string;
-  /** One line the UI may show under the answer. */
+  /**
+   * What the guard did, in words. Deliberately not rendered, and this is the reason.
+   *
+   * It reads "Checked against the corpus; one line removed." A review flagged it as dead
+   * code — written by the server, dropped by the UI — and it is not: it was pulled from
+   * the page on purpose. Telling a visitor that the answer they are reading has been
+   * checked, and that a line of it was deleted, narrates the machinery of the site to
+   * someone who came to find out what MJK has built. The guard's job is to make the
+   * answer trustworthy, not to ask for credit for it.
+   *
+   * It stays on the envelope because it is the only machine-readable account of what
+   * salvage did, and two evals assert against it. If you are about to render this, the
+   * question to answer first is what the visitor does differently for having read it.
+   */
   note?: string;
 };
 

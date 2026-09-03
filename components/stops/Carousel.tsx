@@ -58,11 +58,23 @@ function subscribeToMotion(onChange: () => void): () => void {
   return () => mql.removeEventListener('change', onChange);
 }
 
+/** Same reasoning as `subscribeToMotion`: the tab's visibility is OS/browser state, not
+ * component state, so it is read the same way rather than mirrored into a `useEffect`. */
+function subscribeToPageVisibility(onChange: () => void): () => void {
+  document.addEventListener('visibilitychange', onChange);
+  return () => document.removeEventListener('visibilitychange', onChange);
+}
+
 export default function Carousel() {
   const reduced = useSyncExternalStore(
     subscribeToMotion,
     () => window.matchMedia(MOTION_QUERY).matches,
     () => false,
+  );
+  const pageVisible = useSyncExternalStore(
+    subscribeToPageVisibility,
+    () => !document.hidden,
+    () => true,
   );
   const [index, setIndex] = useState(0);
   // The frame being faded over. Held for one transition so the incoming photograph has
@@ -79,8 +91,30 @@ export default function Carousel() {
   const [playing, setPlaying] = useState(true);
   const [held, setHeld] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  const advancing = playing && !held && !reduced;
+  // Starts false: nothing observed this element yet, and the alternative -- assuming it
+  // is on screen until told otherwise -- is exactly the bug this gates. A nine-screen
+  // page had this timer, and the repaint it drives, running from page load whether or
+  // not the stop was anywhere near the viewport.
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    // 0.5 rather than the default (any overlap at all, including one pixel): a sliver of
+    // the carousel scrolled into view is not "looking at it".
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      threshold: 0.5,
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const advancing = playing && !held && !reduced && inView && pageVisible;
 
   useEffect(() => {
     if (!advancing) return;
@@ -106,6 +140,7 @@ export default function Carousel() {
 
   return (
     <div
+      ref={rootRef}
       className="carousel"
       onPointerEnter={() => setHeld(true)}
       onPointerLeave={() => setHeld(false)}

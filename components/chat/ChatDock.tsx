@@ -129,7 +129,20 @@ export default function ChatDock() {
           </div>
         )}
 
-        {answer === null && (
+        {/*
+          The prompts used to disappear the moment an answer existed, and stay gone.
+          That was wrong twice over. A visitor who has just read one answer is exactly
+          the visitor most likely to want a second, and taking away the four things
+          worth asking leaves them an empty field and no idea what this thing knows.
+
+          It was also costing a relayout: losing the row changes the dock's height,
+          `--dock-h` is republished, and every one of the nine stops recomputes the
+          bottom padding derived from it — nine sections relaid out at the exact moment
+          the page is also flying to a stop and streaming text into it.
+
+          They still yield when the answer has nowhere else to go and is rendering here.
+        */}
+        {!showInline && (
           <SuggestedPrompts
             onPick={(p) => {
               setInput(p);

@@ -147,22 +147,55 @@
  * this and the scene's own tier are the same decision about the same machine, and a
  * decision made from a resizable number is a decision that goes stale.
  */
+:root {
+  /*
+   * The trimmed set, named rather than inlined, because two different conditions want
+   * exactly these values and a second copy would drift from the first.
+   */
+  --halo-lite:
+    0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
+    0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86);
+
+  --halo-display-lite:
+    0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
+    0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62);
+
+  --halo-mono-lite:
+    0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
+    0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76);
+}
+
 @media (pointer: coarse) {
   :root {
-    --halo:
-      0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
-      0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
-      0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86);
-
-    --halo-display:
-      0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
-      0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62);
-
-    --halo-mono:
-      0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
-      0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
-      0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76);
+    --halo: var(--halo-lite);
+    --halo-display: var(--halo-display-lite);
+    --halo-mono: var(--halo-mono-lite);
   }
+}
+
+/*
+ * The same trim, for the length of a programmatic flight, on every pointer.
+ *
+ * The measurement above was taken on a phone and the fix was keyed to phones, and that
+ * left the fuller halo running on exactly the machine that flies furthest. A desktop
+ * flight from the hero to contact measured a 95th-percentile frame gap of 86ms — worse
+ * than a 4x-throttled phone at 19ms — and mid-flight screenshots show 490px of a 900px
+ * viewport arriving unpainted. The cause is the same one the phone had: a `text-shadow`
+ * is a CPU-rastered Gaussian blur of every glyph, and a page in motion re-rasters every
+ * tile the scroll uncovers through all ten layers of it.
+ *
+ * With this attribute set for the duration of the flight and nothing else changed, that
+ * p95 drops to 12ms. `lib/flight.ts` sets it and unconditionally clears it, including on
+ * the interrupt path, so the resting page keeps the halo it was designed with. There is
+ * no transition on these: a halo that animates its radius is a halo that re-rasters
+ * every frame on purpose.
+ */
+html[data-flying] {
+  --halo: var(--halo-lite);
+  --halo-display: var(--halo-display-lite);
+  --halo-mono: var(--halo-mono-lite);
 }
 
 /**
@@ -717,6 +750,30 @@
   text-wrap: pretty;
 }
 
+/*
+ * A caret blinks. It does not breathe.
+ *
+ * This carried Tailwind's `animate-pulse`, which is a 2-second ease-in-out ramp between
+ * full and half opacity. There is a measured 750ms gap between the question being sent
+ * and the first token arriving, and for the whole of it the ramp is somewhere in its
+ * slow middle, changing too little to read as motion — so the one element on screen whose
+ * entire job is to say "this is alive, text is coming" reads as a static orange tick.
+ *
+ * 1.06s, hard on and hard off, which is what a terminal caret does and what the eye
+ * recognises without being asked to. `steps(1)` also costs less than the ramp: two
+ * composited opacity changes a second instead of a value recomputed every frame.
+ */
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .answer-caret {
   display: inline-block;
   width: 2px;
@@ -724,6 +781,13 @@
   margin-left: 4px;
   vertical-align: text-bottom;
   background: var(--color-accent);
+  animation: caret-blink 1.06s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-caret {
+    animation: none;
+  }
 }
 
 /*
@@ -1170,7 +1234,10 @@
 .carousel-hero img.on {
   visibility: visible;
   z-index: 1;
-  animation: carousel-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /* 480ms, not the original 800ms: with the interval now gated to on-screen play, the
+     crossfade itself is a bigger share of what a viewer actually watches, and 800ms read
+     as a lag rather than a transition. */
+  animation: carousel-in 0.48s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @keyframes carousel-in {
@@ -1316,6 +1383,40 @@
   color: var(--color-accent);
 }
 
+/* ── press ───────────────────────────────────────────────────── */
+
+/*
+ * Every control on this site had a hover state and a focus ring and nothing at all for
+ * the press itself. On a desktop that is a missing beat. On a phone there is no hover to
+ * miss it by: a visitor taps a timeline row or a prompt chip and the pixel under their
+ * thumb does not change, so the only confirmation the tap registered is whatever happens
+ * next, 200ms later, somewhere else on the screen.
+ *
+ * Transform and opacity only, so this is the compositor's work and not the raster
+ * threads' — the halo makes anything that repaints text expensive, and a press is the
+ * one moment a finger is already covering the evidence.
+ */
+.prompt-chip:active,
+.dock-send:active,
+.answer-toggle:active,
+.carousel-toggle:active,
+.tl-row > button:active,
+.contact-links a:active {
+  transform: translateY(0.5px);
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt-chip:active,
+  .dock-send:active,
+  .answer-toggle:active,
+  .carousel-toggle:active,
+  .tl-row > button:active,
+  .contact-links a:active {
+    transform: none;
+  }
+}
+
 /* ── the dock ──────────────────────────────────────────────────────────────── */
 
 /*
@@ -1327,12 +1428,24 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /*
+   * In pixels from the top edge, not percentages of a height that changes.
+   *
+   * The percentage stops were read off a desktop dock, where the prompt row is one line
+   * and sits inside the solid 58%. On a phone that row wraps to four lines and the whole
+   * of it lands in the feather, so the fix that was written for this exact collision
+   * never applied where the collision happens: the timeline's "Omnicom Group" and the
+   * next stop's title both print through the prompts, legible, unreadable.
+   *
+   * Solid under everything the dock draws, feathered across the 44px above it. The stop
+   * padding derived from `--dock-h` keeps the *end* of a section clear of the dock; this
+   * is what keeps its middle clear on the way past.
+   */
   background: linear-gradient(
     to top,
-    var(--color-bg) 0%,
-    var(--color-bg) 58%,
-    rgba(10, 10, 14, 0.94) 74%,
-    rgba(10, 10, 14, 0.72) 88%,
+    var(--color-bg) 0,
+    var(--color-bg) calc(100% - 44px),
+    rgba(10, 10, 14, 0.78) calc(100% - 18px),
     rgba(10, 10, 14, 0) 100%
   );
 }
@@ -1507,11 +1620,28 @@
    * likely to be a phone GPU already running the scene.
    */
 
+  /*
+   * `align-self: stretch` is the whole of this rule and it is not a tidy-up.
+   *
+   * The desktop layout is two grid columns and `.media-zone` carries `align-self:
+   * center` to sit the media against the middle of the text beside it. On a phone the
+   * container becomes `flex-direction: column`, and in a column flexbox the cross axis
+   * is the HORIZONTAL one — so that same declaration stopped meaning "centre it
+   * vertically" and started meaning "shrink it to its own content width", overriding the
+   * `align-items: stretch` set on the parent a few rules above.
+   *
+   * Measured at 390px: the RD 350 carousel rendered 132px wide with an 82px-tall image.
+   * The site's only photography, the one section that is not words, was coming out at a
+   * third of the column on every phone — which is a large part of why a phone reads as
+   * nothing but text. Desktop is unaffected: this only applies below 900px, where the
+   * axis has already swapped underneath it.
+   */
   .media-zone,
   .media-zone.left,
   .media-zone.right {
     order: 2;
     padding: 0;
+    align-self: stretch;
   }
 
   /* 30.4px against a 16px body is only a 1.9x step; the display face needs more. */

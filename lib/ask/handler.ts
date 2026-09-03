@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
+  smoothStream,
   streamText,
   type LanguageModel,
   type ModelMessage,
@@ -284,6 +285,11 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         instructions,
         messages,
         providerOptions,
+        // Deltas arrive from the provider in whatever clumps its own token batching
+        // produces, observed on the live site as e.g. " client success and ad" landing
+        // as one piece -- so the answer lurched instead of streaming. This re-buffers
+        // and re-emits on word boundaries at a fixed pace instead.
+        experimental_transform: smoothStream({ chunking: 'word', delayInMs: 12 }),
         onError({ error }) {
           failed = true;
           console.error('[api/ask] streamText failed:', error);
