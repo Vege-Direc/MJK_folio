@@ -42,6 +42,11 @@ type Frame =
       readonly cap: string;
       readonly w: number;
       readonly h: number;
+      /**
+       * Where the 4:3 window sits on a portrait photograph, as `object-position`'s own
+       * percentage. Omitted means the file already fits and nothing is being chosen.
+       */
+      readonly pos?: string;
     };
 
 const FRAMES = [
@@ -49,18 +54,33 @@ const FRAMES = [
   {
     kind: 'photo',
     src: '/media/rd350/3.png',
-    alt: 'The finished bike from in front, looking back along the tank: a silver tank with a black centre stripe, a chrome filler cap, a single round instrument on the top clamp and black clip-on bars, with the finned engine below.',
+    alt: 'The finished bike from in front, looking back along the tank: a silver tank with a chrome filler cap and a scalloped knee cutout, the front wheel and fork beside it, and the finned engine below.',
     cap: 'tank',
     w: 560,
     h: 900,
+    // 560x900 in a 4:3 box shows 46.6% of the file. The subject runs from the clip-ons at
+    // 5% to the engine at 70%, so the window is centred on 37% rather than on the floor.
+    pos: '26%',
   },
   {
     kind: 'photo',
     src: '/media/rd350/2.png',
-    alt: 'The front end close up: a chrome headlight bowl and a chrome instrument above it, black fork tubes with a polished lower leg, an amber indicator, and the disc-braked front wheel on a garage floor.',
+    /*
+     * These alt strings describe the CROP, not the file.
+     *
+     * The hero is `object-fit: cover` in a 4:3 box and these are portrait photographs, so
+     * about half of each file is off screen. An alt that describes the whole file tells a
+     * screen-reader user about things no sighted reader can see - this one used to end
+     * "and the disc-braked front wheel on a garage floor", which the window cuts.
+     */
+    alt: 'The front end close up: a chrome headlight bowl on the left, black fork tubes with polished lower legs, an amber indicator, and the silver tank and exhaust behind them.',
     cap: 'front · lamp',
     w: 560,
     h: 800,
+    // The shallowest of the four at 0.700, so 52.5% survives. Lower than the old global
+    // 20% because the lamp this frame is named for sits at 28-50% and the wheel below it
+    // is half the alt text.
+    pos: '35%',
   },
   {
     kind: 'photo',
@@ -69,14 +89,24 @@ const FRAMES = [
     cap: 'rear · cowl',
     w: 620,
     h: 900,
+    // The exhaust tips are at 65-73% and the caption is "rear · cowl": at the old global 20%
+    // the window ended at 61.4% and cut both of them off, on the frame whose alt text reads
+    // "the rear tyre between two chrome exhausts". 27% was my first answer and a screenshot
+    // showed the tips still below the frame - the window is [0.483p, 0.483p + 0.517] of the
+    // file, so 27% ends at 64.7% and 40% ends at 71%, which is where they are.
+    pos: '40%',
   },
   {
     kind: 'photo',
     src: '/media/rd350/5.png',
-    alt: 'The view from the saddle: the tank running away with its black stripe and chrome filler cap, one round instrument in a chrome cup between the clip-ons, and the headlight bowl below.',
+    alt: 'The view from the saddle: the tank running away with its black centre stripe and chrome filler cap, and one round instrument in a chrome cup between the black clip-on bars.',
     cap: 'rider view',
     w: 560,
     h: 900,
+    // The one frame that is vertical end to end - tank at 12%, instrument at 50%, headlight
+    // bowl at 95% - so no 4:3 window holds all of it. 40% is the rider's own view: the tank
+    // running away, the filler cap, the instrument in its chrome cup, the top of the lamp.
+    pos: '40%',
   },
   {
     kind: 'photo',
@@ -93,6 +123,16 @@ const INTERVAL_MS = 5200;
 /** The media column is 42vw on desktop and the full column below 900px. */
 const HERO_SIZES = '(max-width: 900px) 86vw, 42vw';
 const THUMB_SIZES = '(max-width: 900px) 15vw, 8vw';
+
+/**
+ * `FRAMES` is `as const`, so each entry narrows to its own literal type and the two frames
+ * that need no crop have no `pos` property at all to read. `in` is the narrowing that TypeScript
+ * accepts here, and it keeps the optional field genuinely optional rather than making every
+ * frame declare `pos: undefined`.
+ */
+function cropOf(f: (typeof FRAMES)[number]): { objectPosition: string } | undefined {
+  return 'pos' in f && f.pos ? { objectPosition: `center ${f.pos}` } : undefined;
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -245,6 +285,19 @@ export default function Carousel() {
               // Only the first frame is on screen at load; the rest cross-fade in later.
               loading="lazy"
               className={cls}
+              /*
+               * The crop, chosen per photograph rather than once for all five.
+               *
+               * `.carousel-frame` is `object-fit: cover` in a 4:3 box, and three of these
+               * files are portrait - 560x900 and 620x900 - so between 46.6% and 52.5% of
+               * them reaches the screen and the browser picks which half. One global
+               * `object-position: center 20%` was picking it for five different
+               * compositions at once, and it was picking wrong twice: it cut both exhaust
+               * tips off the frame captioned "rear · cowl", and the headlight off the one
+               * captioned "rider view". Each frame states its own now, and the reasoning
+               * is beside the number in FRAMES.
+               */
+              style={cropOf(f)}
             />
           );
         })}
