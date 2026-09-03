@@ -43,16 +43,54 @@ const MAX_CARDS = 4;
 const CARD_SECTIONS = new Set(['projects', 'capabilities', 'timeline']);
 
 /**
- * The first sentence of a memory body.
+ * How much of a card's description fits in the two lines the layout gives it.
+ *
+ * Two lines at the NARROWEST column a card ever gets, which is 351px on a 390px phone.
+ * Measured on the built page rather than derived: 14px at 1.55 line-height in that column
+ * takes about 44 characters a line, so 88 is the honest budget and anything past it was
+ * being thrown away by CSS.
+ */
+const CARD_CHARS = 88;
+
+/**
+ * The first sentence of a memory body, cut to fit the card.
  *
  * Bodies are YAML folded scalars, so they arrive as one long line with the newlines
  * already collapsed. Splitting on a full stop followed by a space is enough, and falling
  * back to the whole body means a one-sentence memory renders whole rather than empty.
+ *
+ * THE SECOND CUT, AND WHY IT IS HERE RATHER THAN IN CSS. `.mini-card .mb` also carries
+ * `-webkit-line-clamp: 2`, so a first sentence longer than two lines was truncated twice —
+ * and the second truncation knows nothing about words. A judge panel found three cards
+ * reading "…renders traditional forms when they ar…" and "…an AI assistant in front of it
+ * — 27 MCP…", each with `scrollHeight` 65 against `clientHeight` 43 and free space under
+ * the card.
+ *
+ * Raising the clamp to three lines was measured and rejected: it clears every desktop cut
+ * but costs §07 43px, which fits at 1440 and 1920 and overflows a 1280x720 band that has
+ * 15px of slack — a defect traded for a defect. And it still leaves three of six cut on a
+ * phone, where the column is narrowest. Cutting on a word boundary here costs 0px at every
+ * viewport and is the only version that fixes the phone too.
+ *
+ * The ellipsis is deliberate and the clamp stays. A visible cut is a promise that there is
+ * more, and the card's id is the memory's id, so the whole thing is one question away in
+ * the chat. The clamp remains as the backstop for a column narrower than any measured here.
  */
 function firstSentence(body: string): string {
   const text = body.replace(/\s+/g, ' ').trim();
   const end = text.search(/[.!?](\s|$)/);
-  return end === -1 ? text : text.slice(0, end + 1);
+  const sentence = end === -1 ? text : text.slice(0, end + 1);
+  if (sentence.length <= CARD_CHARS) return sentence;
+  // Back up to the last space inside the budget, so the cut lands between words. The
+  // fallback is the hard slice, for the pathological case of a single 88-character word.
+  const cut = sentence.lastIndexOf(' ', CARD_CHARS);
+  const kept = sentence.slice(0, cut > 0 ? cut : CARD_CHARS);
+  // A word boundary is not always a good place to stop: "...syncs Indian accounting
+  // software into a" is grammatically mid-thought and reads as a bug rather than as a
+  // trim. Dropping a dangling function word and any punctuation that led into it costs
+  // nothing and leaves the cut on a noun.
+  // The group repeats, because "software into a" needs both words dropped, not one.
+  return `${kept.replace(/(?:[\s,;:—-]+(?:a|an|the|of|to|in|into|on|for|and|or|with|that|its|their))+$/i, '').replace(/[,;:—-]$/, '')}…`;
 }
 
 /**

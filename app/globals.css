@@ -375,7 +375,7 @@ html[data-flying] {
   grid-template-columns: 1.05fr 0.95fr;
   grid-template-rows: 100%;
   align-items: center;
-  gap: clamp(3rem, 5vw, 6rem);
+  gap: clamp(3rem, 5vw, 4.5rem);
   width: 100%;
   max-width: 1460px;
   margin-inline: auto;
@@ -386,7 +386,7 @@ html[data-flying] {
    * gradient whatever the dock happens to be that viewport — which is what stops the
    * verdict line and the citation chips rendering inside it.
    */
-  padding: 8vh 5vw calc(var(--dock-h) + 32px);
+  padding: 8vh min(5vw, 73px) calc(var(--dock-h) + 32px);
   position: relative;
   text-align: left;
   transition: opacity 0.5s cubic-bezier(0.2, 0, 0, 1), transform 0.5s cubic-bezier(0.2, 0, 0, 1);
@@ -1639,9 +1639,23 @@ html[data-flying] .answer-layer-in {
 
 /* ── carousel ──────────────────────────────────────────────────────────────── */
 
+/*
+ * `max-width: 42vw` was dead code and is gone.
+ *
+ * `0.42 vw` never beat the grid track's own `0.40375 vw`, so the rule never bound at any
+ * width and the hero has always been sized purely by its column. Removing it changes
+ * nothing; the cap that replaces it lives in the wide-screen block at the foot of this
+ * file, and only there.
+ *
+ * The reason it belongs there and not here: the sources cannot grow. The before/after pair
+ * is 780x585 and three carousel frames are 560x900, and the optimizer never upscales —
+ * asked for `w=1920` it returns the file's own size. Below 1500px the column never exceeds
+ * 589.5px, so nothing is stretched and a cap would only make the hero smaller than it
+ * needs to be. Above it the column reaches 902px and 1002px, where an uncapped hero would
+ * be a 780px file blown up by 1.3x.
+ */
 .carousel {
   width: 100%;
-  max-width: 42vw;
 }
 
 .carousel-hero {
@@ -2074,7 +2088,24 @@ html[data-flying] .answer-layer-in {
    * coefficient that clears the band. It is also what stops the figure growing on a tall
    * monitor into a section that has no room for it.
    */
-  --pair-h: min(31svh, calc((100cqw - 56px) / 1.769));
+  /*
+   * `31svh` is a floor, not the value, above 1500px.
+   *
+   * The `min()` shape is right and stays: the frame may never outgrow its own column, and
+   * `100cqw` reads that column directly. What was wrong is the height coefficient. At 2560
+   * the band is 1149.8px and §07's column was using 605 of it — 545px of empty vertical
+   * space in the section with the smallest photographs. So the first term becomes the
+   * larger of 31svh and whatever the band actually has left after the rest of the column,
+   * and `100cqw` still stops it from outgrowing the width. Below ~1500px `31svh` wins and
+   * this is a no-op, which is verified.
+   *
+   * 379px is the rest of the column measured on the built page: the 7px cell gap, the 11px
+   * meta line, the caption, the two cards and their rules.
+   */
+  --pair-h: min(
+    max(31svh, calc(0.92 * 100svh - var(--dock-h) - 32px - 379px)),
+    calc((100cqw - 56px) / 1.769)
+  );
 }
 
 .pair-frames {
@@ -3179,5 +3210,81 @@ html[data-flying] .answer-layer-in {
     to {
       opacity: 1;
     }
+  }
+}
+
+/*
+ * ── the wide screen ────────────────────────────────────────────────────────
+ *
+ * MJK: "the images which really show off the work seem quite small. Why does the layout
+ * not dynamically match screen sizes?"
+ *
+ * It does worse than not grow. It SHRINKS. `max-width: 1460px` caps the container, but the
+ * padding and the gap above are in `vw` and keep growing after the cap has bound, so they
+ * eat the container from both sides:
+ *
+ *   media = 0.475 x ( min(vw, 1460) - 2(0.05 vw) - clamp(48, 0.05 vw, 96) )
+ *
+ * which peaks at 589.5px on a 1460px viewport and falls from there. Measured, exact to
+ * 0.1px at every width: 581.4px at 1440, 556.7 at 1920, 526.3 at 2560. A 2560 monitor has
+ * 3.1x the pixel area of a 1440 laptop and draws the photographs 9.5% NARROWER. A 430px
+ * phone draws §07's supplier frame 51% larger than a 2560 desktop does.
+ *
+ * The `min(5vw, 73px)` and the 4.5rem gap ceiling above are half the fix and cost nothing
+ * anywhere: 73px is what 5vw already is at 1460, and the gap's old 6rem ceiling was never
+ * reached below 1920.
+ *
+ * This block is the other half, and it is deliberately gated at 1500 rather than applied
+ * fluidly, because 1440x900 is the best screen on this site and nothing here may touch it.
+ * Verified byte-identical at 1280, 1366 and 1440.
+ *
+ * WHY THIS DOES NOT REOPEN THE DECISION THE 1460 CAP MADE. The recorded objection to a
+ * wider container was "600px of nothing at 2000px" — and that was measured on a
+ * proportional layout whose gutter was itself `5vw`. Here the gutter is a fixed 72px at
+ * 1500 and at 2560, and the prose track is frozen at 640px rather than grown, so the extra
+ * width goes to the media column and nowhere else. Freezing the prose is what makes this
+ * safe, and it is licensed by DESIGN.md's deliberately short measure — the prose column
+ * never reaches its own 736px cap today, and above 1460 it is actually shrinking to 591.7.
+ *
+ * Raising `max-width` on its own is the wrong move and was measured too: with `1.05fr
+ * 0.95fr` and `5vw` still in place, an 1860 cap gives the media column 716px at 2560,
+ * pushes the prose past its cap, and puts the gutter back to 96-151px — the exact failure
+ * the cap was introduced to fix, for two thirds of the benefit.
+ */
+@media (min-width: 1500px) {
+  .section-inner {
+    max-width: clamp(1460px, 100vw - 160px, 1860px);
+    /* Fixed, not `vw`: this is the rule the whole block exists to break. */
+    padding-inline: 73px;
+    gap: 72px;
+    /*
+     * The prose is frozen and the media column takes the remainder. `minmax(0, ...)` on
+     * both tracks because a `1fr` track's automatic minimum is its content, and a
+     * photograph inside one would refuse to shrink below its intrinsic width.
+     */
+    grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  }
+
+  /* `data-align` carries the authored left/right alternation, so the freeze follows it. */
+  .section-inner[data-align='right'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 640px);
+  }
+
+  /* One column, so there is no ratio to state and stating one would break it. */
+  .section-inner.center-stage {
+    grid-template-columns: none;
+  }
+
+  .fig-ga {
+    max-width: 760px;
+  }
+
+  /*
+   * The RD 350's ceiling, here rather than on `.carousel` itself, so that 1440x900 keeps
+   * the hero it has. 560px is the width of the three portrait frames — the narrowest
+   * sources in the set — so at this cap nothing in §05 is upscaled at DPR 1.
+   */
+  .carousel {
+    max-width: 560px;
   }
 }
