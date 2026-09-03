@@ -31,6 +31,8 @@ Status: `done` · `doing` · `spec'd` (researched, awaiting a decision or a buil
 | 27b | The phone answer landed off the top of the screen | Four flows of four, at -51, -126, -230 and -999px, the last with **0%** of the answer on screen. The page looks again once the answer has stopped growing. Now +64, +225, +63, +64. |
 | 27c | The refusal said two opposite things | "Not my lane" followed by fifteen lines about JewelAI's video pipeline. It says one thing and stops. |
 | 27d | The RD 350's "before" photograph was never fetched | `clip-path: inset(0 100% 0 0)` blocks Chrome's lazy loading outright — measured at `naturalWidth: 0` indefinitely, against 780 for a `visibility: hidden` sibling. The stylesheet's comment claimed the opposite. |
+| 31 | The §02 figure reverted mid-answer | It read the latest envelope, and two late paths narrow `cites` to the two memories a fallback's prose came from. Latched off the first envelope per question. Verified against the exact case with an invalid provider key: six cites then two without `mjk-101`, figure held. |
+| 32 | A provider failure showed a dek and no body | The model's `error` part reached the client and `useChat` applied nothing after it — including the envelope carrying MJK's own prose. Dropped from the merged stream; the handler already owns that recovery, and `x-mjk-answer` still names what happened. |
 | 19 | The aircraft was still a top-down plan | Retraced from the **isometric** render with interior structural lines and a title block, so the projection no longer changes mid-morph. Needs a visual pass. |
 
 ---
@@ -232,7 +234,7 @@ regex, because the corpus already encodes the distinction and a regex would drif
 a new envelope field, because `cites` already carries the signal in order; an interactive
 diagram, since `PLAN.md` §4.4 already counts the one accordion against the site.
 
-## 25. More detail in the vectors, and the particle field — `doing`
+## 25. More detail in the vectors, and the particle field — `done`
 
 "for the engine and plane vectors can you trace and render it with more detail? also denser
 and smaller particles to simulate wave particle motion between transitions? where is loop
@@ -246,6 +248,43 @@ brief.
 On the loop: there is a **Replay** control, at the right of the caption line, once the
 sequence has finished. It is deliberately quiet — 10px, dim — and if MJK could not find it
 that is the answer to whether it is discoverable enough.
+
+**Done.** The wireframe look had a cause in the generator, not in the render: it traced
+with a Hough transform, which can only answer with chords, against a drawing made of arcs.
+A multi-scale Hessian ridge filter finds all four fuselage frames plus the radome ring, the
+nacelle ribs and the wheels, where a difference-of-Gaussians found two partial frames. The
+engine's real defect was staler still — the generator's output had 112 drawables against
+the module's 90, so ten revisions of corrected exhaust routing had never been regenerated
+and the site was drawing the wrong pipes.
+
+The particle field is 2,000 canvas particles against 150 SVG circles, and *cheaper*: 17.4ms
+per frame during the transition against 23.2ms, at 390x844 under 4x CPU throttle. SVG dies
+at 800 particles, so "denser" was unreachable in the DOM at all. The motion is one coherent
+travelling wave rather than per-particle noise, because noise at 2,000 particles reads as
+static. `MORPH`'s 1,433 gzipped bytes are gone — endpoints are sampled at runtime off the
+paths already in the module, so the count is free and the cloud dissolves *as* the drawing
+rather than tracing its boundary.
+
+**Replay is a glyph now**, at `--color-type-muted` (8.8:1 against 5.4:1). A word set in
+caption type reads as caption, which is why he could not find it. Still one run and a
+control, not a loop.
+
+**No library adopted, measured rather than asserted.** Same module with the dependency
+swapped: zero-dep 1,017 bytes gzipped, `simplex-noise` +17%, `motion-dom` +67%, three's own
+addon +120%, `animejs` +622%, `motion` +2,252%. Runtime spread across six noise
+implementations is 0.28ms per frame against a 16.7ms budget, so nobody buys one for speed —
+and the design that won needs no noise at all, which makes the cheapest of them 926 bytes
+spent on nothing. Three licence findings worth keeping: `@remotion/noise` declares MIT,
+ships no LICENSE, and hard-depends on a licence free only under four employees, which is
+the exact GSAP failure mode; `noisejs` has no licence grant in its published tarball; and
+`motion/mini` provably cannot do this job — it is WAAPI-only, so its real cost is 25 kB.
+
+Open, and my own visual judgement rather than a measurement: **the aircraft's forward lower
+fuselage is the weakest part of the drawing.** The nacelle, its pylon and the nose gear
+cluster together at 300px and read closer to noise than to structure. The agent flagged two
+of the three causes itself — the gear bogie is a scalloped lump because six wheels at 28
+source pixels land at 7.3 units, and the nacelle ribs read as hatching. It is better than
+the faceted polygon it replaces, which is why it shipped, but it is not finished.
 
 ## 26. More apparel pairs — `doing`
 
