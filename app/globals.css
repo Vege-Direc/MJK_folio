@@ -684,7 +684,7 @@ html[data-flying] {
   stroke-dashoffset: 1;
 }
 
-.fig-ga[data-arrived] .ga-ink {
+.fig-ga[data-phase='plane'] .ga-ink {
   transition: stroke-dashoffset 1100ms cubic-bezier(0.33, 0.9, 0.35, 1);
   stroke-dashoffset: 0;
 }
@@ -693,7 +693,7 @@ html[data-flying] {
   opacity: 0;
 }
 
-.fig-ga[data-arrived] .ga-case {
+.fig-ga[data-phase='plane'] .ga-case {
   transition: opacity 500ms ease-out 260ms;
   opacity: 1;
 }
@@ -736,7 +736,7 @@ html[data-flying] {
   opacity: 0;
 }
 
-.fig-ga[data-arrived] .ga-dims {
+.fig-ga[data-phase='plane'] .ga-dims {
   transition: opacity 620ms ease-out 780ms;
   opacity: 1;
 }
@@ -760,6 +760,37 @@ html[data-flying] {
   color: var(--color-type-muted);
   text-shadow: var(--halo);
   text-wrap: pretty;
+}
+
+.fig-ga-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/*
+ * Offered rather than advertised: quiet until it is wanted, and a real button so it is
+ * one tab stop with a focus ring and a press state like every other control here.
+ */
+.fig-ga-replay {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+  margin: -6px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+  transition: color 0.15s;
+}
+
+.fig-ga-replay:hover,
+.fig-ga-replay:focus-visible {
+  color: var(--color-accent);
 }
 
 .fig-ga-name {

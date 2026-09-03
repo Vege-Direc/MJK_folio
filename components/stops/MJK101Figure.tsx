@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { ENGINE, FIG_VIEWBOX, MJK101_LENGTH, MJK101_PATH, MJK101_SPAN, MORPH } from './mjk101';
 
 /**
@@ -32,10 +32,18 @@ import { ENGINE, FIG_VIEWBOX, MJK101_LENGTH, MJK101_PATH, MJK101_SPAN, MORPH } f
  * costs a frame.
  */
 
-/** How long each phase lasts, in milliseconds. */
-const HOLD = 850; // the engine, alone
-const SCATTER = 620; // strokes give way to dots
-const FLY = 1000; // dots cross to the planform
+/**
+ * How long each phase lasts, in milliseconds.
+ *
+ * Slower than the first attempt, which MJK described as transitioning "too fast and then
+ * disappears". The disappearing half was a plain bug — the reveal rules were still keyed
+ * on an attribute the rewrite had stopped setting, so the aircraft drew itself with an
+ * invisible stroke. The too-fast half was real: 2.5 seconds for a machine to become an
+ * aeroplane is long enough to notice something happened and too short to watch it.
+ */
+const HOLD = 1400; // the engine, alone, long enough to be read as an engine
+const SCATTER = 900; // strokes give way to dots
+const FLY = 1700; // dots cross to the planform
 
 type Phase = 'engine' | 'scatter' | 'fly' | 'plane';
 
@@ -50,6 +58,7 @@ function subscribeReduced(cb: () => void) {
 export default function MJK101Figure() {
   const ref = useRef<HTMLElement>(null);
   const [advanced, setAdvanced] = useState<Phase | null>(null);
+  const timers = useRef<number[]>([]);
 
   /*
    * Read through `useSyncExternalStore` rather than in the effect. The preference has to
@@ -73,29 +82,46 @@ export default function MJK101Figure() {
    */
   const phase: Phase = reduced ? 'plane' : (advanced ?? 'engine');
 
+  /*
+   * One run, and a control to run it again. Not a loop.
+   *
+   * MJK asked whether it should loop or carry a control. A perpetual loop is the one thing
+   * this site has measured and rejected: an animation that never stops cost 11% of the
+   * framerate and took the worst frame from 66ms to 92ms, and it would sit in the corner
+   * of the eye of someone reading the paragraph beside it. A replay control gives the same
+   * access to the sequence and asks nothing of a visitor who does not want it — the same
+   * bargain the RD 350's before-and-after strikes, where motion happens because a finger
+   * asked for it.
+   */
+  const run = useCallback(() => {
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [];
+    setAdvanced('engine');
+    timers.current.push(window.setTimeout(() => setAdvanced('scatter'), HOLD));
+    timers.current.push(window.setTimeout(() => setAdvanced('fly'), HOLD + SCATTER));
+    timers.current.push(window.setTimeout(() => setAdvanced('plane'), HOLD + SCATTER + FLY));
+  }, []);
+
   useEffect(() => {
     const el = ref.current;
     if (!el || reduced) return;
-
-    const timers: number[] = [];
     const io = new IntersectionObserver(
       (entries) => {
         // A third of it on screen, not a single pixel: the point is that it runs while
         // being watched, not that it finishes before the section arrives.
         if (!entries.some((e) => e.isIntersecting)) return;
         io.disconnect();
-        timers.push(window.setTimeout(() => setAdvanced('scatter'), HOLD));
-        timers.push(window.setTimeout(() => setAdvanced('fly'), HOLD + SCATTER));
-        timers.push(window.setTimeout(() => setAdvanced('plane'), HOLD + SCATTER + FLY));
+        run();
       },
       { threshold: 0.35 },
     );
     io.observe(el);
+    const held = timers.current;
     return () => {
       io.disconnect();
-      timers.forEach(window.clearTimeout);
+      held.forEach(window.clearTimeout);
     };
-  }, [reduced]);
+  }, [reduced, run]);
 
   const dots = phase === 'scatter' || phase === 'fly';
 
@@ -186,7 +212,19 @@ export default function MJK101Figure() {
       </svg>
 
       <figcaption className="fig-ga-cap">
-        <span className="fig-ga-name">MJK-101</span>
+        <span className="fig-ga-head">
+          <span className="fig-ga-name">MJK-101</span>
+          {/*
+            Only offered once the sequence has finished, and never under reduced motion.
+            A replay control that appears mid-run invites a visitor to interrupt the thing
+            they are being shown, and under reduced motion there is no sequence to replay.
+          */}
+          {!reduced && phase === 'plane' ? (
+            <button type="button" className="fig-ga-replay" onClick={run}>
+              Replay
+            </button>
+          ) : null}
+        </span>
         <span>
           The Brunel Airbus project: a dual-role airliner, 100 passengers on short European routes or
           28 in business class across continents, out of London City.

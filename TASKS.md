@@ -220,3 +220,88 @@ conservative.
 garments on a wooden rack in an invented room. Captioning it "on-model" would contradict
 the picture beside it; the honest reading is stronger anyway, because the print, border
 and tassels survive intact while the entire room is generated.
+
+
+---
+
+# Round two, raised 2026-09-03 after the first pass shipped
+
+## 9. §02 pacing and the vanished figure — `done`
+
+**Reported:** "transitions from engine to aircraft too fast and then disappears. Should it
+be a loop? or user controlled option present along with loop so they can see it?"
+
+The disappearing half was a bug I introduced: rewriting the component to drive itself from
+`data-phase` left three CSS rules still keyed on `data-arrived`, which nothing set any
+more, so the aircraft drew itself with an invisible stroke, no casing and no dimensions.
+Fixed and verified in the page: dash offset 0, casing and dimensions at full opacity.
+
+The pacing was real. 2.5s is long enough to notice something happened and too short to
+watch it. Now 4.0s — engine 1.4s, scatter 0.9s, flight 1.7s.
+
+**Not a loop, and a control instead.** A perpetual animation is the one thing this site has
+measured and rejected: it cost 11% of the framerate and took the worst frame from 66ms to
+92ms, and it would sit in the corner of the eye of someone reading the paragraph beside
+it. A Replay control appears once the sequence has finished — the same bargain the RD 350
+comparison strikes, where motion happens because a finger asked for it. Hidden under
+reduced motion, where there is no sequence to replay.
+
+**Still open:** MJK asks that the two-stroke be modelled more closely on the RD 350
+specifically, rather than on the RD family generally.
+
+## 10. The carousel's play control does not work — `todo`
+
+**Reported:** "play button under motorcycle images doesn't work as well."
+
+## 11. §05 does not explain itself — `todo`
+
+**Reported:** "section 5 says aside in parallel a motorcycle, which really doesn't make
+sense to someone coming to the website right? parallel to what? why? why a motorcycle?"
+
+The kicker is `§ 05 — Aside` and the title is "In parallel, a motorcycle." Both assume the
+reader already knows what it is parallel to. They do not.
+
+## 12. The copy, across the whole site — `todo`
+
+**Reported:** "can you check if the overall content on the website can be improved? I don't
+want AI slop, so please use taste and impeccable skills and repos to help with this. I
+don't want those rythmic, duality style sentences or poetic framing for no reason." And
+separately: "Even descriptions of projects are cut short."
+
+Also reported: **§03 has text on one side only on desktop** — it is a `plain` stop, so it
+centres a single column and the other half is empty scene.
+
+## 13. Page copy should prime the chat — `todo`
+
+**Reported:** "I think content on the page should prime the user to ask more about it as
+well through chat right?"
+
+This is the sharpest framing of the site's purpose anyone has given it: the authored copy
+is not there to say everything, it is there to make a visitor want to ask. Every section's
+body should leave a specific, askable question hanging.
+
+## 14. §07's display of the work — `todo`
+
+**Reported:** "Section 7 display of work can be improved? images made larger? Gallery of
+images we have? before and after? please research online best way to show things like
+this and improve? lightbox? mason lightbox? something else?"
+
+## 15. §08 duplication and lead capture — `todo`
+
+**Reported:** "section 8 how to brief me and contact seems to be duplicated. Should we
+link to google sheets or something else to collect leads instead of waiting for people to
+reach out to us? or notion?"
+
+## 16. The answers are cut short — `todo`
+
+**Reported:** "When AI answers as well many times details are cut short, is that because
+you've put a token limit on output? how does this work on desktop and mobile? can user
+scroll through response without triggering the background animation scroll?"
+
+Three questions: is there an output cap and where; does the answer surface differ between
+desktop and phone; and can a visitor read a long answer without the page scroll driving
+the camera.
+
+## 17. Is this actually innovative — `todo`
+
+**Reported:** "This is trying to be an innovative website right? can improve on this?"
