@@ -86,6 +86,35 @@ describe('no false positives on authored prose', () => {
   });
 });
 
+describe('a date is never a claim, however it is punctuated', () => {
+  // MJK asked about his education and was given an answer that skipped a degree. The model
+  // had written it correctly; the guard deleted the sentence. `raw` arrives with whatever
+  // followed the digits, so "2012," failed the bare-year test, became a count of 2012,
+  // matched nothing, and took its sentence with it. The corpus writes years exactly this
+  // way -- "Brunel University London, 2012, Merit" -- so the rule was failing on the
+  // shape it was written for.
+  it.each(['2012,', '2012.', '(2012)', '2012;', '2012:', '2012?', '2012"'])(
+    'reads %s as a date and not as a quantity',
+    (token) => {
+      expect(extractQuantities(`I finished at Brunel in ${token} with a Merit.`)).toEqual([]);
+    },
+  );
+
+  it('keeps a real count that happens to sit in the year range', () => {
+    // The exclusion is deliberately blind to "2000 users"; it must not become blind to
+    // every four-digit number by widening the strip.
+    expect(extractQuantities('We shipped 2,000 images.').length).toBeGreaterThan(0);
+  });
+
+  it('guards every memory in the corpus against the corpus itself', () => {
+    // The broadest statement of the same defect: MJK's own writing, checked against his
+    // own writing, must never produce a violation. Punctuated years are everywhere in it.
+    const all = loadMemories();
+    const failed = all.filter((m) => !guard(m.body, all).ok).map((m) => m.id);
+    expect(failed, `memories the guard rejects: ${failed.join(', ')}`).toEqual([]);
+  });
+});
+
 describe('salvage', () => {
   const good = [
     'At Kinnect I automated reporting with Supermetrics and Looker Studio and cut report generation time by half.',

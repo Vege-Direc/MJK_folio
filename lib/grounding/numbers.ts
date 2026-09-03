@@ -81,9 +81,20 @@ function scaleOf(suffix: string | undefined): number {
   return SCALES[suffix.trim().toLowerCase()] ?? 1;
 }
 
-/** A bare four-digit year is a date, not a claim. See the header. */
+/**
+ * A bare four-digit year is a date, not a claim. See the header.
+ *
+ * The trailing punctuation strip is not tidiness, it is the whole rule working at all.
+ * `raw` arrives with whatever followed the digits, and a year is very often followed by a
+ * comma: the corpus itself writes "Brunel University London, 2012, Merit." Without this,
+ * "2012," failed `^\d{4}$`, was classified as a count of 2012, matched no memory, and the
+ * sentence containing it was deleted from the answer. MJK found it as an answer about his
+ * education that skipped a degree -- the model had written it correctly and the guard
+ * removed it. A guard that silently deletes true sentences is worse than no guard, because
+ * the reader cannot tell that anything is missing.
+ */
 function isYear(raw: string, value: number): boolean {
-  return /^\d{4}$/.test(raw.trim()) && value >= 1950 && value <= 2100;
+  return /^\d{4}$/.test(raw.trim().replace(/[.,;:!?)\]}"'’”]+$/u, '')) && value >= 1950 && value <= 2100;
 }
 
 /** The noun a number counted: up to three words, stopping at a preposition or a comma. */
