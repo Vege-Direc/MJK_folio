@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
-import type { Memory } from '@/lib/corpus/schema';
 import AuthoredBody from './AuthoredBody';
+import { cardKicker } from './card-kicker';
 import CabinFigure from './CabinFigure';
 import Carousel from './Carousel';
 import Timeline from './Timeline';
@@ -38,11 +38,6 @@ const MAX_CARDS = 4;
 
 /** Cards are drawn from the corpus, so a card can never claim what a memory does not. */
 const CARD_SECTIONS = new Set(['projects', 'capabilities', 'timeline']);
-
-/** The card kicker: the memory's period if it has one, else its first tag. */
-function cardKicker(m: Memory): string {
-  return m.period ?? m.tags[0] ?? '';
-}
 
 /**
  * The first sentence of a memory body.
@@ -140,17 +135,23 @@ const CONTACT_LINKS = [
   { href: 'https://github.com/Vege-Direc', label: 'github.com/Vege-Direc', kk: '03 · CODE', external: true },
 ] as const;
 
+/**
+ * The links come before the cards, and that ordering is the point of this component.
+ *
+ * The stop's own paragraph ends "Or reach me directly:" and it sits in the left column,
+ * pointing at this one. It was pointing at three cards about how to brief MJK, with the
+ * mail link, the resume and the GitHub profile another 400px below them. On a phone that
+ * put every contact affordance on the site off the bottom of the screen: §08 is 1,194px
+ * tall against a 630px readable band, so a visitor who scrolled to the section that
+ * exists to be acted on saw only descriptions of the action.
+ *
+ * A colon is a promise about what comes next. These three links are the only outbound
+ * paths on the whole site, and they are what the sentence above them is promising.
+ */
 function Contact({ stop }: { stop: Stop }) {
   const memories = memoriesForStop(stop.id);
   return (
     <div className="contact-zone">
-      {memories.map((m) => (
-        <div className="mini-card" id={m.id} key={m.id}>
-          <div className="mk">{cardKicker(m)}</div>
-          <div className="mt">{m.title}</div>
-          <div className="mb">{firstSentence(m.body)}</div>
-        </div>
-      ))}
       <div className="contact-links">
         {CONTACT_LINKS.map((l) => (
           <a
@@ -164,6 +165,13 @@ function Contact({ stop }: { stop: Stop }) {
           </a>
         ))}
       </div>
+      {memories.map((m) => (
+        <div className="mini-card" id={m.id} key={m.id}>
+          <div className="mk">{cardKicker(m)}</div>
+          <div className="mt">{m.title}</div>
+          <div className="mb">{firstSentence(m.body)}</div>
+        </div>
+      ))}
     </div>
   );
 }

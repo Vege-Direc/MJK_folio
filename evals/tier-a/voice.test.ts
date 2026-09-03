@@ -26,6 +26,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ANSWERABLE_STOP_IDS, STOPS } from '../../content/stops';
 import { suggestedPrompts } from '../../content/static-copy';
+import { cardKicker } from '../../components/stops/card-kicker';
+import { loadMemories } from '../../lib/corpus/load';
 import { fallbackBlock } from '../../lib/fallback';
 
 /**
@@ -45,6 +47,7 @@ const MACHINERY: { pattern: RegExp; why: string }[] = [
   { pattern: /would have said/i, why: 'never apologise for an answer that is true. Just answer.' },
   { pattern: /\bchecked against\b/i, why: 'do not advertise the check. Silence is the signal for a good answer.' },
   { pattern: /\bunder this paragraph\b/i, why: 'do not narrate the layout; it also stops being true when it changes.' },
+  { pattern: /^cta$/i, why: 'a marketing word for the card, printed above the card, to the person it is aimed at.' },
 ];
 
 /** Every string a visitor can read that this repo authors, with where it came from. */
@@ -69,6 +72,17 @@ function visitorCopy(): { where: string; text: string }[] {
       // An unannounced block's title is a memory title, i.e. MJK's, so only check ours.
       if (block.announced) out.push({ where: `fallback ${reason} title`, text: block.title });
     }
+  }
+
+  /*
+   * Card eyebrows. These are derived from the corpus rather than authored, which is
+   * exactly why they were missed: the rule below was only ever reading `stops.ts` and the
+   * fallbacks, so when a card fell back to a memory's first tag the word "CTA" printed
+   * above both cards on §08 — the conversion screen — and no test had anything to say
+   * about it. A derived string a visitor reads is visitor copy.
+   */
+  for (const m of loadMemories()) {
+    out.push({ where: `card kicker for ${m.id}`, text: cardKicker(m) });
   }
 
   const notFound = readFileSync(join(process.cwd(), 'app', 'not-found.tsx'), 'utf-8');
