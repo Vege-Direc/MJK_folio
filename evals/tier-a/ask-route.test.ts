@@ -219,6 +219,34 @@ describe('/api/ask strips the model talking to itself', () => {
     expect(shown).toContain('RD 350');
   });
 
+  // Caught live: "From my memory I do — my LinkedIn and consulting periods covered India,
+  // Thailand and Singapore." The site is written in MJK's first person throughout, and a
+  // sentence that opens by naming its own source is a retrieval system answering instead
+  // of him.
+  it('drops a source-narrating opener and keeps the sentence', async () => {
+    const narrated =
+      'From my memory, I founded Krunch Labs in January 2025 in Singapore, building AI systems for consumer and B2B clients.';
+    const chunks = await chunksOf(
+      await handleAsk(post({ question: 'what is Krunch Labs?' }), depsWith(modelSaying(narrated))),
+    );
+    const shown = envelopes(chunks).at(-1)!.body ?? streamedText(chunks);
+    expect(shown).not.toMatch(/from my memory/i);
+    expect(shown).toMatch(/^I founded Krunch Labs/);
+  });
+
+  // The other half of the same rule, and the more important one. "From" opens plenty of
+  // true sentences in this corpus, and a filter that eats their first clause would be a
+  // repeat of the punctuated-year bug that deleted MJK's bachelors from every answer.
+  it('leaves a sentence that merely begins with a date alone', async () => {
+    const dated =
+      'From June to December 2014 I went home to Kerala and rebuilt a 1986 Yamaha RD 350 as a cafe racer of my own design.';
+    const chunks = await chunksOf(
+      await handleAsk(post({ question: 'tell me about the bike' }), depsWith(modelSaying(dated))),
+    );
+    const shown = envelopes(chunks).at(-1)!.body ?? streamedText(chunks);
+    expect(shown).toMatch(/^From June to December 2014/);
+  });
+
   it('falls back rather than showing a label as the whole answer', async () => {
     const chunks = await chunksOf(
       await handleAsk(post({ question: 'tell me about the bike' }), depsWith(modelSaying('User Safety: safe'))),

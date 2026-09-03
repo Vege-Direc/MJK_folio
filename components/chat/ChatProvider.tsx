@@ -5,7 +5,7 @@ import { DefaultChatTransport } from 'ai';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { STOPS, type StopId } from '@/content/stops';
 import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
-import { flyToElement } from '@/lib/flight';
+import { flyTo } from '@/lib/flight';
 
 /**
  * One chat, shared by the dock (input) and the answer (wherever it docks on the page).
@@ -96,16 +96,46 @@ function viewingStop(): StopId | undefined {
  * preference asks for, and `flyTo` handles that itself.
  *
  * This was `scrollIntoView({ behavior: 'smooth' })`. The native call gives no say over
- * duration or curve, and measured across the full page it spent 1410ms travelling with a
- * 95th-percentile frame gap of 86ms — one step of it moving 5,441px in 335ms, which
- * screenshots as half a viewport of unpainted black. The replacement crosses the same
- * distance in 835ms at a p95 of 12ms. Most of that second number comes from the halo
- * trim `flyTo` switches on for the duration, not from the tween.
+ * duration or curve, and measured over 5,690px it spent 1,488ms travelling against the
+ * tween's 745ms. It also cannot be told where to stop, which is the second half of this
+ * function.
  */
 function goToStop(route: RouteData) {
   const el = document.getElementById(route.stopId);
-  if (el) flyToElement(el);
+  if (el) flyTo(landingFor(el, document.getElementById(`answer-${route.stopId}`)));
   window.dispatchEvent(new CustomEvent<RouteData>(ROUTE_EVENT, { detail: route }));
+}
+
+/**
+ * Where the flight should stop, which is not always the top of the section.
+ *
+ * The answer docks below the section's own paragraph, so landing on the section's top
+ * edge only shows the answer if the section fits in one screen. On a phone five of the
+ * nine do not, and a review of the live site caught the consequence: asked "have you
+ * shipped anything I can look at?", the page flew to §07 and the answer arrived below the
+ * fold, with only the static cards on screen. Ask, watch the page move, see nothing. It is
+ * the worst possible outcome for the one interaction the site exists for.
+ *
+ * So the landing is the higher of two positions: the section's top, and far enough down
+ * that the answer container sits a little above the middle of the readable band. On a
+ * desktop, and on any section that fits, the first wins and nothing changes. Where they
+ * disagree the answer wins, because a visitor who has just asked a question is looking
+ * for the answer, not for the heading above it.
+ *
+ * `--dock-h` is subtracted because the dock is fixed over the foot of the viewport, so
+ * the readable band stops where the dock starts, not where the screen does.
+ */
+function landingFor(section: HTMLElement, answer: HTMLElement | null): number {
+  const top = section.getBoundingClientRect().top + window.scrollY;
+  if (!answer) return top;
+
+  const dock = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-h'), 10);
+  const readable = window.innerHeight - (Number.isFinite(dock) ? dock : 0);
+  const answerTop = answer.getBoundingClientRect().top + window.scrollY;
+
+  // 0.42 rather than dead centre: the answer streams downward from here, so it wants more
+  // room beneath it than above it.
+  return Math.max(top, answerTop - readable * 0.42);
 }
 
 export function ChatProvider({ children }: { children: ReactNode }) {

@@ -95,12 +95,51 @@ const DEFAULT_STOP: StopId = 'now';
 const MODEL_ARTEFACT =
   /^\s*(?:```+\w*|(?:user\s+|content\s+)?(?:safety|moderation|policy|classification|category|rating|verdict|assistant|answer|response)\s*[:：-]\s*\S.{0,60}|\[?(?:safe|unsafe|flagged|ok)\]?)\s*$/i;
 
+/**
+ * The model pointing at its own sources instead of using them.
+ *
+ * A review of the live site caught three of these in one session: "From my memory I do —
+ * my LinkedIn and consulting periods covered India, Thailand and Singapore", "in the
+ * available context", and "documented in the records". Each breaks the first person the
+ * whole site is written in. A visitor asked Mathew a question and a retrieval system
+ * answered them.
+ *
+ * The real fix is the system prompt, which no longer says the word "memories" at the
+ * model and now forbids naming a source outright. This is the backstop for when it does
+ * it anyway.
+ *
+ * Only a LEADING clause is removed, and only when what remains can stand as a sentence.
+ * These phrases turn up mid-sentence too, where cutting one leaves ungrammatical prose —
+ * and a filter that mangles a true sentence is the exact failure this repository has
+ * already paid for once, when a year with a comma after it was read as a count and took
+ * MJK's bachelors degree out of every answer about his education.
+ *
+ * The `(?:...[,:]|)` at the end is an ordered alternation and not a `?`, and the
+ * difference matters. Written `[^.!?]{0,40}?[,:]?` the lazy quantifier prefers to match
+ * nothing, so "Based on the records I have, I led product rollouts" keeps "I have," and
+ * reads as if a sentence lost its head. The alternation tries the comma-terminated branch
+ * first and falls back to empty, which is also what lets "From my memory I do — my
+ * consulting periods…" lose only its first four words.
+ */
+const SOURCE_NARRATION =
+  /^\s*(?:(?:based\s+on|from|according\s+to|going\s+by|as\s+(?:documented|recorded|noted)\s+in)\s+(?:my\s+|the\s+|what\s+i\s+have\s+)?(?:memor(?:y|ies)|records?|context|notes?|material|information)|in\s+the\s+available\s+context)\b(?:[^.!?]{0,40}?[,:]|)\s*/i;
+
+function stripSourceNarration(text: string): string {
+  const cut = text.replace(SOURCE_NARRATION, '');
+  if (cut === text) return text;
+  const rest = cut.trimStart();
+  // If the clause was the whole sentence, or what follows opens mid-thought, keep the
+  // original: a slightly self-conscious answer beats a broken one.
+  return /^[A-Z"'“‘]/.test(rest) && rest.length > 24 ? rest : text;
+}
+
 function stripModelArtefacts(text: string): string {
-  return text
+  const lines = text
     .split('\n')
     .filter((line) => !MODEL_ARTEFACT.test(line))
     .join('\n')
     .trim();
+  return stripSourceNarration(lines);
 }
 
 /** Enough of a prior answer to remember what was said, far too little to anchor on. */
