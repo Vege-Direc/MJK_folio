@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SITE } from '@/content/site';
 import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
 import ApparelPair from './ApparelPair';
@@ -127,13 +128,19 @@ function Cards({ stop, limit = MAX_CARDS }: { stop: Stop; limit?: number }) {
 }
 
 /**
- * Three real destinations. The prototype's resume link was `href="#"` (:2258) while
+ * Four real destinations. The prototype's resume link was `href="#"` (:2258) while
  * `public/resume.pdf` sat there the whole time.
+ *
+ * LinkedIn was already a verified fact in `content/site.ts` and already went out in the
+ * page's JSON-LD, where a search engine could read it and a visitor could not. For a
+ * decade of agency work it is the first thing a recruiter checks, and it was the one
+ * outbound link the site knew about and did not draw.
  */
 const CONTACT_LINKS = [
   { href: '/resume.pdf', label: 'Download resume', kk: '01 · PDF', external: false },
-  { href: 'mailto:mathew_johnk@hotmail.com', label: 'mathew_johnk@hotmail.com', kk: '02 · EMAIL', external: false },
-  { href: 'https://github.com/Vege-Direc', label: 'github.com/Vege-Direc', kk: '03 · CODE', external: true },
+  { href: `mailto:${SITE.email}`, label: SITE.email, kk: '02 · EMAIL', external: false },
+  { href: SITE.linkedin, label: 'linkedin.com/in/mathew-john-kondekeril', kk: '03 · LINKEDIN', external: true },
+  { href: SITE.github, label: 'github.com/Vege-Direc', kk: '04 · CODE', external: true },
 ] as const;
 
 /**
@@ -146,7 +153,7 @@ const CONTACT_LINKS = [
  * tall against a 630px readable band, so a visitor who scrolled to the section that
  * exists to be acted on saw only descriptions of the action.
  *
- * A colon is a promise about what comes next. These three links are the only outbound
+ * A colon is a promise about what comes next. These four links are the only outbound
  * paths on the whole site, and they are what the sentence above them is promising.
  */
 function Contact({ stop }: { stop: Stop }) {

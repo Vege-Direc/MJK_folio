@@ -306,7 +306,7 @@ export const ALIASES: Record<string, string[]> = {
   /* Buying questions -- the ones asked immediately before someone hires you, and the ones
    * this site was refusing outright. A critical review found "how fast could you start?"
    * answered with "Not my lane." The corpus cannot promise a start date, and must not, but
-   * `contact-brief` says exactly what happens next: a scoped proposal within a day, or an
+   * `contact-how-it-starts` says exactly what happens next: a scoped proposal within a day, or an
    * honest no. Sending these to the contact stop answers the question behind the question. */
   'how fast': ['contact', 'brief', 'proposal', 'scoped'],
   'start date': ['contact', 'brief', 'proposal', 'scoped'],

@@ -94,15 +94,6 @@
   tags: [engineering]
   body: Next.js, TypeScript, three.js, Postgres, Redis. From marketing automations to production ERPs.
 
-- id: contact-brief
-  section: contact
-  stopId: contact
-  title: How to brief me
-  tags: [cta]
-  body: >
-    Tell me what you're working on, when you need it, and what's tried already. I'll come back within a day
-    with a scoped proposal or an honest "not the right fit."
-
 # ── Added 2026-08-26, verified against the resume ──────────────────────────────
 
 - id: krunch-labs
