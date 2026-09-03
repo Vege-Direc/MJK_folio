@@ -94,18 +94,29 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
       */}
       {envelope?.title && <p className="answer-dek">{envelope.title}</p>}
 
-      <p className="answer-prose" aria-hidden={streaming || undefined}>
-        {shown}
-        {streaming && <span className="answer-caret" aria-hidden="true" />}
-      </p>
+      {/*
+        A refusal has no body, and an empty paragraph is not nothing: it still takes its
+        line-height and its margin, leaving a gap under the dek that reads as a failed load.
+      */}
+      {(shown || streaming) && (
+        <p className="answer-prose" aria-hidden={streaming || undefined}>
+          {shown}
+          {streaming && <span className="answer-caret" aria-hidden="true" />}
+        </p>
+      )}
 
       {/*
         Mounted from the first render and empty until the guard has had the last word, so
         the region exists before its content does. A live region inserted with its text
         already in it is not reliably announced.
       */}
+      {/*
+        The title when there is no body, because that is the whole message in a refusal and
+        it would otherwise be announced by nobody -- the dek above is an ordinary paragraph,
+        read only by a visitor who navigates to it.
+      */}
       <p className="sr-only" aria-live="polite">
-        {done ? shown : ''}
+        {done ? shown || envelope?.title || '' : ''}
       </p>
 
       {envelope && envelope.cards.length > 0 && !compact && showsCards(envelope.stopId) && (

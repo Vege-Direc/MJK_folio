@@ -83,8 +83,27 @@ export function fallbackBlock(
   const body = memories.map((m) => m.body).join('\n\n');
   const cites = memories.map((m) => m.id);
 
+  /*
+   * A refusal says one thing and stops.
+   *
+   * It used to say "Not my lane. Ask what I've built." and then print the first two
+   * memories of whatever stop the router had guessed at -- so "write me a poem about cats"
+   * produced a refusal followed by fifteen lines about JewelAI's video pipeline, a subject
+   * the visitor had not raised, under a heading declining to discuss anything. It is the
+   * one moment the site speaks about itself and it was saying two opposite things in the
+   * same block.
+   *
+   * The premise was the same one `fallbackBlock` gets right everywhere else -- corpus prose
+   * is a real answer -- applied to the one case where it is false. A refusal is not an
+   * answer that came out short; it is the site declining, and prose stapled to it is not
+   * evidence of anything except that the retriever matched a word.
+   *
+   * No cites either. Citing memories under text that quotes none of them claims a licence
+   * the block does not have, and the WebGL layer would pulse cards for a question that was
+   * never about them.
+   */
   if (reason === 'off-topic') {
-    return { ...REFUSAL, body, cites, announced: true };
+    return { ...REFUSAL, body: '', cites: [], announced: true };
   }
 
   // Everything else is simply an answer. It takes the leading memory's own title, so it

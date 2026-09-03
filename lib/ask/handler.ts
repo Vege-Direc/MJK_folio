@@ -200,6 +200,9 @@ function envelopeFromFallback(stopId: StopId | null, block: FallbackBlock): Enve
     cites: block.cites,
     status: 'replaced',
     body: block.body,
+    // `announced` is true for exactly one reason, the refusal, and the page needs to know:
+    // a block with no body must not collapse the paragraph it is sitting on top of.
+    ...(block.announced ? { refused: true as const } : {}),
   };
 }
 

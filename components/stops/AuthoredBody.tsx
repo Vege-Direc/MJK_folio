@@ -23,8 +23,18 @@ import { useAsk } from '@/components/chat/ChatProvider';
  */
 export default function AuthoredBody({ stopId, children }: { stopId: string; children: ReactNode }) {
   const { answer, showOriginal } = useAsk();
-  const answered = answer?.envelope?.stopId === stopId;
-  const collapsed = answered && !showOriginal;
+  const envelope = answer?.envelope;
+  const answered = envelope?.stopId === stopId;
+  /*
+   * A refusal is not an answer, so nothing makes way for it.
+   *
+   * The collapse exists so an answer can be the only body text in the column. A refusal has
+   * no body text at all, so collapsing for one emptied the section: the visitor asked
+   * something off-topic and the section they were flown to went blank apart from four words
+   * declining to help. Keeping the paragraph means the refusal reads as a note beside real
+   * content, which is what it is.
+   */
+  const collapsed = answered && !showOriginal && !envelope?.refused;
 
   return (
     <div className="authored-body" data-collapsed={collapsed || undefined} inert={collapsed || undefined}>

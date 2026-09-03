@@ -38,6 +38,15 @@ export type EnvelopeData = {
    * question to answer first is what the visitor does differently for having read it.
    */
   note?: string;
+  /**
+   * A deliberate refusal, as opposed to any other reason the model did not speak.
+   *
+   * The distinction is not cosmetic. Every other fallback carries a real answer in MJK's
+   * own words and must look like one; a refusal carries no answer at all, and the page has
+   * to know that so it does not collapse the section's authored paragraph to make room for
+   * nothing.
+   */
+  refused?: true;
 };
 
 export type RouteData = { stopId: StopId; index: number };

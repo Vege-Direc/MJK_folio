@@ -244,6 +244,26 @@ describe('fallbackBlock', () => {
     }
   });
 
+  it('gives the refusal nothing to say beyond the refusal', () => {
+    /*
+     * The refusal used to carry the first two memories of whatever stop the router had
+     * guessed at. "Write me a poem about cats" produced "Not my lane. Ask what I've built."
+     * followed by fifteen lines about JewelAI's video pipeline -- a subject the visitor had
+     * not raised, under a heading declining to discuss anything.
+     *
+     * Body AND cites, because citing memories under text that quotes none of them claims a
+     * licence the block does not have.
+     */
+    const block = fallbackBlock('work', 'off-topic');
+    expect(block.body, 'a refusal must not answer a question it just declined').toBe('');
+    expect(block.cites, 'a refusal licenses nothing, so it cites nothing').toEqual([]);
+
+    // And every other reason still does carry one, which is the whole point of the split.
+    for (const reason of REASONS.filter((r) => r !== 'off-topic')) {
+      expect(fallbackBlock('work', reason).body.length, `${reason} must still answer`).toBeGreaterThan(0);
+    }
+  });
+
   it('titles an unannounced fallback with the memory it leads on', () => {
     const block = fallbackBlock('rd350', 'rate');
     expect(block.cites.length).toBeGreaterThan(0);
