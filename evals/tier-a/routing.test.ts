@@ -18,7 +18,13 @@
 import { describe, expect, it } from 'vitest';
 import { ANSWERABLE_STOP_IDS } from '../../content/stops';
 import { retrieve, routeQuestion } from '../../lib/retrieve';
-import { MIN_ACCURACY, OFF_TOPIC_QUESTIONS, ROUTING_TABLE } from './routing-table';
+import {
+  BUYER_QUESTIONS,
+  MIN_ACCURACY,
+  OFFER_STOPS,
+  OFF_TOPIC_QUESTIONS,
+  ROUTING_TABLE,
+} from './routing-table';
 
 describe('the routing table', () => {
   it('covers every answerable stop, and no unanswerable one', () => {
@@ -88,5 +94,64 @@ describe('questions this site cannot answer', () => {
     expect(result.confident).toBe(false);
     expect(result.hits.length).toBeGreaterThan(0);
     expect(result.stopId).not.toBeNull();
+  });
+});
+
+describe('the field the handler actually reads', () => {
+  /*
+   * THE HOLE THIS CLOSES. Every assertion above this one reads `stopId` or `confident`.
+   * `lib/ask/handler.ts` reads NEITHER -- it refuses on `!topical`, a third field nothing
+   * in this file had ever looked at. So the suite could print 64/64 = 100% while the live
+   * site answered "Not my lane. Ask what I've built." to "can i get your cv", which is one
+   * of those 64. It routed to `contact` correctly and was refused on the way out.
+   *
+   * A test that does not assert the value the caller branches on is decoration.
+   */
+  it('finds every question in the table topical, because that is what decides a refusal', () => {
+    const refused = ROUTING_TABLE.flatMap((row) => {
+      const result = retrieve(row.question);
+      if (result.topical) return [];
+      return [`  ${JSON.stringify(row.question)} -> refused (top=${result.topScore.toFixed(1)}, stop=${result.stopId})`];
+    });
+    expect(
+      refused,
+      'questions in the routing table come back as refusals -- the site would tell a real ' +
+        'visitor "Not my lane":\n' + refused.join('\n'),
+    ).toEqual([]);
+  });
+
+  it('finds none of the off-topic questions topical', () => {
+    const admitted = OFF_TOPIC_QUESTIONS.flatMap((question) => {
+      const result = retrieve(question);
+      return result.topical ? [`  ${JSON.stringify(question)} -> ${result.stopId}`] : [];
+    });
+    expect(admitted, `off-topic questions were admitted:\n${admitted.join('\n')}`).toEqual([]);
+  });
+});
+
+describe('the questions that pay for this site', () => {
+  it('answers every one of them', () => {
+    const refused = BUYER_QUESTIONS.flatMap((question) => {
+      const result = retrieve(question);
+      if (result.topical) return [];
+      return [`  ${JSON.stringify(question)} (top=${result.topScore.toFixed(1)}, stop=${result.stopId})`];
+    });
+    expect(
+      refused,
+      `${refused.length} buying enquiries were refused. Each of these is a visitor with a ` +
+        'budget being told to go away:\n' + refused.join('\n'),
+    ).toEqual([]);
+  });
+
+  it('sends them somewhere that can take a brief', () => {
+    const strays = BUYER_QUESTIONS.flatMap((question) => {
+      const { stopId } = retrieve(question);
+      if (stopId && (OFFER_STOPS as readonly string[]).includes(stopId)) return [];
+      return [`  ${JSON.stringify(question)} -> ${stopId}`];
+    });
+    expect(
+      strays,
+      'buying enquiries were flown to a section that cannot take a brief:\n' + strays.join('\n'),
+    ).toEqual([]);
   });
 });

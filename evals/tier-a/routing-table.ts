@@ -154,6 +154,53 @@ export const ROUTING_TABLE: RoutingCase[] = [
  * body, "tall" against `tallybridge`) and would be answered with a straight face by any
  * retriever that only checks whether something came back.
  */
+/**
+ * The questions that pay for this site.
+ *
+ * Kept apart from ROUTING_TABLE because they are judged differently. The table asks "did
+ * it reach the right stop"; this asks the blunter question the business cares about, "did
+ * the site answer at all" -- and for a long time the answer was no. Seven of these came
+ * back as a refusal reading "Not my lane. Ask what I've built.", including "How much do
+ * you charge?" and "Can you fix our Shopify integration?".
+ *
+ * They are not scored for the exact stop. `work`, `now` and `contact` are all defensible
+ * destinations for "do you do data dashboards?" and arguing about which is the best of
+ * three is not what this list is for. What it forbids is a refusal, and a flight to the
+ * motorcycle.
+ *
+ * Rules for adding a row: write what a prospect with a budget and no patience would type,
+ * including the ones that are barely questions. Do not write a question shaped to match
+ * `ENGAGEMENT` -- the point of the list is to find the shapes it misses.
+ */
+export const BUYER_QUESTIONS = [
+  'I need someone to automate my invoicing. Can you help?',
+  'How much do you charge?',
+  'Are you taking on new clients?',
+  'Do you do data dashboards?',
+  'Can you fix our Shopify integration?',
+  'Can you do a proof of concept in two weeks?',
+  'Can you build a WhatsApp ordering bot for my restaurant?',
+  'can i get your cv',
+  'what would this cost',
+  'are you available for freelance work',
+  'do you take contract work',
+  'can we hire you for a project',
+  'whats your rate',
+  'do you build chatbots',
+  'can you help us with ai automation',
+  'whats your availability next quarter',
+  'we are looking for someone to build an internal tool',
+  'could you send me a proposal',
+  'do you work with startups',
+  'can you take on a retainer',
+];
+
+/**
+ * Where a buyer may be sent. Anywhere else is a misroute even if it is not a refusal:
+ * a prospect flown to a 1986 motorcycle has been answered by the wrong section.
+ */
+export const OFFER_STOPS = ['work', 'now', 'contact'] as const;
+
 export const OFF_TOPIC_QUESTIONS = [
   'write my essay',
   "what's the weather",

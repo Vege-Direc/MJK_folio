@@ -193,6 +193,90 @@ const WORK_REQUEST =
   /\b(write|review|fix|debug|refactor|optimi[sz]e|translate|summari[sz]e|proofread|edit|rewrite|solve|grade|critique)\s+(me\s+)?(my|our|this|these)\b/i;
 
 /**
+ * Questions about engaging MJK, admitted on their SHAPE rather than their score.
+ *
+ * WORK_REQUEST's mirror image, and the more important of the two, because this site exists
+ * to win consulting work and it was refusing the people who wanted to buy some. Measured
+ * against fifteen realistic buying enquiries, seven came back `topical: false`, which is
+ * the refusal: "How much do you charge?" scored 2.4, "Can you fix our Shopify
+ * integration?" 4.9, "Can you do a proof of concept in two weeks?" 4.5, "can i get your
+ * cv" 9.5. All well under MIN_TOP_SCORE, and every one of them from someone with a budget.
+ *
+ * A single score threshold cannot decide this any more, and `npm run route:eval` says so
+ * out loud. The weakest real question in the table now scores 9.5 and the loudest
+ * off-topic one 14.0: the band it prints for MIN_TOP_SCORE to sit in has INVERTED, and no
+ * value exists that admits the first and rejects the second. So the threshold stops being
+ * asked a question it cannot answer.
+ *
+ * The two are different jobs. A score measures whether the corpus holds material on the
+ * subject, which is the right instrument for "tell me about JewelAI" and the wrong one for
+ * "are you taking on new clients?" -- a question the corpus cannot score well because it
+ * holds no prose about rates, and should not. Engagement is a matter of who the question
+ * is addressed to and what it asks for, and that is legible in the words themselves.
+ *
+ * Second person throughout, deliberately. "Who did you hire at Kinnect" is a question about
+ * his career and belongs to the career, so `hire` alone is not a marker; `hire you` is.
+ *
+ * WHERE THIS IS DELIBERATELY LOOSE. "Can you fix my code" now matches, and gets MJK's own
+ * account of what he takes on and how a project starts. That is a slightly wrong answer to
+ * a request for free labour and a perfectly good one to a prospect who phrased their brief
+ * badly -- and the asymmetry is the whole argument. Refusing a lead costs a client;
+ * over-admitting costs a paragraph of authored prose that is true either way, and the
+ * guard still checks anything the model writes on top of it.
+ */
+const ENGAGEMENT = new RegExp(
+  [
+    // Hiring, availability, terms.
+    /\b(hire|hiring|engage|retain|onboard|bring\s+in)\s+(you|him|mjk|mathew)\b/,
+    /\b(can|could|should|may)\s+(we|i)\s+(hire|engage|retain|book|brief|work\s+with)\b/,
+    /\bwork(ing)?\s+(with\s+(you|him)|together)\b/,
+    /\b(are|r)\s+(you|u)\s+(available|free|open\s+to|taking)\b/,
+    /\btaking\s+on\b/,
+    /\bnew\s+clients?\b/,
+    /\byour\s+(availability|rate|rates|fee|fees|pricing|price|retainer|notice\s+period|terms)\b/,
+    /\b(freelance|contract|consulting|consultancy|retainer|part[-\s]?time)\s+(work|basis|engagement|role)\b/,
+
+    // Money, addressed to him. "What did the RD 350 cost" is not this, which is why each of
+    // these carries either `you` or a demonstrative pointing at the job in hand.
+    /\b(what|how\s+much)\s+(do|would|will|does)?\s*(you|u)\s+(charge|cost|bill|quote)\b/,
+    /\bhow\s+much\s+(would|will|does|is)\s+(this|that|it)\b/,
+    /\b(a|your)\s+(quote|estimate|proposal|statement\s+of\s+work)\b/,
+    /\bwhat.{0,2}s?\s+your\s+(rate|price|cost|fee|budget)\b/,
+
+    // Scope: a prospect describing what they need built.
+    /\b(can|could|would|will)\s+(you|u)\s+(build|make|create|develop|design|automate|integrate|migrate|modernis|moderniz|set\s+up|fix|rebuild|help|do|take|handle|deliver|ship)/,
+    /\bdo\s+(you|u)\s+(do|build|make|take|offer|handle|deliver|work\s+on)\b/,
+    /\b(i|we)\s+(need|want|am\s+looking\s+for|are\s+looking\s+for)\s+(someone|somebody|help|a\s+(dev|developer|consultant|engineer|freelancer))\b/,
+    /\bproof\s+of\s+concept\b/,
+    /\bpoc\b/,
+
+    // The artefacts a buyer asks for before they commit.
+    /\byour\s+(cv|resume|portfolio|references|case\s+studies)\b/,
+    /\b(get|see|have|send)\s+(me\s+)?(a\s+copy\s+of\s+)?your\s+(cv|resume)\b/,
+  ]
+    .map((r) => r.source)
+    .join('|'),
+  'i',
+);
+
+/**
+ * A brief: something the visitor wants built, for themselves.
+ *
+ * The one case where engagement OVERRIDES a confident score rather than merely surviving a
+ * poor one. "Can you build a WhatsApp ordering bot for my restaurant?" scores 20.4 -- well
+ * clear of MIN_TOP_SCORE -- and votes for `rd350`, because the corpus is full of building
+ * things and the loudest builder in it is a 1986 motorcycle. A prospect arriving with a
+ * brief was being flown to a photograph of a cafe racer.
+ *
+ * `for my|our|us` is what makes it a brief rather than a question about his work, so "can
+ * you help me understand the RD 350" stays on the RD 350 where it belongs.
+ */
+const BRIEF = /\b(build|make|create|develop|design|automate|integrate|fix|rebuild|set\s+up)\b[^?]{0,80}\bfor\s+(my|our|us)\b/i;
+
+/** Where a brief lands. Section 08 is titled "Brief me"; this is what it is for. */
+const ENGAGEMENT_STOP: StopId = 'contact';
+
+/**
  * Questions that point at something instead of naming it.
  *
  * Tested against the RAW question, not the tokens, because the tokeniser drops every one
@@ -796,7 +880,12 @@ export function retrieve(
    */
   const grounded = Boolean(opts.viewing) && (!parts.length || contextDependent(question, topScore, anchors));
 
-  if (!parts.length && !grounded) {
+  // Decided here rather than below, because it has to survive the empty-question return:
+  // "are you free in March?" has nothing in it the corpus can search for, and is the most
+  // valuable question on the site.
+  const engaging = ENGAGEMENT.test(question);
+
+  if (!parts.length && !grounded && !engaging) {
     return {
       stopId: null,
       confident: false,
@@ -823,22 +912,41 @@ export function retrieve(
         }
       : undefined;
 
-  const { stopId, share } = vote(hits, prior);
+  const { stopId: voted, share } = vote(hits, prior);
+
+  /*
+   * A buyer overrides the vote in two cases, and only two: the corpus had nothing to go on,
+   * or the question is a brief. Everything else an engagement question asks -- "do you build
+   * multi agent systems", "how do i hire you" -- already scores well and already votes for
+   * the right stop, and this must not take those away from it.
+   */
+  const engaged = engaging && (voted === null || topScore < MIN_TOP_SCORE || BRIEF.test(question));
+  const stopId = engaged ? ENGAGEMENT_STOP : voted;
+
+  // Routing to the right place while passing the licences from the wrong one is a defect
+  // this file has already fixed once for the viewport; a redirected buyer earns the same
+  // treatment, or the model answers "can you fix our Shopify integration?" holding four
+  // memories about media planning in Mumbai.
+  const licensed = engaged ? ground(hits, ENGAGEMENT_STOP, byId, k) : hits;
 
   // A question that only makes sense against the page is not off-topic just because it
   // scored badly on its own. "More on these?" earns its topicality from the section the
-  // visitor is reading, which is where its subject actually is.
+  // visitor is reading, which is where its subject actually is. And a question about
+  // engaging MJK is about MJK by construction, whatever it scores.
   const topical =
-    stopId !== null && (topScore >= MIN_TOP_SCORE || grounded) && !WORK_REQUEST.test(question);
+    stopId !== null &&
+    (engaging || ((topScore >= MIN_TOP_SCORE || grounded) && !WORK_REQUEST.test(question)));
 
   return {
     stopId,
-    confident: topical && share >= MIN_SHARE,
+    // A redirected buyer is not a vote that happened to win; the destination was chosen,
+    // so there is no share to be unsure about.
+    confident: topical && (engaged || share >= MIN_SHARE),
     topical,
     grounded,
     topScore,
-    hits,
-    context: formatContext(hits),
+    hits: licensed,
+    context: formatContext(licensed),
   };
 }
 

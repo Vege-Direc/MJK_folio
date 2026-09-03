@@ -9,7 +9,13 @@
  *
  * Exits 0 always. This is an instrument, not a gate; the gate is the test.
  */
-import { MIN_ACCURACY, OFF_TOPIC_QUESTIONS, ROUTING_TABLE } from '../evals/tier-a/routing-table';
+import {
+  BUYER_QUESTIONS,
+  MIN_ACCURACY,
+  OFFER_STOPS,
+  OFF_TOPIC_QUESTIONS,
+  ROUTING_TABLE,
+} from '../evals/tier-a/routing-table';
 import { ALIASES, retrieve, type RetrievalHit } from '../lib/retrieve';
 
 const pad = (s: string, n: number) => s.padEnd(n);
@@ -28,7 +34,9 @@ for (const { question, stopId } of ROUTING_TABLE) {
   if (correct) hits += 1;
   weakest = Math.min(weakest, result.topScore);
 
-  const mark = correct ? (result.confident ? '  ok  ' : ' weak ') : ' MISS ';
+  // `topical` before `confident`, because that is the field lib/ask/handler.ts branches
+  // on. A REFUSD row routed perfectly and was turned away at the door anyway.
+  const mark = !correct ? ' MISS ' : !result.topical ? 'REFUSD' : result.confident ? '  ok  ' : ' weak ';
   console.log(
     `${mark}${num(result.topScore)}  ${pad(stopId, 12)}-> ${pad(String(result.stopId), 12)}${JSON.stringify(question)}`,
   );
@@ -54,8 +62,31 @@ for (const question of OFF_TOPIC_QUESTIONS) {
     `${result.confident ? ' LOUD ' : '  ok  '}${num(result.topScore)}  ${pad(String(result.stopId), 12)}${JSON.stringify(question)}`,
   );
 }
+console.log('\nbuying enquiries -- every one of these must be answered, and land somewhere that takes a brief:');
+for (const question of BUYER_QUESTIONS) {
+  const result = retrieve(question);
+  const ok = result.topical && result.stopId && (OFFER_STOPS as readonly string[]).includes(result.stopId);
+  console.log(
+    `${ok ? '  ok  ' : ' LOST '}${num(result.topScore)}  ${pad(String(result.stopId), 12)}${JSON.stringify(question)}`,
+  );
+}
 
+/*
+ * The band this used to print is gone, and pretending otherwise was the bug.
+ *
+ * It read "MIN_TOP_SCORE must sit between them", and for a while it could: the weakest real
+ * question scored 17.8 and the loudest off-topic one 6.5. The corpus has since closed that
+ * gap and then crossed it -- 9.5 against 14.0 as this is written -- so there is no longer
+ * any value of MIN_TOP_SCORE that admits every real question and rejects every off-topic
+ * one, and a script that keeps asking for one sends its reader hunting for a number that
+ * does not exist. What actually holds the low end now is ENGAGEMENT in lib/retrieve.ts.
+ */
 console.log(
-  `\nscore gap: weakest real question ${weakest.toFixed(1)}, loudest off-topic ${loudest.toFixed(1)}.` +
-    ' MIN_TOP_SCORE must sit between them.',
+  `\nscore band: weakest real question ${weakest.toFixed(1)}, loudest off-topic ${loudest.toFixed(1)}.`,
+);
+console.log(
+  weakest > loudest
+    ? '  The band is intact; MIN_TOP_SCORE sits between them and does the work alone.'
+    : '  The band has INVERTED. No threshold separates these two, so the low end is held by\n' +
+      '  ENGAGEMENT (shape, not score) and the buying enquiries above are what verify it.',
 );
