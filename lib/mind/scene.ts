@@ -1108,11 +1108,13 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
      * Tier 3's arrival, in three parts: whether it is wanted, when its bytes land, and
      * how its geometry gets built without stopping the page.
      *
-     * `opts.farNetwork === null` is the deliberate "no far field on this machine" — see
-     * `MindConfig.farNetwork`. Anything else means the far field is expected, which is
-     * what `t3Wanted` tells the reveal below to wait for.
+     * Who decides whether there is one at all: `null` is the caller saying no, a promise
+     * is the caller saying yes and here it is, and omitting it defers to the tier table
+     * (`MindConfig.farNetwork`, where the mobile entry carries the measurements). So the
+     * policy has one home, and the scene is right about it whether or not the caller
+     * bothered to ask.
      */
-    const t3Wanted = opts.farNetwork !== null;
+    const t3Wanted = opts.farNetwork === undefined ? cfg.farNetwork : opts.farNetwork !== null;
     let t3Steps: Generator<void> | null = null;
     let t3Done = !t3Wanted;
 

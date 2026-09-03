@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { setMind } from '@/lib/mind/controller';
 import { STOPS } from '@/content/stops';
+import { CFG, detectTier } from '@/lib/mind/config';
 import type { FarNetwork, MindHandle } from '@/lib/mind/scene';
 
 /**
@@ -79,13 +80,20 @@ export default function MindCanvas() {
          * of the two — normally lands first, so the scene has it in hand before it has
          * finished building the near network and the whole picture can arrive at once.
          *
+         * On the mobile tier there is nothing to start: `CFG.mobile.farNetwork` is
+         * false and the 67 KB is never requested. The reasoning, and the counting
+         * behind it, is in the tier table. The gate is here as well as in the scene
+         * because this is the only place that can decide NOT to open the connection.
+         *
          * A failure resolves to `null` rather than rejecting: the far field's absence
          * has always been silent, and the scene treats "no far network" the same way
          * whether the file 404s or the machine was never going to draw it.
          */
-        const farNetwork = fetch('/far-network.json')
-          .then((r) => (r.ok ? (r.json() as Promise<FarNetwork>) : null))
-          .catch(() => null);
+        const farNetwork = CFG[detectTier(window)].farNetwork
+          ? fetch('/far-network.json')
+              .then((r) => (r.ok ? (r.json() as Promise<FarNetwork>) : null))
+              .catch(() => null)
+          : null;
         const { createMind } = await import('@/lib/mind/scene');
         if (cancelled || !canvas) return;
         handle = createMind(canvas, {
