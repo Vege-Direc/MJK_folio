@@ -167,6 +167,59 @@ replacing it is not free. Worth doing if a general title turns out not to be eno
 
 ---
 
+## 22. JewelAI on the page — `doing`
+
+Nothing from JewelAI is on the site at all, and it is the strongest technical claim in the
+corpus: three photographs go in together, a vision call is asked whether the geometry can
+be deduced from them, a second reconciles the angles into one description, and every
+generated image carries the whole set — the model is never told in words what the piece
+looks like. Three references in, an image and a video out.
+
+## 23. Workflow charts — `doing`, and the earlier answer needs revisiting
+
+MJK asked this once before and I owe him a straight answer: "Think if makes sense to show
+some of these softwares as workflow charts to make it easier to understand what I built?"
+
+The earlier research said no, and its reason was specific: the corpus licensed none of the
+interesting stations, so a pipeline diagram would have been invented boxes. **That reason
+has since expired.** Reading the JewelAI codebase added six memories that name the stations
+— the geometry check, the same-piece gate, the angle-diversity filter, the reconciliation
+pass, the blind second description, the anatomy audit, the scored judge and its 7-of-10
+bar, the failure fed back for exactly one retry. The apparel pipeline has five named agents
+and a critic with a pass mark. A chart is now licensable where it was not, and the question
+should be re-answered on the new material rather than on the old verdict.
+
+## 24. Generative UI, extended — `doing`
+
+"if people ask to see more examples can more images be shown from the database with genui?
+similarly can workflows be shown with genui?"
+
+§02 already proves the mechanism: the figure rests on the engine or the aircraft depending
+on which memory licensed the answer, deterministically, with no model authority. The
+question is how far that generalises — to more image pairs on request, and to a workflow
+figure that appears when someone asks how something works.
+
+## 25. More detail in the vectors, and the particle field — `doing`
+
+"for the engine and plane vectors can you trace and render it with more detail? also denser
+and smaller particles to simulate wave particle motion between transitions? where is loop
+btw? also look for libraries to help you with this."
+
+The engine is 90 drawables and the aircraft is a 43-point silhouette plus 24 interior
+lines, both deliberately sparse. The particle field is 150 dots on a straight tween. Denser
+and smaller, with wave-like motion rather than point-to-point, is a different and better
+brief.
+
+On the loop: there is a **Replay** control, at the right of the caption line, once the
+sequence has finished. It is deliberately quiet — 10px, dim — and if MJK could not find it
+that is the answer to whether it is discoverable enough.
+
+## 26. More apparel pairs — `doing`
+
+"while I agree not all 15, can you still do a few more? one seems way too less."
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
