@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { STOPS, type StopId } from '@/content/stops';
 import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
 import { flyTo } from '@/lib/flight';
@@ -100,10 +100,96 @@ function viewingStop(): StopId | undefined {
  * tween's 745ms. It also cannot be told where to stop, which is the second half of this
  * function.
  */
+/**
+ * Whether the reader has taken the page over since the flight started.
+ *
+ * MEASURED THE WRONG WAY FIRST, and the wrong way is instructive. The first version
+ * compared `window.scrollY` against where the flight had been aimed, on the theory that a
+ * reader who had moved would be somewhere else. But the section grows by hundreds of pixels
+ * as the answer streams, and the browser's own scroll anchoring moves `scrollY` to keep the
+ * document steady -- `overflow-anchor: none` is set across the answer, not across the page.
+ * So the position had always drifted by the time the correction ran, every question looked
+ * like a reader who had taken over, and two of four flows on a phone were left exactly as
+ * broken as before: -1000px and 0% of the answer on screen.
+ *
+ * Intent is the honest test, and `flyTo` already knows what it looks like: a wheel, a touch,
+ * a key. Module scope because it is one page and one reader, and because holding it in state
+ * would re-render the whole tree to record a boolean nothing renders.
+ */
+let readerMoved = false;
+let releaseWatch: (() => void) | null = null;
+
+function watchForReader(): void {
+  releaseWatch?.();
+  readerMoved = false;
+  const moved = () => {
+    readerMoved = true;
+  };
+  const opts = { passive: true, once: true } as const;
+  // `flyTo` installs its own copies of these to cancel the flight itself. These outlive the
+  // flight, because the question this one answers is asked after the answer has settled.
+  window.addEventListener('wheel', moved, opts);
+  window.addEventListener('touchstart', moved, opts);
+  window.addEventListener('keydown', moved, { once: true });
+  releaseWatch = () => {
+    window.removeEventListener('wheel', moved);
+    window.removeEventListener('touchstart', moved);
+    window.removeEventListener('keydown', moved);
+    releaseWatch = null;
+  };
+}
+
 function goToStop(route: RouteData) {
   const el = document.getElementById(route.stopId);
-  if (el) flyTo(landingFor(el, document.getElementById(`answer-${route.stopId}`)));
+  if (el) {
+    watchForReader();
+    flyTo(landingFor(el, document.getElementById(`answer-${route.stopId}`)));
+  }
   window.dispatchEvent(new CustomEvent<RouteData>(ROUTE_EVENT, { detail: route }));
+}
+
+/** A margin at the top of the readable band; below this the answer's first line is lost. */
+const TOP_EDGE = 8;
+
+/** And at the bottom: an answer starting this close to the dock shows nothing worth reading. */
+const BOTTOM_EDGE = 80;
+
+/**
+ * Put the finished answer back on the screen.
+ *
+ * The flight is aimed before the answer exists. `#answer-<stopId>` is an empty div at that
+ * moment, so `landingFor` is working from ANSWER_ROOM -- a guess -- and the section then
+ * grows by 700-1,000px as the prose arrives. Because `.content-zone` is vertically centred
+ * and `overflow-anchor` is switched off across the answer, that growth moves the answer's
+ * first line UPWARDS past the top of the screen, and nothing ever looked again.
+ *
+ * Measured on a phone at 390x664, four flows out of four: the answer's top landed at -51px,
+ * -126px, -230px and -999px. At -999 the entire 664px screen was the contact link list and
+ * NONE of the answer was visible -- for the question "can you build a WhatsApp ordering bot
+ * for my restaurant, and what would it cost?", which is the most valuable question the site
+ * can be asked.
+ *
+ * Two things keep this from becoming a page that grabs the scroll. It only acts when the
+ * answer's start is actually off the readable band, so an answer that landed well is left
+ * alone; and it does nothing at all if the reader has moved since the flight, on the same
+ * principle `flyTo` already follows -- a flight is a suggestion, and the moment the visitor
+ * touches the page it is over.
+ */
+function settleOnAnswer(stopId: StopId): void {
+  const section = document.getElementById(stopId);
+  const container = document.getElementById(`answer-${stopId}`);
+  if (!section || !container) return;
+
+  // The reader has taken over. Their position is theirs.
+  if (readerMoved) return;
+
+  const dock = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-h'), 10);
+  const readable = window.innerHeight - (Number.isFinite(dock) ? dock : 0);
+  const top = container.getBoundingClientRect().top;
+  if (top >= TOP_EDGE && top <= readable - BOTTOM_EDGE) return;
+
+  releaseWatch?.();
+  flyTo(landingFor(section, container));
 }
 
 /**
@@ -131,8 +217,27 @@ function goToStop(route: RouteData) {
  * the readable band ends where the dock begins, not where the screen does.
  */
 
-/** Room to leave under the answer's first line: roughly a dek and four lines of prose. */
+/**
+ * Room to leave under the answer's first line: roughly a dek and four lines of prose.
+ *
+ * Only a guess, and only used while it has to be one. At routing time the answer container
+ * is an empty div with no height, because the envelope arrives at ~15ms and the prose has
+ * not started; once the answer has settled this function is called again and measures the
+ * real thing instead.
+ */
 const ANSWER_ROOM = 200;
+
+/**
+ * A strip of the section left above the answer when the answer is too tall to fit anyway.
+ *
+ * An answer taller than the readable band cannot be shown whole from any scroll position,
+ * so the choice is only where to start reading it, and the start is the right place -- a
+ * landing that shows the middle of a paragraph reads as a broken page. But putting the
+ * first line hard against the top of the screen leaves nothing above it, and the visitor
+ * has no way to tell they are inside a section rather than on a new page. 64px is one line
+ * of the section's own body text, which is enough to say where they are.
+ */
+const CONTEXT_ABOVE = 64;
 
 function landingFor(section: HTMLElement, answer: HTMLElement | null): number {
   const top = section.getBoundingClientRect().top + window.scrollY;
@@ -140,9 +245,15 @@ function landingFor(section: HTMLElement, answer: HTMLElement | null): number {
 
   const dock = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-h'), 10);
   const readable = window.innerHeight - (Number.isFinite(dock) ? dock : 0);
-  const answerFromTop = answer.getBoundingClientRect().top + window.scrollY - top;
+  const box = answer.getBoundingClientRect();
+  const answerFromTop = box.top + window.scrollY - top;
 
-  const shortfall = answerFromTop + ANSWER_ROOM - readable;
+  // The answer's own height when it has one; zero means it has not arrived yet. Capped so
+  // an answer longer than the screen starts at its first line rather than dragging the
+  // landing down to make room for prose that runs past the dock regardless.
+  const room = box.height > 0 ? Math.min(box.height, readable - CONTEXT_ABOVE) : ANSWER_ROOM;
+
+  const shortfall = answerFromTop + room - readable;
   return shortfall > 0 ? top + shortfall : top;
 }
 
@@ -191,6 +302,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const shown = envelope?.body ?? text;
     return { question, envelope, text, streaming: asking, shown };
   }, [messages, asking]);
+
+  /*
+   * One correction per answer, after it has stopped growing.
+   *
+   * Keyed on the question rather than on `answer`, which is a fresh object on every
+   * streamed token; and gated on `!asking` so it runs when the stream is finished rather
+   * than dozens of times while it arrives. The guard rewrites the envelope once more after
+   * that, which can only shorten the answer, and a shorter answer cannot push its own first
+   * line off the top.
+   */
+  const settledStop = !asking ? (answer?.envelope?.stopId ?? null) : null;
+  const settledQuestion = !asking ? (answer?.question ?? null) : null;
+  useEffect(() => {
+    if (!settledStop || !settledQuestion) return;
+    // One frame, so the collapse of the authored paragraph and the swap's height
+    // transition have both been laid out before anything is measured.
+    const id = requestAnimationFrame(() => settleOnAnswer(settledStop));
+    return () => cancelAnimationFrame(id);
+  }, [settledStop, settledQuestion]);
 
   const [showOriginal, setShowOriginal] = useState(false);
 
