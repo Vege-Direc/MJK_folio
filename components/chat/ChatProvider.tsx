@@ -116,26 +116,34 @@ function goToStop(route: RouteData) {
  * fold, with only the static cards on screen. Ask, watch the page move, see nothing. It is
  * the worst possible outcome for the one interaction the site exists for.
  *
- * So the landing is the higher of two positions: the section's top, and far enough down
- * that the answer container sits a little above the middle of the readable band. On a
- * desktop, and on any section that fits, the first wins and nothing changes. Where they
- * disagree the answer wins, because a visitor who has just asked a question is looking
- * for the answer, not for the heading above it.
+ * So the section's top is still the landing, and it is only given up when keeping it
+ * would hide the answer — then the page goes exactly far enough to open ROOM below where
+ * the answer will start, and not one pixel further.
+ *
+ * "Exactly far enough" is the correction, and it was a real bug in between. Aiming the
+ * answer at a fixed fraction of the band instead measured a 214px overshoot on a 1440
+ * desktop, which put §07's title and kicker off the top of the screen: `.content-zone` is
+ * vertically centred there, so the answer container already sits near the middle and
+ * pulling it higher scrolls past the heading for no gain. Every desktop section now
+ * lands exactly where it did before this function existed.
  *
  * `--dock-h` is subtracted because the dock is fixed over the foot of the viewport, so
- * the readable band stops where the dock starts, not where the screen does.
+ * the readable band ends where the dock begins, not where the screen does.
  */
+
+/** Room to leave under the answer's first line: roughly a dek and four lines of prose. */
+const ANSWER_ROOM = 200;
+
 function landingFor(section: HTMLElement, answer: HTMLElement | null): number {
   const top = section.getBoundingClientRect().top + window.scrollY;
   if (!answer) return top;
 
   const dock = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-h'), 10);
   const readable = window.innerHeight - (Number.isFinite(dock) ? dock : 0);
-  const answerTop = answer.getBoundingClientRect().top + window.scrollY;
+  const answerFromTop = answer.getBoundingClientRect().top + window.scrollY - top;
 
-  // 0.42 rather than dead centre: the answer streams downward from here, so it wants more
-  // room beneath it than above it.
-  return Math.max(top, answerTop - readable * 0.42);
+  const shortfall = answerFromTop + ANSWER_ROOM - readable;
+  return shortfall > 0 ? top + shortfall : top;
 }
 
 export function ChatProvider({ children }: { children: ReactNode }) {
