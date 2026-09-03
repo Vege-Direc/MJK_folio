@@ -1843,6 +1843,92 @@ html[data-flying] .answer-layer-in {
   color: var(--color-accent);
 }
 
+/* ── §07's before and after ─────────────────────────────────────── */
+
+.pair {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+/*
+ * Equal height, unequal width, and no crop on either photograph.
+ *
+ * The two frames are 0.926 and 0.806, and they are different shapes because the second is
+ * a different photograph rather than a retouch of the first. The column tracks are those
+ * ratios, so both images run to the same height and take whatever width that height gives
+ * them — nothing is squeezed on one axis, which is the whole requirement. `min-width: 0`
+ * is what stops a grid item refusing to shrink below its intrinsic width and pushing the
+ * pair out of the column.
+ */
+.pair-frames {
+  display: grid;
+  grid-template-columns: 0.926fr auto 0.806fr;
+  align-items: end;
+  gap: 0 clamp(14px, 2.4vw, 26px);
+}
+
+.pair-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pair-cell img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-rule);
+}
+
+.pair-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+}
+
+/*
+ * Drawn, not typed. A character would inherit the body face and sit on a baseline that
+ * has nothing to do with the two frames it points between.
+ */
+.pair-arrow {
+  width: clamp(18px, 2.6vw, 28px);
+  height: auto;
+  align-self: center;
+  margin-bottom: 18px;
+  overflow: visible;
+}
+
+.pair-arrow path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pair-arrow-case {
+  stroke: #08080c;
+  stroke-width: 3.4;
+}
+
+.pair-arrow-ink {
+  stroke: var(--color-accent);
+  stroke-width: 1.3;
+}
+
+.pair-cap {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
 /* ── press ───────────────────────────────────────────────────── */
 
 /*

@@ -30,6 +30,8 @@ const RENDERABLE_COMPOSE: readonly ComposeKind[] = [
   // Added after launch and the only kind not in `reference/preview.html`: §02's general
   // arrangement of the MJK-101. See `components/stops/MJK101Figure.tsx`.
   'figure',
+  // §07's before-and-after pair, over a shortened card list.
+  'proof',
 ];
 
 describe('STOPS', () => {

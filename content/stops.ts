@@ -137,7 +137,7 @@ export const STOPS = [
     id: 'work',
     index: 7,
     kicker: '§ 07 — Selected work',
-    compose: 'cards',
+    compose: 'proof',
     align: 'left',
     title: { strong: 'Things I have built.' },
     body: 'Agent pipelines, an ERP you talk to, an open-source bridge into Indian accounting, and the growth engines around them. Ask about any of them.',

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
+import ApparelPair from './ApparelPair';
 import AuthoredBody from './AuthoredBody';
 import MJK101Figure from './MJK101Figure';
 import { cardKicker } from './card-kicker';
@@ -103,10 +104,10 @@ function Content({ stop, wide }: { stop: Stop; wide?: boolean }) {
   );
 }
 
-function Cards({ stop }: { stop: Stop }) {
+function Cards({ stop, limit = MAX_CARDS }: { stop: Stop; limit?: number }) {
   const memories = memoriesForStop(stop.id)
     .filter((m) => CARD_SECTIONS.has(m.section))
-    .slice(0, MAX_CARDS);
+    .slice(0, limit);
 
   if (!memories.length) return null;
 
@@ -186,6 +187,21 @@ function media(stop: Stop): ReactNode {
       return <Carousel />;
     case 'figure':
       return <MJK101Figure />;
+    /*
+     * §07 is the section a sceptic reads, and until now it answered them with four cards
+     * of prose. A review put it plainly: no link, screenshot, repo or demo for any of the
+     * work. So the column leads with a photograph the pipeline actually made from a
+     * photograph a supplier actually sent, and the card list drops to two — which also
+     * retires both cards about the third-party assessment, whose volume numbers that same
+     * review called volume rather than outcomes.
+     */
+    case 'proof':
+      return (
+        <>
+          <ApparelPair />
+          <Cards stop={stop} limit={2} />
+        </>
+      );
     case 'contact':
       return <Contact stop={stop} />;
     default:
