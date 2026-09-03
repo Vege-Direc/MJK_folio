@@ -27,9 +27,6 @@ const RENDERABLE_COMPOSE: readonly ComposeKind[] = [
   'carousel',
   'contact',
   'timeline',
-  // Added after launch, and the only kind not in `reference/preview.html`: §02's unit
-  // chart. See `components/stops/CabinFigure.tsx` for why that stop stopped being plain.
-  'figure',
 ];
 
 describe('STOPS', () => {

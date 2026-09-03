@@ -558,6 +558,83 @@ html[data-flying] {
 }
 
 /**
+ * A stop's own artefact, beside its prose.
+ *
+ * The frame is the carousel hero's — a single hairline in the rule colour — because a
+ * photograph and a screenshot on the same page should be held the same way, and because
+ * a raster on this background needs an edge to stop being a hole in it.
+ *
+ * The caption is set in the body face, not the mono label face. It is a sentence, and
+ * the site's own rule puts tracking on small caps labels and never on prose.
+ *
+ * Stacked under the paragraph is the obvious arrangement and it does not survive
+ * measurement. A `plain` stop is one viewport tall and centred, and the kicker, a
+ * two-line 4.4rem title and the paragraph already take 359 of the ~584px that clears
+ * the chat dock. That leaves under 200px for a 1.56:1 screenshot and its caption, which
+ * is a figure 270px wide — small enough to be decoration rather than evidence. Below
+ * 900px the panel is allowed to grow and the stack fits, so the stack is what a phone
+ * gets; the desktop puts the figure in the column beside the paragraph instead, where
+ * the height it needs is height the paragraph is not using.
+ */
+.stop-figure {
+  margin: 26px 0 0;
+  max-width: 32rem;
+}
+
+/*
+ * The frame is on the image, not on the figure. Drawn around both, its fill sat behind
+ * the caption as a 40%-black plate over the scene — the scrim this project has already
+ * rejected twice, arrived at by accident through a border shorthand. The caption
+ * defends itself the way every other line on the page does, with the halo it inherits
+ * from `.content-zone`.
+ */
+.stop-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-rule);
+  background: rgba(20, 20, 26, 0.4);
+}
+
+.stop-figure figcaption {
+  padding: 10px 1px 0;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-type-muted);
+  text-wrap: pretty;
+}
+
+@media (min-width: 901px) {
+  /*
+   * The column widens only for the stop that has an artefact, and only by the width of
+   * the artefact: the paragraph keeps its 44ch measure and its position on the left
+   * rail, so nothing about the reading changes. A stop with no figure is untouched.
+   */
+  .center-stage .content-zone.with-figure {
+    max-width: 56rem;
+  }
+
+  .content-zone.with-figure .authored-body-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1.75rem, 3vw, 2.75rem);
+    align-items: start;
+  }
+
+  /*
+   * Sized off the viewport's height as well as its width, because height is the
+   * constraint here and a 1280x720 laptop has 180px less of it than the 900 this was
+   * drawn against. The ratio is the image's own, so capping the width caps the height.
+   */
+  .content-zone.with-figure .stop-figure {
+    margin: 4px 0 0;
+    width: min(24rem, 27svh * 1.563);
+    max-width: none;
+  }
+}
+
+/**
  * Where a streamed answer docks. Empty until the chat step fills it, and deliberately
  * inside the stop's own type scale: an answer about Taboola belongs in the Taboola stop,
  * not in a panel bolted to the bottom of the screen.
@@ -1264,7 +1341,13 @@ html[data-flying] .answer-layer-in {
  * `visibility` instead, so they still preload and decode, and nothing is ever a
  * photograph turned down to nothing.
  */
-.carousel-hero img {
+/*
+ * A frame is not always an `<img>` any more — the first one is the before-and-after
+ * wipe, which is two of them and a control. The selector moved onto a class so both
+ * kinds stack, hide and cross-fade by the same rule, and so that `.carousel-cap`, which
+ * is also a child of the hero, keeps its own positioning.
+ */
+.carousel-frame {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1274,12 +1357,12 @@ html[data-flying] .answer-layer-in {
 }
 
 /* The outgoing frame, held underneath at full strength while the new one arrives. */
-.carousel-hero img.prev {
+.carousel-frame.prev {
   visibility: visible;
   z-index: 0;
 }
 
-.carousel-hero img.on {
+.carousel-frame.on {
   visibility: visible;
   z-index: 1;
   /* 480ms, not the original 800ms: with the interval now gated to on-screen play, the
@@ -1312,9 +1395,16 @@ html[data-flying] .answer-layer-in {
   backdrop-filter: blur(4px);
 }
 
+/*
+ * `repeat(5, 1fr)` was a count of the frames that happened to exist. Adding the
+ * before-and-after tab and the engine photograph made it six and the sixth wrapped onto
+ * a second row. Columns are derived from the children now, so the strip cannot disagree
+ * with the array again.
+ */
 .carousel-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 6px;
   margin-top: 8px;
 }
@@ -1337,6 +1427,26 @@ html[data-flying] .answer-layer-in {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/*
+ * The before-and-after tab's thumbnail. Two halves of the same field, each showing its
+ * own outer edge, so the tab reads as a comparison at 50px rather than as a sixth
+ * photograph of the finished bike.
+ */
+.carousel-thumb-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-thumb-split img:first-child {
+  object-position: 22% center;
+}
+
+.carousel-thumb-split img:last-child {
+  object-position: 78% center;
 }
 
 .carousel-strip button:hover {
@@ -1398,6 +1508,146 @@ html[data-flying] .answer-layer-in {
   color: var(--color-accent);
 }
 
+/* ── before / after ────────────────────────────────────────────────────────── */
+
+/*
+ * The wipe. `--ba-split` is written from React as a percentage and is the only number
+ * the whole component moves.
+ */
+.ba {
+  --ba-split: 50%;
+  position: absolute;
+  inset: 0;
+}
+
+.ba-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /*
+   * The pair is composed tight around the motorcycle, and below 900px the hero crops to
+   * 16:10. Biased down the frame so the crop takes background off the top rather than
+   * the ground the bike is standing on — losing the tyres' contact with the floor is
+   * what would make the two frames stop reading as one machine.
+   */
+  object-position: center 55%;
+}
+
+/*
+ * The stock bike is drawn over the finished one and clipped from the right, so the
+ * finished bike is never hidden behind an image at zero opacity and the stock one is
+ * never a raster under a wash. `clip-path` rather than a sized wrapper: no nested
+ * element has to be told the container's width to avoid squashing.
+ */
+.ba-stock {
+  clip-path: inset(0 calc(100% - var(--ba-split)) 0 0);
+  transition: clip-path 0.12s linear;
+}
+
+.ba-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--ba-split);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-accent);
+  transition: left 0.12s linear;
+  /* The input behind it owns every pointer event; this is the drawing, not the control. */
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ba-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  background: rgba(10, 10, 14, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+/* Two chevrons, pointing at the two things the knob moves between. */
+.ba-knob::before,
+.ba-knob::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: 2px solid var(--color-accent);
+  border-width: 2px 2px 0 0;
+}
+
+.ba-knob::before {
+  left: 9px;
+  rotate: -135deg;
+  translate: 0 -50%;
+}
+
+.ba-knob::after {
+  right: 9px;
+  rotate: 45deg;
+  translate: 0 -50%;
+}
+
+/*
+ * A real range input, stretched over the whole photograph and made invisible. The thumb
+ * is transparent because `.ba-line` is the thumb as far as a sighted visitor is
+ * concerned; what the input keeps is everything that is expensive to rebuild — arrow
+ * keys, Home and End, click-to-jump, touch, and a slider role with a value.
+ */
+.ba-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+  z-index: 3;
+}
+
+.ba-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.ba-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.ba-range::-moz-range-track {
+  background: transparent;
+}
+
+/*
+ * The input covers the frame, so its focus ring is the frame's — which is the right
+ * answer anyway: the thing that has focus is the comparison, not a dot on it. Same
+ * accent, same offset as the thumbnails beneath it.
+ */
+.ba-range:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /*
  * The prompts wrap rather than scroll. See SuggestedPrompts.tsx for why the scroller had
  * to go; the short version is that at 375px it showed one prompt, clipped mid-word, and
@@ -1429,93 +1679,6 @@ html[data-flying] .answer-layer-in {
 .prompt-chip:hover,
 .prompt-chip:focus-visible {
   color: var(--color-accent);
-}
-
-/* ── §02's figure ────────────────────────────────────────────── */
-
-.fig-cabin {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  width: 100%;
-  max-width: 620px;
-}
-
-/*
- * The marks. Cased, not haloed — `paint-order: stroke` paints the dark stroke first and
- * the fill over the top of it, so each mark ends up with a ~1.5px dark surround and the
- * scene shows through everywhere between them. A `filter: drop-shadow` would do the same
- * job by blurring, and blur on this page is the thing that cost 100ms per frame.
- *
- * The stroke is 3 units against a 6-unit gap, so half the gap stays open. Wider and the
- * grid closes into a slab; narrower and the marks lose their edge over a bright filament.
- */
-.fig-marks {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-.fig-marks rect {
-  fill: var(--color-accent);
-  stroke: #08080c;
-  stroke-width: 3;
-  paint-order: stroke;
-}
-
-/*
- * 210/300. Both blocks are drawn at the same pitch in their own coordinates, so they only
- * stay comparable if their rendered widths hold the same ratio as their viewBoxes. This
- * is the one number in the figure that is geometry rather than fact, and it is derived
- * from the two viewBox widths in `CabinFigure.tsx`, casing bleed included.
- */
-.fig-block-narrow .fig-marks {
-  width: 70%;
-}
-
-.fig-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.fig-kicker {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  text-shadow: var(--halo-mono);
-}
-
-.fig-label {
-  font-size: 14px;
-  color: var(--color-type-muted);
-  text-shadow: var(--halo);
-}
-
-/* The count is the figure's subject, so it is the one thing here set in the display face. */
-.fig-n {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  color: var(--color-type);
-  margin-right: 6px;
-}
-
-/*
- * Not monospace, though it was. `DESIGN.md` reserves the mono face for years and
- * coordinates, and "One aircraft, two roles" is neither — it is a sentence, and setting
- * a sentence in tracked-out mono is the costume version of a technical register rather
- * than the thing itself. The kicker above stays mono because it is an address, which is
- * exactly what the rule does allow.
- */
-.fig-foot {
-  font-size: 13px;
-  color: var(--color-type-dim);
-  text-shadow: var(--halo);
-  border-top: 1px solid var(--color-rule);
-  padding-top: 12px;
 }
 
 /* ── press ───────────────────────────────────────────────────── */
@@ -1907,23 +2070,6 @@ html[data-flying] .answer-layer-in {
     gap: 4px;
   }
 
-  .fig-cabin {
-    gap: 16px;
-    max-width: none;
-  }
-
-  /*
-   * 22px is a display size on a 390px screen and the count would outrank the section
-   * title two lines above it. The marks are already carrying the comparison; the numeral
-   * only has to name it.
-   */
-  .fig-n {
-    font-size: 19px;
-  }
-
-  .fig-label {
-    font-size: 13px;
-  }
 }
 
 /* ── reduced motion ────────────────────────────────────────────────────────── */
@@ -1948,7 +2094,19 @@ html[data-flying] .answer-layer-in {
     transform: none;
   }
 
-  .carousel-hero img {
+  .carousel-frame {
+    transition: none;
+  }
+
+  /*
+   * The wipe holds at a static split and the seam stops sliding: the eased 0.12s on the
+   * clip and the line is the only thing in the component that moves on its own once a
+   * value changes, and it is the thing to take out. The control itself stays — a slider
+   * a visitor drags is motion they asked for, and removing it would take the comparison
+   * away from exactly the people least able to work around its absence.
+   */
+  .ba-stock,
+  .ba-line {
     transition: none;
   }
 
