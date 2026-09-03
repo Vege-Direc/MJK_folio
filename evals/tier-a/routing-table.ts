@@ -89,6 +89,11 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'origin',
     'who are you',
     'who is mathew',
+    // MJK asked this one on the live site and was told "Not my lane." His own first name
+    // was not an alias and appears once in a corpus written in the first person, so the
+    // query scored 5.1 and fell under the confidence bar.
+    'what can you tell me about mathew?',
+    'tell me about mathew',
     'tell me about yourself',
     'introduce yourself',
     'why aircraft',

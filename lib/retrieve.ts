@@ -284,6 +284,15 @@ export const ALIASES: Record<string, string[]> = {
   'who is mathew': ['identity', 'introduction', 'mathew', 'kondekeril'],
   'who is this': ['identity', 'introduction', 'mathew', 'kondekeril'],
   'about you': ['identity', 'introduction', 'mathew'],
+  /* His own name, on its own. MJK asked "what can you tell me about mathew?" -- the most
+   * ordinary question a visitor has -- and the site answered "Not my lane. Ask what I've
+   * built." The name was not an alias and appears exactly once in a corpus written in the
+   * first person, so the whole query scored 5.1 and fell under the confidence bar. A
+   * question that names him is definitionally about him, and one that names him in full is
+   * not a different question from one that uses his first name. */
+  mathew: ['identity', 'introduction', 'mathew', 'kondekeril'],
+  kondekeril: ['identity', 'introduction', 'mathew', 'kondekeril'],
+  'about mathew': ['identity', 'introduction', 'mathew', 'kondekeril'],
   'about yourself': ['identity', 'introduction', 'mathew'],
   'tell me about yourself': ['identity', 'introduction', 'mathew'],
   'introduce yourself': ['identity', 'introduction', 'mathew'],

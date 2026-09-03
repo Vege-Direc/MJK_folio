@@ -99,8 +99,35 @@ export default function ScrollProgress({ count }: { count: number }) {
     // stylesheet can, so re-measure once the page has settled.
     const settle = setTimeout(onResize, 400);
 
+    /*
+     * Sections change height without the window ever resizing, and the mapping has to
+     * follow them.
+     *
+     * `marks` used to be measured at mount and refreshed only on `resize`. An answer
+     * streaming into a stop moved that stop's offset by 1,268px on a phone and fired no
+     * resize at all, so every mark below it was wrong for the rest of the visit and the
+     * camera ran against stale geometry. It matters more now that a desktop panel is also
+     * allowed to grow when it holds an answer.
+     *
+     * Measuring reads layout and writes none, so observing the same elements it measures
+     * cannot loop. The rAF coalesces the burst a streaming answer produces into one
+     * measurement per frame.
+     */
+    let pending = 0;
+    const remeasure = () => {
+      if (pending) return;
+      pending = requestAnimationFrame(() => {
+        pending = 0;
+        onResize();
+      });
+    };
+    const ro = new ResizeObserver(remeasure);
+    for (const el of sections) ro.observe(el);
+
     return () => {
       clearTimeout(settle);
+      cancelAnimationFrame(pending);
+      ro.disconnect();
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
     };
