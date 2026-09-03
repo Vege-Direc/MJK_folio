@@ -51,8 +51,27 @@ export function buildWaypoints(n: number): Waypoint[] {
     S.push(new THREE.Vector3(x, y, z));
   }
   const dir0 = S[1].clone().sub(S[0]).normalize();
+  const dirN = S[n - 1].clone().sub(S[n - 2]).normalize();
   const V = S.map((p, i) => {
     if (i === 0) return p.clone().addScaledVector(dir0, -15).add(new THREE.Vector3(0, 6, 0));
+    /*
+     * The last vantage gets the same treatment as the first, and for the same reason at
+     * the other end of the flight.
+     *
+     * Every interior stop sits 1.4 above its spine node with the next node ahead of it,
+     * so the featured soma is something the camera is travelling *towards*. There is no
+     * next node at the ninth, so the camera came to rest 1.4 units off the terminal soma
+     * and filled the frame with it: `contact` measured a whole-frame luminance of 127.6
+     * against 92.2 for every other stop, a pale cyan wash from edge to edge. That is the
+     * one screen a visitor is asked to act on, and it read as a different website — and
+     * the reading light, which weights itself toward one side of the frame, had nothing
+     * to weight toward.
+     *
+     * Nine units back is one segment's worth: it puts the last soma at the distance the
+     * other eight are seen from, and keeps `lookAt` on it so the stop still has a
+     * subject.
+     */
+    if (i === n - 1) return p.clone().addScaledVector(dirN, -9).add(new THREE.Vector3(0, 1.4, 0));
     return p.clone().add(new THREE.Vector3(0, 1.4, 0));
   });
   return S.map((p, i) => ({
