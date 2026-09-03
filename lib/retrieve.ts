@@ -293,6 +293,15 @@ export const ALIASES: Record<string, string[]> = {
   mathew: ['identity', 'introduction', 'mathew', 'kondekeril'],
   kondekeril: ['identity', 'introduction', 'mathew', 'kondekeril'],
   'about mathew': ['identity', 'introduction', 'mathew', 'kondekeril'],
+  /* The aircraft he actually drew, as opposed to the aircraft he wanted to fly. Both live
+   * in the corpus and `arc-aircraft-to-agents` mentions Brunel and aircraft in one summary
+   * sentence on §01, which outscored the aircraft's own memory on §02 — so a question about
+   * the machine he designed landed on the section about wanting to be a pilot, next to a
+   * figure of the wrong thing. */
+  'aircraft you designed': ['mjk-101', 'airbus', 'airliner', 'brunel', 'design'],
+  'aircraft he designed': ['mjk-101', 'airbus', 'airliner', 'brunel', 'design'],
+  'plane you designed': ['mjk-101', 'airbus', 'airliner', 'brunel', 'design'],
+  airliner: ['mjk-101', 'airbus', 'brunel', 'design'],
   'about yourself': ['identity', 'introduction', 'mathew'],
   'tell me about yourself': ['identity', 'introduction', 'mathew'],
   'introduce yourself': ['identity', 'introduction', 'mathew'],

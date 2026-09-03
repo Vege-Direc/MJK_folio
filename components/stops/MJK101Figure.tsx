@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useAsk } from '../chat/ChatProvider';
 import { ENGINE, FIG_VIEWBOX, MJK101_INNER, MJK101_PATH, MORPH } from './mjk101';
 
 /**
@@ -47,6 +48,13 @@ const FLY = 1700; // dots cross to the planform
 
 type Phase = 'engine' | 'scatter' | 'fly' | 'plane';
 
+/**
+ * The aircraft is the answer to exactly one memory. Everything else this stop knows — the
+ * mechanical degree at BITS, the fabrication internships, the Visual Basic engine
+ * simulator — belongs to the engine.
+ */
+const AIRCRAFT_MEMORY = 'mjk-101';
+
 const REDUCED = '(prefers-reduced-motion: reduce)';
 
 function subscribeReduced(cb: () => void) {
@@ -80,7 +88,28 @@ export default function MJK101Figure() {
    * Someone who has asked for less movement gets the subject immediately, rather than a
    * faster version of a transition they did not want.
    */
-  const phase: Phase = reduced ? 'plane' : (advanced ?? 'engine');
+  /*
+   * Which half of the figure the answer is about.
+   *
+   * MJK asked about his BITS education, landed here, and was shown an aeroplane. The
+   * figure already holds both states — it is an engine that becomes the MJK-101 — and it
+   * simply always rested on the aircraft. So retrieval chooses now: if the answer was
+   * licensed by the aircraft's own memory it rests on the aircraft, and otherwise on the
+   * engine, which is what every other memory on this stop is about.
+   *
+   * This is generative UI of the only kind this site allows. The choice comes from the
+   * memory ids the guard licensed the answer against, so it is deterministic and the model
+   * has no say in it — the same rule that governs which section an answer lands in at all.
+   */
+  const { answer } = useAsk();
+  const cites = answer?.envelope?.stopId === 'engineering' ? answer.envelope.cites : undefined;
+  const rests: Phase | null = !cites?.length
+    ? null
+    : cites.includes(AIRCRAFT_MEMORY)
+      ? 'plane'
+      : 'engine';
+
+  const phase: Phase = rests ?? (reduced ? 'plane' : (advanced ?? 'engine'));
 
   /*
    * One run, and a control to run it again. Not a loop.
@@ -215,9 +244,13 @@ export default function MJK101Figure() {
         ) : null}
       </svg>
 
+      {/*
+        The caption follows the figure. Resting on the engine under a caption about an
+        airliner would be the same mistake in a different place.
+      */}
       <figcaption className="fig-ga-cap">
         <span className="fig-ga-head">
-          <span className="fig-ga-name">MJK-101</span>
+          <span className="fig-ga-name">{phase === 'plane' ? 'MJK-101' : 'TWO-STROKE TWIN'}</span>
           {/*
             Only offered once the sequence has finished, and never under reduced motion.
             A replay control that appears mid-run invites a visitor to interrupt the thing
@@ -230,8 +263,9 @@ export default function MJK101Figure() {
           ) : null}
         </span>
         <span>
-          The Brunel Airbus project: a dual-role airliner, 100 passengers on short European routes or
-          28 in business class across continents, out of London City.
+          {phase === 'plane'
+            ? 'The Brunel Airbus project: a dual-role airliner, 100 passengers on short European routes or 28 in business class across continents, out of London City.'
+            : 'An air-cooled parallel twin — the architecture of the 1986 Yamaha RD 350 I stripped to the frame and rebuilt.'}
         </span>
       </figcaption>
     </figure>
