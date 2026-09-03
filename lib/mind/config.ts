@@ -29,6 +29,11 @@ export const PALETTE = {
 export type Tier = 'desktop' | 'mobile';
 
 export type MindConfig = {
+  /**
+   * Whether this tier draws the far background at all — `public/far-network.json`,
+   * 4,664 nodes and 67 KB over the wire. The reasoning is at the mobile entry below.
+   */
+  farNetwork: boolean;
   secondaryPerNode: number;
   bloom: boolean;
   pulseCoverage: number;
@@ -97,6 +102,7 @@ export type MindConfig = {
 
 export const CFG: Record<Tier, MindConfig> = {
   desktop: {
+    farNetwork: true,
     secondaryPerNode: 5.5, bloom: true, pulseCoverage: 1.0, pixelRatioCap: 2,
     tubeSeg: 64, tubeRad: 12, icoDetail: 3, nodeRadius: 0.5, tubeRadius: 0.045, fog: 0.020,
     bloomStrength: 0.45, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 2.0, axialFloor: 0.4,
@@ -127,6 +133,43 @@ export const CFG: Record<Tier, MindConfig> = {
     corridorInner: 9, corridorOuter: 16,
   },
   mobile: {
+    /**
+     * No far background on this tier. Asked as "for mobile do we need all layers or is
+     * just the central enough?", and answered by counting rather than by taste.
+     *
+     * Two things this tier already does compound against the far field. Its fog is
+     * FogExp2 at 0.030 against desktop's 0.020, which is a squared exponent, so a node
+     * 50 units out survives at 10% here and 37% there. And a phone in portrait is a
+     * 31-degree horizontal cone against a desktop window's 88 — a third of the angle,
+     * pointed at a network that spreads laterally.
+     *
+     * Counting, at each of the nine stops, the far nodes that are simultaneously inside
+     * the frustum and better than 10% through the fog — `THREE.Frustum` built from a
+     * camera at `buildWaypoints`' own vantages, times `exp(-(d*fog)^2)`:
+     *
+     *   phone portrait, this tier     160 of 4,664 ever = 3.4%;  6-22 per stop
+     *   tablet landscape, this tier   495 = 10.6%
+     *   phone frustum, desktop fog    725 = 15.5%   (isolates the fog)
+     *   desktop                     1,761 = 37.8%;  400-444 per stop
+     *
+     * And confirmed against the pixels, one screenshot per stop at 375 with the layer
+     * on and off. Eight of the nine differ by less than one part in 255 of whole-frame
+     * mean luminance — visually one or two thread-thin wisps at a frame edge. The
+     * ninth, `contact`, differs by 28% (127.6 vs 92.2), because the camera ends inside
+     * a far cluster there; what goes with it is a flat brightening haze over an
+     * already-white frame, and the shot without it holds more depth, not less.
+     *
+     * What it costs to draw those few dots: 66,952 bytes, a third of the scene's whole
+     * wire payload on a phone; ~7 MB of heap; and the arrival cost — before this was
+     * time-sliced, a 1,506ms (4x) to 2,026ms (6x) frozen page.
+     *
+     * What is NOT dropped, and why the answer to "is just the central enough" is no:
+     * tier 2 and the nebula stay. Turning those off was measured too, and it is a
+     * different scene — the neuropil haze vanishes, the somas lose their glow and read
+     * as bare balls, and the frame goes to empty black between filaments. The far
+     * field's absence is a thinner version of this world; theirs is another one.
+     */
+    farNetwork: false,
     secondaryPerNode: 2.0, bloom: false, pulseCoverage: 0.8, pixelRatioCap: 1.5,
     tubeSeg: 26, tubeRad: 5, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.030,
     bloomStrength: 0.0, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
