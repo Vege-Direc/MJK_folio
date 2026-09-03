@@ -27,6 +27,9 @@ const RENDERABLE_COMPOSE: readonly ComposeKind[] = [
   'carousel',
   'contact',
   'timeline',
+  // Added after launch and the only kind not in `reference/preview.html`: §02's general
+  // arrangement of the MJK-101. See `components/stops/MJK101Figure.tsx`.
+  'figure',
 ];
 
 describe('STOPS', () => {

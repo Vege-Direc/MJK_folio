@@ -1962,8 +1962,18 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       mouseActive = true;
     }
     function onPointerOut(){ mouseActive = false; }
-    doc.addEventListener('pointermove', onPointerMove, { passive: true });
-    doc.addEventListener('pointerleave', onPointerOut);
+    // isMobile is `pointer: coarse` (see detectTier in config.ts) -- there is no mouse
+    // to repel particles away from, only a finger that is busy scrolling the page. Not
+    // registering the listener at all, rather than filtering by e.pointerType inside it,
+    // means mouseActive can never flip true on this tier, which in turn means the
+    // spring-damper block in animate() (`nebSim && (mouseActive || !nebSettled)`) never
+    // enters its loop: no per-frame CPU sim, no raycast, no position-buffer upload. The
+    // ambient drift (uTime, above) is untouched -- particles keep moving, just not toward
+    // or away from a touch.
+    if (!isMobile) {
+      doc.addEventListener('pointermove', onPointerMove, { passive: true });
+      doc.addEventListener('pointerleave', onPointerOut);
+    }
     /**
      * Reduced motion, applied live.
      *

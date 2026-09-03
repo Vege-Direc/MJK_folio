@@ -26,9 +26,6 @@ export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** Under this many viewports of travel, the flight decelerates into the stop. */
-const NEAR = 1.5;
-
 /**
  * Distance-proportional, and clamped at both ends.
  *
@@ -43,18 +40,46 @@ function duration(distance: number, viewport: number): number {
 }
 
 /**
- * Expo, out for short hops and in-out for long ones.
+ * CSS's own `ease-in-out` — cubic-bezier(.42, 0, .58, 1) — for every flight, short or
+ * long. `easeOutExpo` used to run the short hops (under 1.5 viewports, the common case):
+ * fastest at frame one and decelerating from there, which is the "jumps straight into a
+ * fast scroll" MJK flagged. There was never a departure, only an arrival.
  *
- * `easeOutExpo` over a short distance puts the deceleration where the eye needs it: the
- * stop arrives and settles. Over 7200px the same curve covers 58% of the journey in the
- * first 100ms, which rips the current stop off the screen before the visitor has
- * registered that anything is moving. Long flights get a symmetric curve so departure
- * reads as departure.
+ * Picked over easeInOutCubic and easeInOutQuart by peak scroll velocity in px/frame at
+ * 60fps, on the two ends of what this file actually flies (9 stops, so 8 hops): a
+ * one-stop hop (844px over 370ms, `duration()`'s number for that distance) and an
+ * eight-stop flight (7,821px over 820ms, the clamp). Threshold is the ~1-viewport-per-
+ * 100ms rate this file's header already ties to visible tearing — ≈141px/frame at an
+ * 844px (390×844) viewport:
+ *
+ *   easeOutExpo    (old, short hops)   226 px/frame (one-stop)   1,028 px/frame (eight-stop)
+ *   easeInOutExpo  (old, long flights) 207 px/frame (one-stop)   1,025 px/frame (eight-stop)
+ *   easeInOutCubic                     106 px/frame (one-stop)     467 px/frame (eight-stop)
+ *   easeInOutQuart                     136 px/frame (one-stop)     616 px/frame (eight-stop)
+ *   cubic-bezier(.42,0,.58,1)           65 px/frame (one-stop)     274 px/frame (eight-stop)
+ *
+ * The bezier has the smallest peak at both distances — comfortably under threshold on
+ * the one-stop hop that is the common case (the old curves were both already over it
+ * there), and 3.7x gentler than the old far-flight curve on the eight-stop one. It still
+ * clears threshold on the eight-stop flight, because 820ms is not enough time to move
+ * 7,800px that slowly — that is `duration()`'s clamp, which this change does not touch.
+ *
+ * Implementation note: this bezier's control points have y1=0 and y2=1, which collapses
+ * its y-mapping to the plain smoothstep polynomial 3s²−2s³ — only x needs solving, which
+ * `s` does by Newton-Raphson (4 steps measures <2e-9 off a reference bisection solver
+ * across the full [0,1] domain, and `d` never approaches zero on this curve's control
+ * points, so no divide-by-zero guard is needed).
  */
-function ease(t: number, far: boolean): number {
+function ease(t: number): number {
+  if (t <= 0) return 0;
   if (t >= 1) return 1;
-  if (!far) return 1 - Math.pow(2, -10 * t);
-  return t < 0.5 ? Math.pow(2, 20 * t - 10) / 2 : (2 - Math.pow(2, -20 * t + 10)) / 2;
+  let s = t;
+  for (let i = 0; i < 4; i++) {
+    const xEst = ((0.52 * s - 0.78) * s + 1.26) * s - t;
+    const d = (1.56 * s - 1.56) * s + 1.26;
+    s -= xEst / d;
+  }
+  return (-2 * s + 3) * s * s;
 }
 
 let active: number | null = null;
@@ -92,7 +117,6 @@ export function flyTo(top: number, onArrive?: () => void): void {
   }
 
   const vh = window.innerHeight;
-  const far = Math.abs(delta) > NEAR * vh;
   const ms = duration(Math.abs(delta), vh);
   const started = performance.now();
 
@@ -116,7 +140,7 @@ export function flyTo(top: number, onArrive?: () => void): void {
 
   const step = (now: number) => {
     const t = Math.min(1, (now - started) / ms);
-    window.scrollTo({ top: from + delta * ease(t, far), behavior: 'instant' });
+    window.scrollTo({ top: from + delta * ease(t), behavior: 'instant' });
     if (t < 1) {
       active = requestAnimationFrame(step);
       return;

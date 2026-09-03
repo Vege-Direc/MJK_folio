@@ -402,6 +402,21 @@
     twice and did not make the cut. No reason was given. What stuck is the way of thinking: define the
     problem, model it, build it, measure it. It is why I still build things.
 
+- id: mjk-101
+  section: story
+  stopId: engineering
+  title: The MJK-101
+  tags: [aircraft, airbus, brunel, design, aerospace, mjk-101, wingspan, blueprint, airliner, london city]
+  period: 2012
+  body: >
+    The Airbus design project at Brunel had a name, and I drew it. The MJK-101 is a dual-role
+    airliner: 100 passengers on short European routes, or 28 in business class across continents.
+    It is a high-wing layout with triple-slotted flaps, because it had to get in and out of London
+    City, which means a short runway. Two underwing engines and a T-tail. The wingspan is 110 feet
+    and the length is 97 feet, which puts it inside ICAO code C. It carries fuel for a range of
+    4112 nautical miles. The project ran under the Royal Academy of Engineering's HE STEM
+    programme, and the drawing on this page is traced from my own CAD render of it.
+
 - id: pivot-how-it-happened
   section: story
   stopId: pivot

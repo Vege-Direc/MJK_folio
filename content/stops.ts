@@ -77,48 +77,25 @@ export const STOPS = [
     index: 2,
     kicker: '§ 02 — Engineering',
     /*
-     * Stays `plain`, and that was a decision rather than an omission.
+     * The one stop with a compose kind of its own, and it took three attempts to earn it.
      *
-     * A `figure` compose kind was built for this stop and rendered a unit chart of the
-     * Airbus project's two cabin fits — 100 marks against 28 — in a media column. Both
-     * were then put on the page together and looked at. The count works, but it is a
-     * picture of a sentence that is already in the paragraph, and giving the stop a
-     * second column cut the paragraph to five words a line and made this the tallest
-     * section on a phone after the timeline.
+     * First a unit chart of the Airbus project's two cabin fits, which worked but drew a
+     * sentence the paragraph already contained. Then a screenshot of the Visual Basic
+     * engine simulator he wrote in 2010, which was real evidence but a white Windows
+     * dialog on a black page — MJK's own verdict was that it "doesn't look good here or
+     * fit the overall aesthetic of the website", and he was right.
      *
-     * The screenshot below is the older claim and the better one: it is a thing MJK
-     * built in 2010, and the argument this whole site is making is that he was building
-     * software before he was a marketer. A portfolio whose weakness is proof should
-     * spend its one figure on evidence, not on illustration.
+     * What unlocked the third attempt was material, not design. He sent the Airbus
+     * presentation, and it carries his own CAD plan view of the aircraft together with a
+     * full specification table. A general arrangement was previously forbidden here
+     * because the corpus held no geometry and any drawing would have been an artist's
+     * impression with his name on it. It now holds both, as `mjk-101`, so the outline can
+     * be traced from his render and the dimensions taken from his table.
      */
-    compose: 'plain',
+    compose: 'figure',
     align: 'left',
     title: { strong: 'Mechanical, then', muted: 'aerospace.' },
     body: 'Mechanical engineering to get in the door. An aerospace design masters in the UK, because you cannot design what you do not understand. By the time it was finished, the market that needed those drawings was not hiring.',
-    /*
-     * The oldest thing on this site by fifteen years, and the only stop that had no
-     * evidence of its own — eight stops carry photographs, a timeline or cards drawn
-     * from the corpus, and this one carried three sentences.
-     *
-     * `figure` is optional and belongs to the STOP, like `lede`. It is deliberately not
-     * a new compose kind and not a media column: `plain` stays one centred column, and
-     * the figure sits inside it beside the paragraph, narrower than the paragraph and
-     * with no claim on the title. Adding a sixth compose kind, or a second column, to
-     * hold one image would have made the renderer carry a layout for a thing that is
-     * not a layout.
-     *
-     * The caption says only what `engineering-what-stuck` licenses: a final-year
-     * project that simulated internal combustion engines in Visual Basic, at BITS
-     * Pilani Dubai. The alt text describes the screenshot, which is observation.
-     */
-    figure: {
-      src: '/media/engineering/engine-simulator.png',
-      width: 1160,
-      height: 742,
-      alt: 'A screenshot of a Visual Basic application titled Internal Combustion 4 Stroke Diesel Engine. Three columns of labelled fields, each with its own Calculate button, work from bore, stroke, compression ratio, cut-off ratio and calorific value of fuel through to air standard efficiency, net work output, mean effective pressure, brake power, volumetric efficiency and brake thermal efficiency. Beneath them sit the stated assumptions, a diagram of the four-stroke cycle, and its pressure-volume plot.',
-      caption:
-        'Final-year project, BITS Pilani Dubai: an internal combustion engine simulator written in Visual Basic.',
-    },
   },
   {
     id: 'pivot',
@@ -196,26 +173,6 @@ export type StopTitle = { readonly strong: string; readonly muted?: string };
  */
 export function ledeOf(stop: Stop): string | undefined {
   return 'lede' in stop ? stop.lede : undefined;
-}
-
-/**
- * A single framed artefact under a stop's prose, and only `engineering` has one.
- *
- * Same `in` narrowing as `ledeOf`, for the same reason: `STOPS` is `as const`, so the
- * property exists on one member of the union and is unreadable on the union itself.
- * Widening every stop to carry a `figure` it does not have would make the field look
- * like something the renderer expects everywhere.
- */
-export type StopFigure = {
-  readonly src: string;
-  readonly width: number;
-  readonly height: number;
-  readonly alt: string;
-  readonly caption: string;
-};
-
-export function figureOf(stop: Stop): StopFigure | undefined {
-  return 'figure' in stop ? stop.figure : undefined;
 }
 
 export const STOP_IDS = STOPS.map((s) => s.id) as readonly StopId[];

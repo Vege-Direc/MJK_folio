@@ -557,81 +557,159 @@ html[data-flying] {
   max-width: 44ch;
 }
 
-/**
- * A stop's own artefact, beside its prose.
- *
- * The frame is the carousel hero's — a single hairline in the rule colour — because a
- * photograph and a screenshot on the same page should be held the same way, and because
- * a raster on this background needs an edge to stop being a hole in it.
- *
- * The caption is set in the body face, not the mono label face. It is a sentence, and
- * the site's own rule puts tracking on small caps labels and never on prose.
- *
- * Stacked under the paragraph is the obvious arrangement and it does not survive
- * measurement. A `plain` stop is one viewport tall and centred, and the kicker, a
- * two-line 4.4rem title and the paragraph already take 359 of the ~584px that clears
- * the chat dock. That leaves under 200px for a 1.56:1 screenshot and its caption, which
- * is a figure 270px wide — small enough to be decoration rather than evidence. Below
- * 900px the panel is allowed to grow and the stack fits, so the stack is what a phone
- * gets; the desktop puts the figure in the column beside the paragraph instead, where
- * the height it needs is height the paragraph is not using.
- */
-.stop-figure {
-  margin: 26px 0 0;
-  max-width: 32rem;
+/* ── §02's general arrangement ────────────────────────────────────── */
+
+.fig-ga {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 620px;
 }
 
-/*
- * The frame is on the image, not on the figure. Drawn around both, its fill sat behind
- * the caption as a 40%-black plate over the scene — the scrim this project has already
- * rejected twice, arrived at by accident through a border shorthand. The caption
- * defends itself the way every other line on the page does, with the halo it inherits
- * from `.content-zone`.
- */
-.stop-figure img {
+.fig-ga svg {
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--color-rule);
-  background: rgba(20, 20, 26, 0.4);
+  overflow: visible;
 }
 
-.stop-figure figcaption {
-  padding: 10px 1px 0;
-  font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  line-height: 1.45;
+/*
+ * The casing, and the only reason this drawing survives the scene behind it.
+ *
+ * The network is bright thin lines on black and so is a general arrangement; at low
+ * alpha the two read as the same material and the aircraft dissolves into the filaments.
+ * So every stroke is painted twice — once fat in the background colour underneath, once
+ * in the accent on top. It is the page's halo rule moved out of blur and into geometry,
+ * which is the whole trick: a halo is a Gaussian and costs raster, a casing is a second
+ * path and costs nothing.
+ *
+ * There is deliberately no `vector-effect: non-scaling-stroke` here, and that is not an
+ * omission. With it set, dash lengths resolve in SCREEN space rather than user space,
+ * which defeats the `pathLength` normalisation the draw-on depends on: the pattern became
+ * one screen pixel on and one off, and the port wing and the whole left side of the
+ * fuselage rendered as bare black casing with no ink in it. Measured by removing the
+ * declaration in the live page and screenshotting both. The widths below are therefore in
+ * user units and scale with the figure, which is also what you want — a drawing at 581px
+ * can carry a heavier line than the same drawing at 351px.
+ */
+.ga-case {
+  fill: none;
+  stroke: #08080c;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+
+.ga-ink {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+/*
+ * The outline draws itself on once, when the section first comes into view, and then
+ * never moves again. Measured on this site at 375x812 under 4x CPU throttle: a static
+ * SVG costs 24.9ms at p95 against a 24.6ms baseline — inside run-to-run noise — while a
+ * perpetual animation cost 11% of the framerate and took the worst frame from 66ms to
+ * 92ms. One-shot is the difference between those two numbers.
+ *
+ * The dash length is 1 because the element carries `pathLength="1"`, which renormalises
+ * the path's own arc length to that number. The first attempt guessed 1400 instead, and
+ * the real outline is longer than that: the dash pattern repeated, so the last stretch of
+ * the aircraft — the port wing and tailplane — sat in a permanent gap and rendered as
+ * bare casing, a black outline with no ink in it. `pathLength` makes the animation exact
+ * without measuring anything at runtime, and it stays exact if the trace is regenerated.
+ */
+.ga-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.fig-ga[data-arrived] .ga-ink {
+  transition: stroke-dashoffset 1100ms cubic-bezier(0.33, 0.9, 0.35, 1);
+  stroke-dashoffset: 0;
+}
+
+.ga-case {
+  opacity: 0;
+}
+
+.fig-ga[data-arrived] .ga-case {
+  transition: opacity 500ms ease-out 260ms;
+  opacity: 1;
+}
+
+/*
+ * Dimension lines, with the extension lines that make them draughting rather than
+ * decoration. Without them the length dimension floats outboard of the wing tip with
+ * nothing tying it to the nose and tail it measures, and reads as a stray rule.
+ */
+.ga-dims line {
+  stroke: var(--color-type-dim);
+  stroke-width: 0.6;
+}
+
+.ga-ext {
+  stroke: var(--color-type-dim);
+  stroke-width: 0.4;
+  stroke-dasharray: 2 3;
+  opacity: 0.75;
+}
+
+.ga-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  fill: var(--color-type-muted);
+  /* The text's own casing: stroke first, fill over it. */
+  stroke: #08080c;
+  /* 2.5, not 3.5: at 9px the heavier casing closed up around the vertical label and read
+     as a black plate behind the type rather than an edge on it. */
+  stroke-width: 2.5;
+  paint-order: stroke;
+}
+
+.ga-label-v {
+  writing-mode: vertical-rl;
+}
+
+.ga-dims {
+  opacity: 0;
+}
+
+.fig-ga[data-arrived] .ga-dims {
+  transition: opacity 620ms ease-out 780ms;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-ga .ga-ink,
+  .fig-ga .ga-case,
+  .fig-ga .ga-dims {
+    transition: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+.fig-ga-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--color-type-muted);
+  text-shadow: var(--halo);
   text-wrap: pretty;
 }
 
-@media (min-width: 901px) {
-  /*
-   * The column widens only for the stop that has an artefact, and only by the width of
-   * the artefact: the paragraph keeps its 44ch measure and its position on the left
-   * rail, so nothing about the reading changes. A stop with no figure is untouched.
-   */
-  .center-stage .content-zone.with-figure {
-    max-width: 56rem;
-  }
-
-  .content-zone.with-figure .authored-body-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: clamp(1.75rem, 3vw, 2.75rem);
-    align-items: start;
-  }
-
-  /*
-   * Sized off the viewport's height as well as its width, because height is the
-   * constraint here and a 1280x720 laptop has 180px less of it than the 900 this was
-   * drawn against. The ratio is the image's own, so capping the width caps the height.
-   */
-  .content-zone.with-figure .stop-figure {
-    margin: 4px 0 0;
-    width: min(24rem, 27svh * 1.563);
-    max-width: none;
-  }
+.fig-ga-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+  text-shadow: var(--halo-mono);
 }
 
 /**
