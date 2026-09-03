@@ -103,7 +103,8 @@ imbalance is the problem, not the total word count.
 | Press states on every control | Touch had no press feedback at all |
 | Word-boundary streaming | Deltas arrived as clumps such as `" client success and ad"` |
 | Carousel stops off-screen | Was a timer and a repaint behind eight other stops |
-| §02 has a figure | 100 marks against 28, at one pitch, from the only three facts the corpus holds |
+| §02 has its artefact | The 2010 Visual Basic engine simulator, the oldest thing on the site |
+| §05 opens on a before/after | Two photographs registered by homography, dragged by the visitor |
 | Stacked column gap 48px → 26px | 22px back for each of the five sections that overrun the dock |
 | Model stops naming its sources | "From my memory I do", "in the available context", "documented in the records" |
 | Answers land in view on a phone | §07 flew into place with only its static cards on screen |
@@ -117,25 +118,17 @@ imbalance is the problem, not the total word count.
 
 ## 4. Specified, not yet built
 
-### 4.1 The §02 unit chart — the one figure to build first
+### 4.1 The §02 unit chart — built, judged, withdrawn
 
-`engineering` is half empty scene at 1440 and sits on the densest untapped material in
-the corpus: the Brunel Airbus project, *a dual-role airliner carrying 100 passengers on
-short European routes or 28 in business class across continents, out of London City*.
+A unit chart of the Airbus project's two cabin fits (100 marks against 28, at one pitch,
+cased rather than haloed) was built and put on the page beside the engine simulator, and
+the two were looked at together at 1440 and 390. The chart works and survives the scene.
+It was withdrawn anyway, for two reasons that were only visible once rendered: it draws a
+sentence that is already in the paragraph, and the second column it needs cut the text to
+five words a line and took §02 from 896px to 1,262px on a phone. A portfolio whose
+measured weakness is proof spends its one figure on evidence.
 
-- **Form.** A unit chart. 100 marks against 28 marks. The count *is* the drawing, so
-  nothing is invented.
-- **No fuselage outline.** The desktop prototype drew a hull around the seats. That
-  outline is the single invented element in the figure; the corpus licenses 100 and 28,
-  not a cabin arrangement. Dropping it also makes the figure fit at 375.
-- **Rendering.** A server component emitting static SVG. No library, no runtime, no
-  animation.
-- **Legibility over the scene.** Draw every path twice: once fat in `#08080c` beneath,
-  once thin in `--color-accent` above; on SVG text use `paint-order: stroke` with a
-  3.5–4px `#08080c` stroke. This is the halo rule extended from glyphs to strokes, in
-  geometry rather than blur, so it costs one extra path and zero raster. Thin strokes at
-  low alpha were tested over the live scene and lose the fight with the filaments.
-- **New `compose` kind:** `figure`.
+It is recoverable from the history of this branch if that call turns out to be wrong.
 
 ### 4.2 Callouts on the RD 350 photographs
 
@@ -221,8 +214,18 @@ it. That is the one call worth overruling on sight.
    repo or demo. TallyBridge is MIT open source and therefore trivially linkable.
 4. **The Paxel report.** It borrows Y Combinator's name for authority, and occupies half
    of Selected Work; 208,803 lines and 993 commits are volume, not outcomes.
+5. **Four facts about the engine simulator**, if you want the caption to say more than it
+   does. It is a four-stroke compression-ignition engine specifically; it computes air
+   standard efficiency, mean effective pressure, brake power, brake thermal and volumetric
+   efficiency and specific fuel consumption; it was 2010; and there are parameter sweeps
+   against compression and cut-off ratio. The caption says only what `memories.yaml`
+   licenses, so these go in the corpus first or not at all.
 5. **Fonts.** Fraunces with Inter is flagged as a saturated pairing.
 6. **The hero name label**, which is a genuine eyebrow.
+
+Three loose ends that need no decision, only time: the stock headlight is clipped at the
+top of the before/after frame; §02 is 896px on an 812px phone; and `sharp` is not in
+`package.json`, which is why the image-preparation scripts are not committed.
 
 ---
 
