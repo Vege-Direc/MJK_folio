@@ -36,6 +36,9 @@ import { clamp, makeCurve, smoothstep, tubeWithTangent, UP } from './curves';
 import { anchorAt, ReadingLightOutputPass } from './reading-light';
 import { buildWaypoints, mulberry32, srand, type Waypoint } from './waypoints';
 
+/** The precomputed tier-3 topology, as `public/far-network.json` stores it. */
+export type FarNetwork = { nodes: number[][]; edges: number[][] };
+
 export type MindOptions = {
   /** Nine by default — one per stop in content/stops.ts. */
   waypoints?: Waypoint[];
@@ -45,6 +48,19 @@ export type MindOptions = {
   tier?: Tier;
   /** Tier 3 topology. Fetched after the scene is already running. */
   farNetworkUrl?: string;
+  /**
+   * A tier-3 fetch the caller has already started, or `null` for "this machine is not
+   * having a far field at all".
+   *
+   * Omitted, the scene fetches `farNetworkUrl` itself, which is what it used to do
+   * unconditionally — and which cost a second of arrival, because that request could
+   * not leave the browser until the three.js chunk had both downloaded AND executed.
+   * Measured on Fast 3G at 375: the chunk landed at 5.5s, `createMind` ran, and only
+   * then did far-network.json start, finishing at 6.9s. Handed the promise instead,
+   * the caller starts both at once and the far field is usually in hand before the
+   * near scene has finished building, so the whole picture can arrive together.
+   */
+  farNetwork?: Promise<FarNetwork | null> | null;
   /**
    * Which side each stop puts its text on: -1 left, +1 right, one per stop. Drives
    * the reading light. Omitted, the light is off and the scene renders as it always
@@ -843,7 +859,23 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     // entries and the attribute upload it feeds can both be skipped for this frame.
     let t3ExciteHot = false;
     let pulseMatShared: THREE.ShaderMaterial | null = null; // set by the pulse block below; tier 3 reuses it (identical look)
-    function buildTier3(net: { nodes: number[][]; edges: number[][] }){
+    /**
+     * Tier 3, built a few milliseconds at a time.
+     *
+     * This used to be one synchronous call in a `.then()`, and it was the single worst
+     * moment on the page: measured on the deployed build at 375 with the CPU throttled,
+     * one task of **1,506 ms at 4x and 2,026 ms at 6x**, during which nothing on the
+     * page moved — not the scroll, not the text selection, not the scene — and at the
+     * end of which the far field appeared in a single frame. The visitor had been
+     * reading for four seconds by then, so the freeze landed mid-scroll.
+     *
+     * A generator makes the fix structural rather than careful: the body below is the
+     * same code in the same order, with `yield` at the points where it can be left. The
+     * driver in `animate()` runs it against a millisecond budget, so the work costs a
+     * slice of each frame instead of a stall, and a slower machine takes more frames
+     * rather than one longer freeze.
+     */
+    function* buildTier3(net: FarNetwork){
       const nodes = net.nodes;   // [x, y, z, depthFromRoot, clusterId, rallRadius]
       const nN = nodes.length;
       if (!nN) return;
@@ -888,8 +920,14 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         const rallAvg = 0.5 * (rallOf(ai) + rallOf(bi));
         const radius = rad0 + (radT - rad0) * rallAvg;
         geos.push(tubeWithTangent(curve, seg, radius, cfg.t3Radial, [swPh[ai], swAm[ai]], [swPh[bi], swAm[bi]]));
+        // ~2,300 tubes at roughly 0.08ms each. A batch of twelve is under a millisecond
+        // on a desktop and about six on a six-times-throttled core, which is the whole
+        // point: the batch is small enough that the SLOWEST machine still fits one
+        // inside a frame, and the driver's budget lets a fast one run many.
+        if (geos.length % 12 === 0) yield;
       }
       if (!geos.length) return;
+      yield;
       const merged = mergeGeometries(geos, false);
       geos.forEach(g => g.dispose());
       // SAME shader as tiers 1/2 (identical visual language) but a dedicated
@@ -904,6 +942,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       t3TubeMesh = new THREE.Mesh(merged, t3TubeMat);
       t3TubeMesh.renderOrder = -1;                  // background, behind main tubes(0)/nodes(1)
       scene.add(t3TubeMesh);
+      yield;
       // Node billboards: shared nodeMat (same glow/sway/breathing/excitation
       // shader). Soma size scales with Rall diameter => cluster roots are bright
       // cell bodies, distal tips are tiny — reinforcing the trunk->tuft hierarchy.
@@ -933,6 +972,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       t3NodeMesh.instanceColor.needsUpdate = true;
       t3NodeMesh.renderOrder = 0;
       scene.add(t3NodeMesh);
+      yield;
 
       // --- per-cluster neuropil dust (Points, 1 draw call) ---
       // The same felt-of-fine-processes haze that hugs the MAIN cluster, now
@@ -1008,6 +1048,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         t3DustMesh.renderOrder = -2; // behind the far tubes
         scene.add(t3DustMesh);
       }
+      yield;
 
       // Ambient pulses: same fractional-coverage pattern + pulse material as the
       // main cluster's sub-twigs => identical look. As each pulse departs/arrives
@@ -1063,10 +1104,59 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         console.info('[mind] tier3 loaded:', nN, 'nodes,', edgeCurves.length, 'edges, tubeSeg', seg, 'dust', cfg.t3Dust);
       }
     }
-    fetch(farNetworkUrl)
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(buildTier3)
-      .catch(e => console.warn('[neural] tier3 skipped (far-network.json):', e.message || e));
+    /**
+     * Tier 3's arrival, in three parts: whether it is wanted, when its bytes land, and
+     * how its geometry gets built without stopping the page.
+     *
+     * `opts.farNetwork === null` is the deliberate "no far field on this machine" — see
+     * `MindConfig.farNetwork`. Anything else means the far field is expected, which is
+     * what `t3Wanted` tells the reveal below to wait for.
+     */
+    const t3Wanted = opts.farNetwork !== null;
+    let t3Steps: Generator<void> | null = null;
+    let t3Done = !t3Wanted;
+
+    /**
+     * Two budgets, because the frame rate does not mean the same thing before and after
+     * the reveal.
+     *
+     * While the canvas is still hidden nobody is watching the scene, so the only thing
+     * the budget has to protect is the PAGE — the scroll and the words, which are up
+     * and being read. 12ms of build plus a render still leaves every task short, and it
+     * gets the far field finished inside the grace below, which is what buys the single
+     * arrival. Measured at 4x with the earlier 6ms budget the build ran ~2s, missed the
+     * grace, and the far field arrived on its own after all — the exact defect being
+     * fixed, moved later.
+     *
+     * After the reveal the scene is visible and its frame rate is the product, so a
+     * build still running drops to a quarter of a frame.
+     */
+    const T3_BUDGET_HIDDEN_MS = 12;
+    const T3_BUDGET_VISIBLE_MS = 4;
+
+    /** Runs the sliced build against this frame's budget. Called once per frame. */
+    function stepTier3(){
+      if (!t3Steps) return;
+      const deadline = performance.now() + (revealT > 0 ? T3_BUDGET_VISIBLE_MS : T3_BUDGET_HIDDEN_MS);
+      let r = t3Steps.next();
+      while (!r.done && performance.now() < deadline) r = t3Steps.next();
+      if (r.done){ t3Steps = null; t3Done = true; }
+    }
+
+    if (t3Wanted) {
+      const source = opts.farNetwork
+        ?? fetch(farNetworkUrl).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+      source
+        .then((net: FarNetwork | null) => {
+          if (disposed) return;
+          if (net && net.nodes?.length) t3Steps = buildTier3(net);
+          else t3Done = true;   // nothing to build; stop the reveal waiting on it
+        })
+        .catch((e: Error) => {
+          t3Done = true;
+          console.warn('[neural] tier3 skipped (far-network.json):', e.message || e);
+        });
+    }
 
     // --- ambient signal pulses travelling along a few connection curves ---
     // Billboarded, additive-blended glow sprites (plane + procedural radial-gradient
@@ -1445,12 +1535,86 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       return true;
     }
 
+    /**
+     * The arrival.
+     *
+     * What the owner reported — "the central neural layer loads first followed by the
+     * other layers and sometimes it just snaps into place one after the other" — is
+     * two hard cuts, and both are literal: the scene's first rendered frame was the
+     * finished near network at full brightness against a black page, and tier 3's
+     * first rendered frame was the finished far network at full brightness on top of
+     * that, one to two seconds later. Nothing ever faded; there was simply a frame
+     * before and a frame after.
+     *
+     * The reveal is the canvas's own CSS opacity, and it is exact rather than
+     * approximate because three colours in this project are the same colour:
+     * `PALETTE.bg`, `.mind-canvas { background }` and the page's `--color-bg` are all
+     * `#0a0a0e`. Compositing the canvas at opacity a over a ground of the same colour
+     * gives `bg + a * (scene - bg)`, so the void stays exactly the void through the
+     * whole ramp and only what the scene ADDS to it comes up — which, with every
+     * material in here additively blended, is the entire picture. One compositor-only
+     * property, no shader touched, and it cannot fall out of step with a tier because
+     * it does not know tiers exist.
+     *
+     * The DOM is above the canvas (`.scroll-root` is z-index 1), so none of this
+     * touches the words. They are already painted, already interactive, and they were
+     * never waiting on any of it.
+     *
+     * `prefers-reduced-motion` keeps the fade, deliberately. The setting is about
+     * motion, and this is a luminance cross-fade with no movement in it: the
+     * alternative is the hard cut, which is the worse thing to show someone who has
+     * asked for less. Everything in here that actually MOVES — sway, breathing,
+     * shimmer, drift, the pulses, the camera ease — stays gated on `reduced` exactly
+     * as before.
+     */
+    const REVEAL_MS = 700;
+    /**
+     * How long the near scene will wait, once it is ready, for the far field to finish
+     * so the two can arrive as one picture. Past it the near scene reveals alone rather
+     * than hold the page dark for a slow network.
+     *
+     * The one case this does not cover, stated rather than hidden: a machine on the
+     * desktop tier whose far network arrives more than 1.2s after its near scene is
+     * built still gets the far field added without a fade, exactly as every machine did
+     * before. That needs the 67 KB JSON to lose a race it now starts at the same moment
+     * as the 141 KB three.js chunk, and measured at Fast 3G on both a 375 and a 1440
+     * viewport it does not: the JSON finished at 4.7-4.9s, before `createMind` had even
+     * been called at 5.1-5.6s. Closing it properly means giving tier 3 its own
+     * materials — it shares `nodeMat` and the pulse material with tiers 1 and 2 — and
+     * that trades a real risk of the two drifting apart against a case the network has
+     * to go out of its way to produce.
+     */
+    const T3_GRACE_MS = 1200;
+    let revealT = 0;
+    let revealing = false;
+    let readyAt = 0;
+    // Hidden from the first frame rather than from the first PAINT: the canvas is
+    // server-rendered and has been showing its own --color-bg since first paint, which
+    // is the ground the scene fades up from. This only takes over once WebGL exists.
+    canvas.style.opacity = '0';
+
+    function stepReveal(dt: number){
+      if (revealT >= 1) return;
+      const now = performance.now();
+      if (!readyAt) readyAt = now;   // set on the first frame that has actually rendered
+      if (!revealing) {
+        if (!t3Done && now - readyAt < T3_GRACE_MS) return;
+        revealing = true;
+      }
+      revealT = clamp(revealT + dt / (REVEAL_MS / 1000), 0, 1);
+      // easeOutCubic: quick to legible, slow to settle, so the scene arrives rather
+      // than being switched on.
+      const a = 1 - Math.pow(1 - revealT, 3);
+      canvas.style.opacity = revealT >= 1 ? '' : String(a.toFixed(3));
+    }
+
     let raf = 0;
     const clock = new THREE.Clock();
     let frames = 0, fpsTime = performance.now();
 
     function animate(){
       raf = view.requestAnimationFrame(animate);
+      stepTier3();
       const dt = Math.min(clock.getDelta(), 0.05);
 
       if (stepFlight(dt)) {
@@ -1756,6 +1920,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       if (t3ExciteAttr && (t3ExciteHot || t3ExciteFlush)) t3ExciteAttr.needsUpdate = true;
 
       composer.render();
+      // After the render, never before: the first call to this is the first frame that
+      // actually has a picture in it, so the ramp can never fade up an empty buffer.
+      stepReveal(dt);
 
       frames++;
       const now = performance.now();
@@ -1860,6 +2027,12 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       disposed = true;
       view.cancelAnimationFrame(raf);
       raf = 0;
+      // Hand the canvas back the way it was found. Without this, a scene torn down
+      // mid-reveal — React 19 strict mode double-invokes the effect, and every
+      // hot reload does the same — leaves an inline opacity on the element that the
+      // next scene inherits and, if it dies before its own first frame, never clears.
+      canvas.style.opacity = '';
+      t3Steps = null;
       cancelFlight();
       doc.removeEventListener('pointermove', onPointerMove);
       // The prototype removed `mousemove` and left `mouseleave` attached (`:2092` vs

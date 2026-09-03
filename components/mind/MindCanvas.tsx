@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { setMind } from '@/lib/mind/controller';
 import { STOPS } from '@/content/stops';
-import type { MindHandle } from '@/lib/mind/scene';
+import type { FarNetwork, MindHandle } from '@/lib/mind/scene';
 
 /**
  * Mounts the scene. Everything expensive happens after the page is already readable.
@@ -65,6 +65,27 @@ export default function MindCanvas() {
     async function start() {
       if (cancelled) return;
       try {
+        /**
+         * Both requests, at once.
+         *
+         * `far-network.json` is a static 67 KB the scene needs and three.js does not,
+         * and until now it was fetched from inside `createMind` — which meant the
+         * request could not be issued until the 141 KB chunk had finished downloading
+         * AND finished executing. Measured on the deployed site at Fast 3G on a 375
+         * viewport: chunk done at 5.8s, far network requested at 6.1s, done at 7.0s.
+         * Two transfers that fit side by side were run end to end for no reason.
+         *
+         * Started here, they share the connection, and the far network — the smaller
+         * of the two — normally lands first, so the scene has it in hand before it has
+         * finished building the near network and the whole picture can arrive at once.
+         *
+         * A failure resolves to `null` rather than rejecting: the far field's absence
+         * has always been silent, and the scene treats "no far network" the same way
+         * whether the file 404s or the machine was never going to draw it.
+         */
+        const farNetwork = fetch('/far-network.json')
+          .then((r) => (r.ok ? (r.json() as Promise<FarNetwork>) : null))
+          .catch(() => null);
         const { createMind } = await import('@/lib/mind/scene');
         if (cancelled || !canvas) return;
         handle = createMind(canvas, {
@@ -74,6 +95,7 @@ export default function MindCanvas() {
           // same field the DOM lays the columns out with, so the light and the type
           // cannot disagree about which half of the frame is being read.
           textSides: TEXT_SIDES,
+          farNetwork,
           // Deliberately no `onArriveAtStop` here. The scene arrives on its own clock —
           // displayProgress eases toward the pushed value over ~125ms — and the DOM's
           // lit stop is written from scroll by ScrollProgress. Wiring both to the same
@@ -90,6 +112,12 @@ export default function MindCanvas() {
         handle.setPaused(document.hidden);
         setMind(handle);
       } catch (err) {
+        // The scene hides the canvas while it assembles and un-hides it on its own
+        // first frame. If it dies in between, that inline opacity is the only trace it
+        // leaves, and leaving it set would take the dark ground down with it — so the
+        // failure path puts the element back the way the server rendered it. Which is
+        // the whole fallback: a full-viewport rectangle of --color-bg.
+        if (canvas) canvas.style.opacity = '';
         console.warn('[mind] scene did not load', err);
       }
     }
