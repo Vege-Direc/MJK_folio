@@ -103,6 +103,15 @@ imbalance is the problem, not the total word count.
 | Press states on every control | Touch had no press feedback at all |
 | Word-boundary streaming | Deltas arrived as clumps such as `" client success and ad"` |
 | Carousel stops off-screen | Was a timer and a repaint behind eight other stops |
+| §02 has a figure | 100 marks against 28, at one pitch, from the only three facts the corpus holds |
+| Stacked column gap 48px → 26px | 22px back for each of the five sections that overrun the dock |
+| Model stops naming its sources | "From my memory I do", "in the available context", "documented in the records" |
+| Answers land in view on a phone | §07 flew into place with only its static cards on screen |
+| The dek matches the answer | "What that looked like in numbers" over a paragraph with no numbers |
+| "CTA" off the conversion screen | A marketing word for the card, printed above the card |
+| Contact links above the cards | Every outbound path on the site was off the bottom of a phone screen |
+| Scene arrives once | Two hard cuts with a 1,506ms frozen task between them |
+| Far network dropped on phones | 3.4% of its nodes ever visible, for a third of the scene's wire payload |
 
 ---
 
@@ -145,17 +154,26 @@ third-party measured. 172 marks, 150 filled. Same rendering rules as 4.1.
 With the photographs fixed, what remains is the sparse/dense imbalance in §2. Candidate
 moves, in order of confidence:
 
-1. Merge two of §01, §02, §03. Three near-identical text screens is the flattest stretch
-   of the page, and the panel and the design audit both name it independently.
-2. Give §04's timeline a collapsed default on coarse pointers: era headers plus the
-   current era's entries, the rest one tap away.
-3. Shorten `contact`, which is 1,216px for a section whose job is a mail link.
+1. §02 now carries a figure, so §01 and §03 are the only remaining text-only screens and
+   the case for merging them is weaker than it was. Revisit after MJK has seen the figure.
+2. **Not** a collapsed timeline. §04 is 1,349px on a phone and it is the longest section,
+   but the research is explicit that the rail is already the best thing on the page and
+   should not be added to or hidden behind a tap.
+3. `contact` is still 1,194px against a 630px readable band. The links now come first, so
+   the section works on a phone even though it does not fit on one screen.
 
-### 4.5 Scene arrival and mobile tiers
+### 4.5 The §08 light
 
-Under investigation in a running task: the layers currently snap into place one after
-another on load rather than arriving together, and it is not yet established that a phone
-needs every tier.
+The contact stop's camera parks a bloom behind both columns, so a side-weighted reading
+light has nothing to weight toward and the whole frame reads pale. It is the one screen
+that looks like a different website. A waypoint move, not a shader change.
+
+### 4.6 One judgement for MJK's eye
+
+Removing the far network changed exactly one frame visibly: `contact` at 375, whole-frame
+luminance 127.6 to 92.2. The measurement says what goes is a flat brightening haze over
+an already-pale frame rather than structure, and that the stop holds more depth without
+it. That is the one call worth overruling on sight.
 
 ---
 
