@@ -69,8 +69,9 @@ decided. What is measured: its own per-word fade costs p95 30.9 ms on a phone at
 throttle against 14.5 ms today, and its blur variant 51.4 ms with a 247 ms worst frame,
 which is worse than the mobile crisis this site already fixed. A 20-line version — one
 span per arriving chunk, opacity only, 220 ms — measures 19.1 ms. So the aesthetic is
-affordable without the dependency. **What has not been established is whether it improves
-the reading experience at all**, and that is a UX judgement rather than a benchmark. Open.
+affordable without the dependency. **Decided against it** once the current streaming was
+measured — see "Per-word fade" below. The short version: there is no lurch at the source
+to smooth, and the benefit could not be measured honestly in this environment.
 
 **`hyperframes` — not applicable, but it produced the one real find.** It renders HTML to
 MP4 with Puppeteer and FFmpeg; there is no version of this site that wants that. Its font
