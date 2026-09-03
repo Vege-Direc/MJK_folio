@@ -322,10 +322,14 @@ construction, because 1440x900 is the best screen on this site.
 Still open from that measurement, and worth doing:
 
 - **`object-fit: cover` throws away more than the width bug did.** Three of five RD 350
-  frames are 560x900 portrait inside a 4:3 hero, so **46.6% of them is visible on desktop
-  and 38.8% on a phone** — over half of three photographs of the finished bike never
-  reaches the screen, at every viewport. Fixable today with no new photographs by re-cutting
-  those four frames to 4:3 by hand, choosing the crop.
+  frames are portrait inside a 4:3 hero, so **46.6% to 52.5% of each file is visible** and
+  the browser was choosing which half for five different compositions at once. Half done:
+  each frame now states its own crop, which was picking wrong twice — the window cut both
+  exhaust tips off the frame captioned "rear · cowl", whose alt text names them, and cut
+  the instrument out of "rider view". The alt strings describe the crop now rather than the
+  file. What that does NOT do is recover the missing half, and nothing can at 4:3 from a
+  560x900 source. Recovering it needs a taller hero, which does not fit the height budget
+  below 1500px, or re-cut files — and both change what §05 is, so both are his call.
 - **§05 cannot grow until the files do.** The widest source is 780x585 and the optimizer
   never upscales — asked for `w=1920` it returns the file's own size. The section MJK most
   wants larger is the one that cannot get larger. That is the wider RD 350 photograph
