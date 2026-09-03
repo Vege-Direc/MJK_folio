@@ -27,6 +27,10 @@ Status: `done` · `doing` · `spec'd` (researched, awaiting a decision or a buil
 | 15b | — | LinkedIn was already a verified fact and already in the JSON-LD, never drawn as a link. Now the fourth contact link. |
 | 3a | Show the AI work | §07 leads with the supplier photograph and the catalogue frame made from it, ratios preserved to three decimals, no crop. |
 | 2 | §02 should be an engine becoming the aircraft | Built: a two-stroke twin, 150 particles, then the MJK-101 traced from his own CAD render. |
+| 27a | The site refused paying customers | Six of ten realistic buying enquiries came back "Not my lane. Ask what I've built." Topicality was decided by one BM25 threshold whose band had **inverted** — weakest real question 9.5, loudest off-topic 14.0 — so no threshold could work. Shape decides the other half now, and twenty buying enquiries are a standing eval. |
+| 27b | The phone answer landed off the top of the screen | Four flows of four, at -51, -126, -230 and -999px, the last with **0%** of the answer on screen. The page looks again once the answer has stopped growing. Now +64, +225, +63, +64. |
+| 27c | The refusal said two opposite things | "Not my lane" followed by fifteen lines about JewelAI's video pipeline. It says one thing and stops. |
+| 27d | The RD 350's "before" photograph was never fetched | `clip-path: inset(0 100% 0 0)` blocks Chrome's lazy loading outright — measured at `naturalWidth: 0` indefinitely, against 780 for a `visibility: hidden` sibling. The stylesheet's comment claimed the opposite. |
 | 19 | The aircraft was still a top-down plan | Retraced from the **isometric** render with interior structural lines and a title block, so the projection no longer changes mid-morph. Needs a visual pass. |
 
 ---
@@ -258,6 +262,59 @@ sceptic. Real screenshots at 1440x900 and 390x664, described in words before the
 judged — two performance claims in this project were retracted because they were measured
 under headless software rendering, so the panel reports no timing numbers from headless.
 It ranks by what costs MJK work, and it names what is good and must not be touched.
+
+## 28. The images are small, and the layout stops growing — `doing`
+
+"the images which really show off the work seem quite small. Why does the layout not
+dynamically match screen sizes?"
+
+Part of the mechanism is already found: `.section-inner` has `max-width: 1460px`, so above
+that width the layout stops growing and the extra pixels become empty margin. A 2560px
+display shows the same photographs at the same size as a 1460px one. The rest of the
+question is harder, because a section is one viewport tall with `overflow: hidden` that
+*destroys* what does not fit, and a wider image at a fixed aspect is a taller image. Out
+for measurement across eight viewports with the height arithmetic for each proposal.
+
+## 29. The scene is too much seen from inside it — `doing`
+
+"the entire flashing and nueron system seems to be a bit overwhelming for some users
+especially when they actually enter the scroll pathway... ideally when fully zoomed out
+it's not so much of an issue, but on the path I think there is a lot happening so might
+overwhelm the senses?"
+
+The shape of the answer is in the question: not less scene, but less at close range and
+during motion. The camera flies along a path through the field, and near the path the
+particles are close, large, fast and bright, where the same field seen whole reads as a
+structure. Two constraints pull against each other and both are measured: reduced motion
+already takes pixel change from 7.88% to 0.01% on desktop and must not be weakened, and a
+judge panel found the scene *nearly absent* on the phone's first screen at 1.16%. So
+anything global makes one of the two worse. Out for research into how comparable sites
+handle a camera inside a particle field, and for a graded curve rather than a switch.
+
+## 30. A judge panel's ranked defects — `doing`, four fixed
+
+The panel is task 27. Its list, with status:
+
+| # | Defect | Status |
+|---|---|---|
+| 1 | Six of ten buying enquiries refused by name; the eval printed 100% | **fixed** — `b22b5c0` |
+| 2 | On a phone the answer lands off the top of the screen, 4 of 4 flows | **fixed** — `b333132` |
+| 3 | A long answer's tail destroyed by the dock on desktop | partly — same fix; needs re-measuring at 1440x900 |
+| 4 | The refusal contradicts itself, then talks for 1,100 characters | **fixed** — `d440f43` |
+| 5 | Nothing in §07 is clickable; two card descriptions clamped mid-word | open — the clamp is in `globals.css`, which agents hold |
+| 6 | The prompt chips have no affordance: transparent, borderless | open |
+| 7 | Contact links typographically identical to the card headings beside them | open |
+| 8 | §08 prints its own headline twice | open |
+| 9 | §02's caption named the RD 350 beside a BITS answer | open — the vectors agent owns that file |
+| 10 | The section heading is scrolled off at the moment of landing | partly — the re-anchor now leaves 64px above |
+| 11 | Six of nine sections overrun the dock at 390x664 (§04 by 808px) | open |
+| 12 | The scene is nearly absent on the phone's first screen | folded into 29 |
+| 13 | Markdown lists render as inline hyphens | open |
+
+Two of its own findings it retracted, and both retractions are the useful kind: a focus
+measurement taken 160ms into a smooth scroll, and a contrast reading taken with the wrong
+instrument (brightest pixel in a box). It also found a real defect while measuring
+something else — see the RD 350's unfetched photograph in the Done table.
 
 ---
 
