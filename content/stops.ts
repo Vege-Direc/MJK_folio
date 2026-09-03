@@ -76,7 +76,16 @@ export const STOPS = [
     id: 'engineering',
     index: 2,
     kicker: '§ 02 — Engineering',
-    compose: 'plain',
+    /*
+     * The only stop that changed compose kind after launch. §01, §02 and §03 were three
+     * consecutive screens of a title and one paragraph, which is the flattest stretch of
+     * the page and reads worst on a phone, where there is no second column to look at.
+     * This is also where the corpus's densest unused material sits: a dual-role airliner
+     * carrying 100 or 28. `figure` gives the stop a media column, and `CabinFigure`
+     * fills it with the count itself rather than a drawing of an aircraft nobody has the
+     * dimensions of.
+     */
+    compose: 'figure',
     align: 'left',
     title: { strong: 'Mechanical, then', muted: 'aerospace.' },
     body: 'Mechanical engineering to get in the door. An aerospace design masters in the UK, because you cannot design what you do not understand. By the time it was finished, the market that needed those drawings was not hiring.',

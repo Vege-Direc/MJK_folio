@@ -3,6 +3,7 @@ import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
 import type { Memory } from '@/lib/corpus/schema';
 import AuthoredBody from './AuthoredBody';
+import CabinFigure from './CabinFigure';
 import Carousel from './Carousel';
 import Timeline from './Timeline';
 import { timelineGroups } from './timeline-data';
@@ -175,6 +176,8 @@ function media(stop: Stop): ReactNode {
       return <Timeline groups={timelineGroups()} />;
     case 'carousel':
       return <Carousel />;
+    case 'figure':
+      return <CabinFigure />;
     case 'contact':
       return <Contact stop={stop} />;
     default:

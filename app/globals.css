@@ -1383,6 +1383,93 @@ html[data-flying] {
   color: var(--color-accent);
 }
 
+/* ── §02's figure ────────────────────────────────────────────── */
+
+.fig-cabin {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  max-width: 620px;
+}
+
+/*
+ * The marks. Cased, not haloed — `paint-order: stroke` paints the dark stroke first and
+ * the fill over the top of it, so each mark ends up with a ~1.5px dark surround and the
+ * scene shows through everywhere between them. A `filter: drop-shadow` would do the same
+ * job by blurring, and blur on this page is the thing that cost 100ms per frame.
+ *
+ * The stroke is 3 units against a 6-unit gap, so half the gap stays open. Wider and the
+ * grid closes into a slab; narrower and the marks lose their edge over a bright filament.
+ */
+.fig-marks {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.fig-marks rect {
+  fill: var(--color-accent);
+  stroke: #08080c;
+  stroke-width: 3;
+  paint-order: stroke;
+}
+
+/*
+ * 210/300. Both blocks are drawn at the same pitch in their own coordinates, so they only
+ * stay comparable if their rendered widths hold the same ratio as their viewBoxes. This
+ * is the one number in the figure that is geometry rather than fact, and it is derived
+ * from the two viewBox widths in `CabinFigure.tsx`, casing bleed included.
+ */
+.fig-block-narrow .fig-marks {
+  width: 70%;
+}
+
+.fig-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fig-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  text-shadow: var(--halo-mono);
+}
+
+.fig-label {
+  font-size: 14px;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+}
+
+/* The count is the figure's subject, so it is the one thing here set in the display face. */
+.fig-n {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--color-type);
+  margin-right: 6px;
+}
+
+/*
+ * Not monospace, though it was. `DESIGN.md` reserves the mono face for years and
+ * coordinates, and "One aircraft, two roles" is neither — it is a sentence, and setting
+ * a sentence in tracked-out mono is the costume version of a technical register rather
+ * than the thing itself. The kicker above stays mono because it is an address, which is
+ * exactly what the rule does allow.
+ */
+.fig-foot {
+  font-size: 13px;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo);
+  border-top: 1px solid var(--color-rule);
+  padding-top: 12px;
+}
+
 /* ── press ───────────────────────────────────────────────────── */
 
 /*
@@ -1558,6 +1645,15 @@ html[data-flying] {
   .section-inner.center-stage {
     display: flex;
     flex-direction: column;
+    /*
+     * The desktop gap is `clamp(3rem, 5vw, 6rem)` — at least 48px — and it is the gap
+     * between two side-by-side COLUMNS. Stacked into one column on a phone it becomes
+     * 48px of vertical dead air between a section's words and its media, on the axis
+     * where space is scarcest. Measured at 390x844: five of the nine sections already
+     * run past the top of the dock when scrolled to their own top, by 113px to 503px,
+     * and this returns 22px of that to every one of them.
+     */
+    gap: 26px;
     /*
      * `center` printed the last card of every cards stop underneath the dock. The
      * reserve below is correct and was never the bug: when content exceeds
@@ -1761,6 +1857,24 @@ html[data-flying] {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+
+  .fig-cabin {
+    gap: 16px;
+    max-width: none;
+  }
+
+  /*
+   * 22px is a display size on a 390px screen and the count would outrank the section
+   * title two lines above it. The marks are already carrying the comparison; the numeral
+   * only has to name it.
+   */
+  .fig-n {
+    font-size: 19px;
+  }
+
+  .fig-label {
+    font-size: 13px;
   }
 }
 
