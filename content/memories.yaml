@@ -385,9 +385,13 @@
   period: 2006-2012
   body: >
     Mechanical engineering at BITS Pilani Dubai from 2006 to 2010, because there was no aeronautical
-    course and mechanical was the broadest way in. AutoCAD, SAE and ASME, eight months of steel
-    fabrication internships in the UAE, and a final-year project that simulated internal combustion
-    engines in Visual Basic. Then the aerospace masters at Brunel in London, 2011 to 2012. The Airbus
+    course and mechanical was the broadest way in. AutoCAD, SAE and ASME, and eight months of steel
+    fabrication internships in the UAE. My final-year project was a Visual Basic application that
+    simulated a four-stroke compression-ignition engine: you gave it bore, stroke, compression ratio,
+    cylinder count and the rest, and it returned air standard efficiency, mean effective pressure,
+    brake power, brake thermal efficiency, volumetric efficiency and specific fuel consumption, with
+    the pressure-volume diagram beside them. That is the earliest thing I built that was software
+    rather than hardware. Then the aerospace masters at Brunel in London, 2011 to 2012. The Airbus
     design project was a dual-role airliner: 100 passengers on short European routes or 28 in business
     class across continents, operating out of London City. My dissertation compared single and double
     chamber synthetic jet actuators for active flow control; the double chamber design ran quieter and
