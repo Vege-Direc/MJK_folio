@@ -194,19 +194,41 @@ export default function Carousel() {
     }
   };
 
+  /*
+   * Hold the slideshow while the visitor is looking at a frame or navigating the strip —
+   * and NOWHERE ELSE. This used to live on the root, which is why MJK reported that "play
+   * button under motorcycle images doesn't work".
+   *
+   * The mechanism: `advancing` requires `!held`, and the root's `onPointerEnter` and
+   * `onFocusCapture` both set `held`. To press the play control you must move the pointer
+   * into the carousel and give the button focus, so the very act of pressing play
+   * guaranteed `held` was true. The label flipped to PAUSE and nothing moved. The only way
+   * to make it advance was to press play and then take the pointer entirely off the
+   * carousel without tabbing anywhere inside it, which nobody would discover.
+   *
+   * So the courtesy pause is attached to the picture and the thumbnail strip, and the
+   * control that turns the slideshow on sits outside both. Hovering the photographs still
+   * pauses it, which is the behaviour that was wanted; pressing play now starts it.
+   */
+  const pause = {
+    onPointerEnter: () => setHeld(true),
+    onPointerLeave: () => setHeld(false),
+    onFocusCapture: () => setHeld(true),
+    onBlurCapture: (e: React.FocusEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeld(false);
+    },
+  };
+
   return (
-    <div
-      ref={rootRef}
-      className="carousel"
-      onPointerEnter={() => setHeld(true)}
-      onPointerLeave={() => setHeld(false)}
-      onFocusCapture={() => setHeld(true)}
-      onBlurCapture={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeld(false);
-      }}
-      onTouchStart={() => setPlaying(false)}
-    >
-      <div className="carousel-hero">
+    <div ref={rootRef} className="carousel">
+      <div
+        className="carousel-hero"
+        {...pause}
+        // A touch on the photograph is someone examining it, so it stops the slideshow
+        // outright rather than merely holding it. On the control below, a touch is the
+        // opposite instruction, which is the other half of why this cannot live on the root.
+        onTouchStart={() => setPlaying(false)}
+      >
         {FRAMES.map((f, i) => {
           const state = i === index ? 'on' : i === prev ? 'prev' : undefined;
           const cls = state ? `carousel-frame ${state}` : 'carousel-frame';
@@ -232,7 +254,7 @@ export default function Carousel() {
         </span>
       </div>
 
-      <div className="carousel-strip" role="tablist" aria-label="RD 350 frames" onKeyDown={onKeyDown}>
+      <div className="carousel-strip" role="tablist" aria-label="RD 350 frames" onKeyDown={onKeyDown} {...pause}>
         {FRAMES.map((f, i) => (
           <button
             key={f.kind === 'compare' ? 'compare' : f.src}
