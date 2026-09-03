@@ -234,6 +234,34 @@ describe('/api/ask strips the model talking to itself', () => {
     expect(shown).toMatch(/^I founded Krunch Labs/);
   });
 
+  it('titles the answer from the memory the answer actually used', async () => {
+    const chunks = await chunksOf(
+      await handleAsk(
+        post({ question: 'What shipped at Taboola?' }),
+        depsWith(
+          modelSaying(
+            'I led product rollouts at Taboola: emerging-market payment expansion into Korea and Indonesia, the APAC Ads Interface revamp, and a global two-factor authentication launch.',
+          ),
+        ),
+      ),
+    );
+    expect(envelopes(chunks).at(-1)!.title).toMatch(/taboola/i);
+  });
+
+  // A dek is a promise about the paragraph under it. The panel found "What that looked
+  // like in numbers" sitting over an answer with no numbers in it, because the title was
+  // chosen from the top retrieval hit before a word had been generated.
+  it('drops the dek when no licensed memory is reflected in the answer', async () => {
+    const chunks = await chunksOf(
+      await handleAsk(
+        post({ question: 'What shipped at Taboola?' }),
+        depsWith(modelSaying('I would rather show you than list it out here.')),
+      ),
+    );
+    const last = envelopes(chunks).at(-1)!;
+    expect(last.title).toBe('');
+  });
+
   // The other half of the same rule, and the more important one. "From" opens plenty of
   // true sentences in this corpus, and a filter that eats their first clause would be a
   // repeat of the punctuated-year bug that deleted MJK's bachelors from every answer.

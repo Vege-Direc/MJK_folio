@@ -142,6 +142,41 @@ function stripModelArtefacts(text: string): string {
   return stripSourceNarration(lines);
 }
 
+/**
+ * The dek over the answer, chosen once the answer exists.
+ *
+ * The envelope has to name a title before a word has been generated, and the only thing
+ * available at that point is the highest-scoring memory. That is a guess about what the
+ * answer will be about, and it is frequently wrong: asked "have you shipped anything I
+ * can look at?", the site answered about MruNN-ERP and JewelAI Studio under the heading
+ * "What that looked like in numbers" — a dek promising figures over a paragraph with no
+ * figures in it. A review found the same mismatch on two of eight questions.
+ *
+ * So the final envelope re-titles from the memory the answer actually used, measured by
+ * how much of that memory's title turns up in the prose. It changes once, at the moment
+ * the caret stops, which is the only point where it can be right rather than likely.
+ *
+ * When nothing scores, the dek is dropped rather than guessed. A missing dek costs a
+ * visitor nothing; a wrong one contradicts the paragraph under it, and on a site whose
+ * entire claim is that it does not make things up, that is the more expensive mistake.
+ */
+function dekFor(answer: string, licences: readonly { title: string }[]): string {
+  const prose = answer.toLowerCase();
+  let best = '';
+  let bestScore = 0.5; // the bar, not a starting score: below this the dek is dropped
+
+  for (const m of licences) {
+    const words = m.title.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
+    if (words.length === 0) continue;
+    const score = words.filter((w) => prose.includes(w)).length / words.length;
+    if (score > bestScore) {
+      bestScore = score;
+      best = m.title;
+    }
+  }
+  return best;
+}
+
 /** Enough of a prior answer to remember what was said, far too little to anchor on. */
 function firstSentence(text: string): string {
   const trimmed = text.trim();
@@ -386,7 +421,12 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         writer.write({
           type: 'data-envelope',
           id: 'envelope',
-          data: { ...envelope, status: 'verified', ...(stripped ? { body: text } : {}) },
+          data: {
+            ...envelope,
+            status: 'verified',
+            title: dekFor(text, licences),
+            ...(stripped ? { body: text } : {}),
+          },
         });
       } else {
         console.warn(
@@ -404,6 +444,9 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
             data: {
               ...envelope,
               status: 'salvaged',
+              // From what survived, not from what was written: salvage can remove the
+              // very sentence the dek was describing.
+              title: dekFor(kept.text, licences),
               body: kept.text,
               note: `Checked against the corpus; ${parts.join(', ')}.`,
             },

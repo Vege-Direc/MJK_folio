@@ -87,7 +87,12 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
         )}
       </div>
 
-      {envelope && <p className="answer-dek">{envelope.title}</p>}
+      {/*
+        An empty title is a decision, not a missing value: the server drops the dek when
+        no memory it licensed is actually reflected in the answer, because a heading that
+        contradicts the paragraph beneath it is worse than no heading at all.
+      */}
+      {envelope?.title && <p className="answer-dek">{envelope.title}</p>}
 
       <p className="answer-prose" aria-hidden={streaming || undefined}>
         {shown}
