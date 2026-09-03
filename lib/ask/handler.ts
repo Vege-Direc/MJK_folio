@@ -79,6 +79,29 @@ function stopLabel(stopId: StopId): string {
 
 const DEFAULT_STOP: StopId = 'now';
 
+/**
+ * Model housekeeping that is not an answer.
+ *
+ * A critical review of the live site found one question in eight returning `User Safety:
+ * safe` as the entire visible answer. Free-tier models sometimes emit their own
+ * moderation verdict, a role label or a fenced preamble before, or instead of, the prose.
+ * The grounding guard cannot help: a classifier label contains no number and no proper
+ * noun, so it is perfectly "grounded" and sails through.
+ *
+ * Stripped line by line rather than by trimming a prefix, because it turns up before the
+ * answer, after it, and occasionally on its own.
+ */
+const MODEL_ARTEFACT =
+  /^\s*(?:```+\w*|(?:user\s+|content\s+)?(?:safety|moderation|policy|classification|category|rating|verdict|assistant|answer|response)\s*[:：-]\s*\S.{0,60}|\[?(?:safe|unsafe|flagged|ok)\]?)\s*$/i;
+
+function stripModelArtefacts(text: string): string {
+  return text
+    .split('\n')
+    .filter((line) => !MODEL_ARTEFACT.test(line))
+    .join('\n')
+    .trim();
+}
+
 /** Enough of a prior answer to remember what was said, far too little to anchor on. */
 function firstSentence(text: string): string {
   const trimmed = text.trim();
@@ -273,8 +296,12 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
 
       const startedAt = Date.now();
       let text = '';
+      let stripped = false;
       try {
-        text = await result.text;
+        const raw = await result.text;
+        text = stripModelArtefacts(raw);
+        stripped = text !== raw;
+        if (stripped) console.warn('[api/ask] stripped model housekeeping from the answer');
         const meta = await result.response;
         console.info(`[api/ask] ${meta.modelId} answered ${stopId} in ${Date.now() - startedAt} ms`);
       } catch (error) {
@@ -306,7 +333,16 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
 
       const verdict = deps.guard(text, licences, { topLicences: 3 });
       if (verdict.ok) {
-        writer.write({ type: 'data-envelope', id: 'envelope', data: { ...envelope, status: 'verified' } });
+        // A clean answer normally carries no body: the visitor keeps the prose that
+        // streamed in. But the artefact strip happens after the stream, so if the model
+        // prefixed its own moderation verdict the visitor has already watched it arrive.
+        // Sending the cleaned text as a body replaces what is on screen; without this the
+        // strip would sanitise the logs and leave the label sitting on the page.
+        writer.write({
+          type: 'data-envelope',
+          id: 'envelope',
+          data: { ...envelope, status: 'verified', ...(stripped ? { body: text } : {}) },
+        });
       } else {
         console.warn(
           '[api/ask] guard rejected:',

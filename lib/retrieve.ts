@@ -300,6 +300,23 @@ export const ALIASES: Record<string, string[]> = {
   'work with you': ['contact', 'brief', 'proposal'],
   'work together': ['contact', 'brief', 'proposal'],
   'working with you': ['contact', 'brief', 'proposal'],
+  /* Buying questions -- the ones asked immediately before someone hires you, and the ones
+   * this site was refusing outright. A critical review found "how fast could you start?"
+   * answered with "Not my lane." The corpus cannot promise a start date, and must not, but
+   * `contact-brief` says exactly what happens next: a scoped proposal within a day, or an
+   * honest no. Sending these to the contact stop answers the question behind the question. */
+  'how fast': ['contact', 'brief', 'proposal', 'scoped'],
+  'start date': ['contact', 'brief', 'proposal', 'scoped'],
+  'get started': ['contact', 'brief', 'proposal', 'scoped'],
+  'capacity': ['contact', 'brief', 'proposal', 'available'],
+  'lead time': ['contact', 'brief', 'proposal'],
+  'how long': ['contact', 'brief', 'proposal', 'scoped'],
+  'timeline for': ['contact', 'brief', 'proposal', 'scoped'],
+  'scope a project': ['contact', 'brief', 'proposal', 'scoped'],
+  'how do you work with': ['contact', 'brief', 'proposal', 'scoped'],
+  'take on new': ['contact', 'brief', 'proposal', 'available'],
+  'next step': ['contact', 'brief', 'proposal'],
+  'work together on': ['contact', 'brief', 'proposal', 'scoped'],
   budget: ['contact', 'brief', 'proposal', 'scoped'],
   rates: ['contact', 'brief', 'proposal'],
   pricing: ['contact', 'brief', 'proposal'],

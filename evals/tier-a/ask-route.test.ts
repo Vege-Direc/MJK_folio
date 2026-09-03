@@ -198,6 +198,49 @@ describe('/api/ask streams a grounded answer in the right order', () => {
   });
 });
 
+describe('/api/ask strips the model talking to itself', () => {
+  // A critical review of the live site found one question in eight answered with
+  // "User Safety: safe" and nothing else. Free-tier models sometimes emit their own
+  // moderation verdict, a role label or a code fence around the prose. The grounding
+  // guard is no defence: a classifier label carries no number and no proper noun, so it
+  // is perfectly grounded and passes untouched.
+  it('drops a moderation label that arrives with the answer', async () => {
+    const leaked = [
+      'User Safety: safe',
+      '',
+      'I rebuilt a 1986 Yamaha RD 350 into a cafe racer of my own design. The build ran June to December 2014, back home in Kerala.',
+    ].join('\n');
+    const chunks = await chunksOf(
+      await handleAsk(post({ question: 'tell me about the bike' }), depsWith(modelSaying(leaked))),
+    );
+    const last = envelopes(chunks).at(-1)!;
+    const shown = last.body ?? streamedText(chunks);
+    expect(shown).not.toMatch(/user safety/i);
+    expect(shown).toContain('RD 350');
+  });
+
+  it('falls back rather than showing a label as the whole answer', async () => {
+    const chunks = await chunksOf(
+      await handleAsk(post({ question: 'tell me about the bike' }), depsWith(modelSaying('User Safety: safe'))),
+    );
+    const last = envelopes(chunks).at(-1)!;
+    expect(last.status).toBe('replaced');
+    expect(last.body).toBeDefined();
+    expect(last.body).not.toMatch(/user safety/i);
+    // The visitor still reads something true rather than a blank space.
+    expect((last.body ?? '').length).toBeGreaterThan(40);
+  });
+
+  it('leaves prose that merely contains a colon alone', async () => {
+    const real =
+      'I treat delivery as a gated system: nothing ships without a check. That is the job.';
+    const chunks = await chunksOf(
+      await handleAsk(post({ question: 'how do you direct an agent' }), depsWith(modelSaying(real))),
+    );
+    expect(streamedText(chunks)).toContain('gated system:');
+  });
+});
+
 describe('/api/ask never lets a fabrication reach the page as prose', () => {
   it('a wholly fabricated answer is replaced by the licensed memory', async () => {
     const fabricated = 'At Canon I drove a 5x lift in awareness across 12 markets.';
