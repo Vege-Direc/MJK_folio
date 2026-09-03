@@ -347,8 +347,12 @@
   body: >
     JewelAI Studio is a multi-service AI photography and video platform: Next.js, NestJS, a
     LangGraph.js orchestration worker and a Cloudflare edge worker, deployed as four independent
-    services. I engineered a multi-reference video-generation technique after evaluating and
-    rejecting three competing AI models.
+    services. The multi-reference technique is in the image path, not the video path. I tried
+    attaching the reference set to the video model as well, and it dragged the source photograph's
+    own scene into the clip, so I took it out on purpose: the video animates an image the pipeline
+    has already generated and already checked, and inherits its fidelity instead of arguing for it
+    again. Three video models sit behind one interface, and the pipeline falls through them in order
+    when one refuses the job.
 
 - id: kinnect-rustomjee
   section: projects
@@ -595,3 +599,104 @@
     Scope and start date depend on what you need and what I am already carrying, so ask and I will
     tell you straight rather than guess in public. Most engagements begin as one automation and turn
     into the system around it.
+
+- id: jewelai-reads-the-piece
+  section: projects
+  stopId: work
+  title: How JewelAI Studio reads a piece of jewellery
+  tags: [ai, jewelai, pipeline, jewellery, multi-reference, vision, generation, krunch]
+  body: >
+    JewelAI Studio asks for three to five photographs of one piece, shot from different angles, and the
+    whole set travels together rather than one at a time. A single vision call receives every photograph
+    at once and is asked three things in order: can the geometry be deduced from what is here, are these
+    really all the same piece, and which of these angles are different enough from each other to be worth
+    keeping. It is told up front that the inputs are amateur phone photos and that dark, yellow-cast and
+    slightly blurred is expected, not a reason to refuse. A second call then reconciles the whole set
+    into one physical description — stone shape and cut, exact hue, metal tone, band texture, setting,
+    silhouette — and its job is specifically to resolve the contradictions, so a stone that looks dark in
+    one photograph and bright in the next is settled as one true property rather than averaged. After
+    that, every image the pipeline generates is produced with the entire reference set attached to the
+    prompt. That last part is the piece people assume is a trick. It is the opposite of a trick: the
+    model is never told in words what the piece looks like, because describing a ring in text is how you
+    get a different ring back.
+- id: jewelai-gates
+  section: projects
+  stopId: work
+  title: The gates inside JewelAI Studio
+  tags: [ai, jewelai, quality, qc, validation, judgement, agents, krunch]
+  body: >
+    What I care about most in JewelAI Studio is that it is allowed to stop. Before it spends anything it
+    checks that the uploaded photographs really are one piece, and when they are not it halts and asks
+    the person rather than guessing. It checks that the angles genuinely differ, throws away any
+    photograph too close to one it has already kept, and refuses to run at all on fewer than two usable
+    angles. After generation a judge scores each image against the original photographs, and the bar is
+    deliberately higher for a bare product shot than for one on a model, because a product shot has
+    nowhere to hide. Then a second pass describes the generated image while kept blind to the source, the
+    two descriptions are compared as plain text, and the anatomy audit in that pass is mandatory —
+    that is how a changed stone cut or a hand with the wrong number of fingers gets caught. A failure is
+    not thrown away either: the judge's specific complaint is folded back into the prompt and the image
+    is made again. If only part of a batch survives, the run finishes with what passed and refunds the
+    credits for what did not.
+- id: jewelai-video
+  section: projects
+  stopId: work
+  title: The video half of JewelAI Studio
+  tags: [ai, jewelai, video, animation, models, fallback, krunch]
+  body: >
+    Video in JewelAI Studio does not animate the uploads. It animates one of the images the pipeline has
+    already made and already checked, which is the whole argument — fidelity was won at the image stage,
+    so the clip inherits it instead of arguing it again from scratch. Before the clip is requested, a
+    director step goes back to the original photographs behind that chosen image and writes a description
+    of the piece to ride along in the prompt, while the prompt itself is confined to camera, light and
+    motion. Clips are five seconds, ten seconds or fifteen seconds long, and the motion is kept
+    deliberately small — a gentle turntable, a highlight travelling across metal — because big moves are
+    exactly where a generated piece stops being the piece. Three video models sit behind one interface and the pipeline falls
+    through them in order when one refuses the job.
+- id: photoshoot-how-it-works
+  section: projects
+  stopId: work
+  title: How the photoshoot pipeline turns a supplier photo into a catalogue image
+  tags: [ai, agents, apparel, clothing, catalogue, photoshoot, prompt-memory, qa]
+  body: >
+    A supplier sends one flat photograph of a garment — hung on a rail, shot against a wall, watermarked,
+    lit by whatever was in the room. What comes out is a finished catalogue image. Five agents do the
+    work in between. A classifier places the product, a creative director reads the photograph and plans
+    the staging, backdrop, lighting and pose, a prompt writer turns that plan into the actual prompt, and
+    a validator checks the prompt against the category's rules before any money is spent on it. Then a
+    critic scores the finished image against the source photograph on colour fidelity, pattern and
+    embroidery survival, whether the fabric drapes and folds the way that material actually drapes, and
+    whether the set is clean. It scores out of ten points and seven points is the pass mark. Below that
+    the image is filed away as a failure and the critic's own complaint is fed back for exactly one more
+    attempt. For the sarees the model's
+    face is pinned to a single reference so the same woman appears through the whole catalogue, and the
+    instruction on the product photograph is blunt: replicate every colour, print, pattern, embroidery
+    and layout from this image exactly, because this is the actual thing being sold.
+- id: photoshoot-numbers
+  section: projects
+  stopId: work
+  title: The photoshoot pipeline's own ledger
+  tags: [ai, agents, apparel, volume, cost, measurement, prompt-memory]
+  body: >
+    The pipeline keeps its own ledger, so I do not have to estimate. It logged 107 runs, attempted 249
+    jobs, and produced 125 accepted images across seven product categories — sarees, shawls, dupattas,
+    dress materials, accessories, art and homeware. 55 attempts failed the critic and were kept rather
+    than deleted, which is the part that made the thing improve: the memory file holds 129 logged product
+    runs, and every new prompt is written with the past winners and the past failures in front of it, the
+    winners being anything the critic scored 8 points or better and the failures carrying the exact
+    complaint that sank them. The whole body of work cost 27 dollars in model calls.
+- id: jewelai-infrastructure
+  section: projects
+  stopId: work
+  title: What JewelAI Studio runs on
+  tags: [ai, jewelai, architecture, stack, langgraph, nestjs, nextjs, cloudflare, supabase, krunch]
+  body: >
+    Four services, deployed independently. A Next.js front end, a NestJS API, a LangGraph worker that
+    owns the pipeline itself, and a Cloudflare Worker sitting in front of the media so that no generated
+    asset is ever readable without authorisation. Jobs move between them on a Postgres-backed queue with
+    a visibility timeout and a heartbeat that extends it while work is genuinely in progress, so a worker
+    that dies mid-job releases it rather than losing it, and the graph checkpoints into Postgres so a
+    resumed job picks up where it stopped instead of starting over. Every generated image is written to
+    Cloudflare R2 twice, the full-resolution original and a compressed copy for the browser, into a
+    private bucket read only through signed URLs. Every model call has something behind it: two image
+    providers, three video providers, and the text models routed through whichever endpoint still has
+    credit. Sentry and OpenTelemetry run in all of the Node services.

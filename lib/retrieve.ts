@@ -156,10 +156,13 @@ const ALIAS_WEIGHT = 0.6;
 const STOP_SUPPORT = 0.35;
 
 /**
- * Calibrated, not guessed, against evals/tier-a/routing-table.ts. Measured on that table:
- * the weakest question this site can genuinely answer scores 17.8 ("what's mrunn"); the
- * strongest off-topic question scores 6.5 ("how tall are you", which prefix-matches
- * `tallybridge`). 8 sits in that gap with room on both sides.
+ * Calibrated, not guessed, against evals/tier-a/routing-table.ts, and RE-calibrated when
+ * the corpus grew. It was 8, from a table where the weakest real question scored 17.8 and
+ * the loudest off-topic one 6.5. Six memories about the two AI pipelines moved both ends:
+ * the weakest real question is now 21.5 and the loudest off-topic 13.9, so 8 had stopped
+ * being a gap and started being a floor a nonsense question could clear on its own. 16
+ * sits back in the middle, with 5.5 points of margin below the quietest real question and
+ * 2.1 above the loudest piece of noise.
  *
  * The gap exists because nonsense only ever brushes the corpus: "write my essay" catches
  * `writer` in one body, "translate this to french" catches `translate` in another. One
@@ -167,7 +170,7 @@ const STOP_SUPPORT = 0.35;
  * over. Scores are raw BM25+ and will move if the field boosts or the corpus size move --
  * `npm run route:eval` prints them, and this number is re-read from that output.
  */
-const MIN_TOP_SCORE = 8;
+const MIN_TOP_SCORE = 16;
 
 /** The winning stop must hold half the weighted mass, or the router is guessing. */
 const MIN_SHARE = 0.5;
@@ -587,7 +590,27 @@ function getEngine(): Engine {
     // tokenize already lowercases, stems and drops stopwords; MiniSearch's default
     // processTerm would lowercase a second time and nothing more.
     processTerm: (term) => term,
-    searchOptions: { boost: FIELD_BOOSTS, fuzzy: 0.1, prefix: true, combineWith: 'OR' },
+    /*
+     * Prefix matching, but only for terms long enough to mean something.
+     *
+     * It used to be `prefix: true`, which lets any stem match any word beginning with it,
+     * and the short ones are where that goes wrong: this file already recorded "how tall
+     * are you" prefix-matching `tallybridge` at 6.5. Then the corpus gained a memory that
+     * counts product categories, and "tell me a joke about cats" stemmed to `cat`, matched
+     * `categories`, and scored 9.3 on the work stop -- over the 8-point bar, so the site
+     * would have answered a cat joke with a straight face about apparel.
+     *
+     * Five characters is measured rather than chosen: at four, `tall` still reaches
+     * `tallybridge`. Exact matching is untouched, so short real terms like `erp` and `ai`
+     * are unaffected -- prefix only ever ADDED matches, and what it adds below five
+     * characters is noise.
+     */
+    searchOptions: {
+      boost: FIELD_BOOSTS,
+      fuzzy: 0.1,
+      prefix: (term: string) => term.length >= 5,
+      combineWith: 'OR',
+    },
   });
   index.addAll(
     memories.map((m) => ({
