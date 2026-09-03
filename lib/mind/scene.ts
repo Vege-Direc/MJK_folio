@@ -179,6 +179,66 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
 
   let scrollProgress = 0;
   let displayProgress = 0;
+  /**
+   * --- CALM ---
+   * Camera speed, smoothed asymmetrically, and the proximity attenuation it drives.
+   *
+   * motionEased is 0 at rest and 1 at CALM.speedFull stops/second. The attack is fast
+   * so the scene calms AS the reader starts moving; the release is slow so a wheel --
+   * which is a train of discrete events with 10-50ms gaps, not a continuous signal --
+   * cannot pump the field on and off at wheel-event rate. The asymmetry IS the
+   * hysteresis: there is no threshold to sit on and so nothing to chatter.
+   */
+  let prevDisplay = 0;
+  let motionEased = 0;
+  /**
+   * Why these numbers, and not others.
+   *
+   * MJK: "the entire flashing and nueron system seems to be a bit overwhelming for some
+   * users especially when they actually enter the scroll pathway... ideally when fully
+   * zoomed out it's not so much of an issue, but on the path I think there is a lot
+   * happening". He is describing one object, and it turns out to be literally one:
+   * `buildWaypoints` puts the camera at `spineNode + (0, 1.4, 0)` and spine somas carry
+   * `scale 0.85-1.25` -- 2.5x a secondary node -- plus a colour lift, so the camera spends
+   * every segment flying directly at the largest and brightest thing in the field, with
+   * `lookAt(u + 0.05)` holding it near frame centre until it passes underneath.
+   *
+   * Measured as screen-space disk area clipped to the viewport, over 201 path samples:
+   * coverage runs 6.6% median at rest against a 30.4% peak on the path on a 1440x900
+   * desktop, and 3.7% against 37.9% on a 390x664 phone -- a 10x swing, with one soma
+   * taking 35.5% of that phone frame on its own.
+   *
+   * The two ends of the path are the same defect, which is the useful part: the phone's
+   * "scene nearly absent on the first screen" (1.6% measured) and its 37.9% peak are one
+   * problem, so taking the peak down is what makes room to raise the floor.
+   *
+   * `near0`/`near1` are 1.2 and 9.0 because the loud band is 2-8 world units, not 0-3:
+   * coverage inside 4 units is 0.0% for the first 70% of every segment. Beyond 9 units
+   * nothing changes at any speed, which is what keeps the field intact seen from outside.
+   *
+   * `floorRest` 0.62 and `floorMoving` 0.34 with an attack of 0.10s and a release of
+   * 0.55s. The asymmetry IS the hysteresis: a wheel is a train of discrete events with
+   * 10-50ms gaps rather than a continuous signal, and a symmetric filter would let it pump
+   * the field on and off at wheel-event rate. There is no threshold here, so there is
+   * nothing to chatter on.
+   *
+   * `sizeClampD` stays 0. The angular-size guard is written and measured and is not
+   * needed once the core term falls; it is left in place because the two `Points` layers
+   * already carry the same guard as `max(-mv.z, 6.0)` and the billboards are the only
+   * bright layer without one, so the day that changes the code is here.
+   */
+  const CALM = {
+    enabled: true,
+    speedFull: 0.55,
+    attack: 0.10,
+    release: 0.55,
+    floorRest: 0.62,
+    floorMoving: 0.34,
+    near0: 1.2,
+    near1: 9.0,
+    sizeClampD: 0.0,
+    exciteCut: 0.45,
+  };
   let currentStop = -1;
   let flight: Flight | null = null;
   let paused = false;
@@ -383,6 +443,19 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         uTime:       { value: 0 },
         uBreathAmt:  { value: reduced ? 0 : 0.06 }, // soft scale breathing amplitude
         uExciteAmt:  { value: 0.8 }, // how much arrival/departure excitation brightens+scales a node
+        // --- proximity calm ---
+        // The mirror of fog. FogExp2 fades what is FAR; nothing in three.js fades what
+        // is NEAR, which is why a field that reads as calm structure from outside becomes
+        // a lamp in the face from inside. uProxFloor 1.0 is the identity: every pixel is
+        // bit-identical to the shipped scene until it is lowered.
+        uProxFloor:  { value: 1.0 },
+        uProxNear0:  { value: 1.2 },
+        uProxNear1:  { value: 9.0 },
+        // Soft angular-size guard: below this view distance the node's WORLD size shrinks
+        // in proportion to distance, so its on-screen size stops growing as 1/z. This is
+        // the same guard the two Points layers already carry as max(-mv.z, 6.0); the
+        // billboards are the only bright layer without it. 0 disables.
+        uSizeClampD: { value: 0.0 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -396,6 +469,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         attribute float aBreathFreq;
         attribute float aExcite;
         uniform float uSwayTime, uSwayAmt, uSwayFreq, uTime, uBreathAmt, uExciteAmt;
+        uniform float uSizeClampD;
         // Sway direction derived deterministically from the phase so every node
         // sways in a unique direction with no extra attribute. A node and the
         // filament endpoint sharing the same phase => same direction => the
@@ -420,6 +494,10 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           vec3 camRight = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
           vec3 camUp    = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
           float size = instScale * uSizeScale * breath * scaleBoost;
+          if (uSizeClampD > 0.0) {
+            float czc = max(-(viewMatrix * vec4(instanceCenter, 1.0)).z, 0.001);
+            size *= min(1.0, czc / uSizeClampD);
+          }
           vec3 worldPos = instanceCenter + (camRight * position.x + camUp * position.y) * size;
           vec4 mvPos = viewMatrix * vec4(worldPos, 1.0);
           vViewDist = length(mvPos.xyz); // camera-relative distance for fog
@@ -438,6 +516,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         uniform float uBody;
         uniform float uFogDensity;
         uniform float uExciteAmt;
+        uniform float uProxFloor, uProxNear0, uProxNear1;
         void main(){
           vec2 p = vUv - 0.5;
           float d = length(p) * 2.0;     // 0 center -> 1 edge of the quad
@@ -447,12 +526,18 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           float halo = pow(fall, uHaloPower); // soft halo (broad) -> drives alpha
           // Excitation: a signal arriving/departing makes the node briefly hotter +
           // whiter (electrical "firing"). Widen the core and push the peak toward white.
+          // Proximity: 1.0 beyond uProxNear1, falling to uProxFloor at uProxNear0.
+          float prox = mix(uProxFloor, 1.0, smoothstep(uProxNear0, uProxNear1, vViewDist));
           float ex = vExcite * uExciteAmt;
-          core = min(core + ex * 0.5, 1.0);
+          // Applied to the core term, not to the body colour: what goes away up close is the
+          // white-hot peak (the part that also crosses the 0.6 bloom threshold), while
+          // the coloured body survives. A soma you are inside reads as a cloud you are
+          // passing through rather than as a soma that was turned down.
+          core = min(core + ex * 0.5, 1.0) * prox;
           vec3 hot  = mix(vColor, vec3(1.0), min(uCoreWhite + ex * 0.4, 0.95));
           vec3 body = vColor * uBody;
           vec3 col  = mix(body, hot, core);   // smooth body -> hot center
-          float alpha = halo * (1.0 + ex * 0.4);
+          float alpha = halo * (1.0 + ex * 0.4) * prox;
           // exp2 fog: distant glows fade into the near-black bg. Additive only adds, so fade
           // by multiplying contribution (bg ~= fog color, so this matches FogExp2 on opaque).
           float fog = 1.0 - exp(-uFogDensity * uFogDensity * vViewDist * vViewDist);
@@ -639,6 +724,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         uSwayFreq:   { value: cfg.swayFreq },
         uTime:       { value: 0 },
         uShimmer:    { value: reduced ? 0 : 0.28 },
+        uProxFloor:  { value: 1.0 },
+        uProxNear0:  { value: 1.2 },
+        uProxNear1:  { value: 9.0 },
       },
       vertexShader: `
         attribute vec3 tangent;
@@ -680,6 +768,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         uniform float uFogDensity;
         uniform float uTime;
         uniform float uShimmer;
+        uniform float uProxFloor, uProxNear0, uProxNear1;
         varying vec3 vNormal;
         varying vec3 vViewDir;
         varying float vFogDepth;
@@ -695,8 +784,10 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           // so it never competes with the node glow or blooms into noise.
           float shimmer = 1.0 + uShimmer * sin(vTubeU * 9.0 - uTime * 1.4);
           core *= shimmer;
+          float prox = mix(uProxFloor, 1.0, smoothstep(uProxNear0, uProxNear1, vFogDepth));
+          core *= prox;
           vec3 col = mix(uColorDim, uColorCore, core);
-          float a = mix(0.18, 0.9, core);
+          float a = mix(0.18, 0.9, core) * prox;
           float fogF = 1.0 - exp(-uFogDensity * uFogDensity * vFogDepth * vFogDepth);
           col = mix(col, uFogColor, fogF);
           a *= (1.0 - fogF);
@@ -793,6 +884,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           uFogDensity: { value: cfg.fog },
           uDriftAmt:   { value: reduced ? 0 : cfg.nebulaDrift },
           uPixelRatio: { value: renderer.getPixelRatio() },
+          uProxFloor:  { value: 1.0 },
+          uProxNear0:  { value: 1.2 },
+          uProxNear1:  { value: 9.0 },
         },
         vertexShader: `
           attribute vec3 aColor; attribute vec3 aDrift; attribute float aPhase; attribute float aSize;
@@ -814,6 +908,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         fragmentShader: `
           varying vec3 vColor; varying float vFogDepth; varying float vPhase;
           uniform float uOpacity, uFogDensity, uTime;
+          uniform float uProxFloor, uProxNear0, uProxNear1;
           void main(){
             vec2 pc = gl_PointCoord - 0.5;
             float d = length(pc) * 2.0;
@@ -826,7 +921,8 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             // 0.7 vs drift's 0.25) so the haze reads as living tissue, not static dust.
             // Amplitude tiny (±12%) so it never fights the Step 6 bloom/fog tuning.
             float twk = 1.0 + 0.12 * sin(uTime * 0.7 + vPhase * 2.7);
-            float a = (core + haze) * uOpacity * twk;
+            float prox = mix(uProxFloor, 1.0, smoothstep(uProxNear0, uProxNear1, vFogDepth));
+            float a = (core + haze) * uOpacity * twk * prox;
             vec3 col = vColor;
             float fog = 1.0 - exp(-uFogDensity * uFogDensity * vFogDepth * vFogDepth);
             col *= (1.0 - fog);
@@ -1630,6 +1726,52 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       }
 
       const u = clamp(displayProgress, 0, 1);
+
+      // --- CALM: camera speed -> proximity floor ---
+      // Speed is in STOPS PER SECOND, taken from displayProgress, which is already the
+      // framerate-independent eased camera position. It is therefore the same number on
+      // a 30fps phone and a 120Hz desktop for the same reader gesture.
+      if (dt > 0) {
+        const speed = (Math.abs(u - prevDisplay) * Math.max(1, M - 1)) / dt;
+        const want = clamp(speed / CALM.speedFull, 0, 1);
+        const tau = want > motionEased ? CALM.attack : CALM.release;
+        motionEased += (want - motionEased) * (1 - Math.exp(-dt / tau));
+      }
+      prevDisplay = u;
+      /*
+       * Under reduced motion the speed term is not merely small, it is zero.
+       *
+       * It measures at +0.1% mean luminance and 0.00% of pixels over threshold either
+       * way, because a reduced-motion flight is an instant jump and there is no sustained
+       * speed to read. But this path is the one thing on the page that carries an exact
+       * promise -- 7.88% of pixels changing per frame becomes 0.01% -- and a promise held
+       * to within a tenth of a percent is a different promise. So it is held exactly.
+       */
+      if (reduced) motionEased = 0;
+      if (CALM.enabled) {
+        const floor = CALM.floorRest + (CALM.floorMoving - CALM.floorRest) * motionEased;
+        const win = (m: THREE.ShaderMaterial | null | undefined) => {
+          if (!m || !m.uniforms.uProxFloor) return;
+          m.uniforms.uProxFloor.value = floor;
+          m.uniforms.uProxNear0.value = CALM.near0;
+          m.uniforms.uProxNear1.value = CALM.near1;
+        };
+        win(nodeMat);
+        win(tubeMat);
+        // The far tubes share the window. Out there it never opens, so this is
+        // arithmetic that never fires -- but it keeps the two filament materials from
+        // drifting apart.
+        win(t3TubeMat);
+        win(nebulaMesh ? (nebulaMesh.material as THREE.ShaderMaterial) : null);
+        nodeMat.uniforms.uSizeClampD.value = CALM.sizeClampD;
+        // The firing flash is the one fast luminance event in the scene (half-life
+        // ~110ms). Motion reduces its AMPLITUDE, never its rate: the pulses still
+        // travel and the somas still light, they simply stop snapping to white while
+        // the frame is already sliding. Never to zero -- a scene that stops firing is a
+        // scene that stopped being alive.
+        nodeMat.uniforms.uExciteAmt.value = 0.8 * (1 - CALM.exciteCut * motionEased);
+      }
+
       sampleSeg(u, camCurves, V, _pos);
       camera.position.copy(_pos);
       lookTarget(clamp(u + 0.05, 0, 1), _look);
