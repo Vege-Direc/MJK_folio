@@ -148,11 +148,14 @@ function goToStop(route: RouteData) {
   window.dispatchEvent(new CustomEvent<RouteData>(ROUTE_EVENT, { detail: route }));
 }
 
-/** A margin at the top of the readable band; below this the answer's first line is lost. */
-const TOP_EDGE = 8;
-
-/** And at the bottom: an answer starting this close to the dock shows nothing worth reading. */
-const BOTTOM_EDGE = 80;
+/**
+ * How much better the correction has to be before it is worth moving the page.
+ *
+ * An answer that landed well leaves this alone, and that is the whole safety property: the
+ * test is not "is something wrong" but "is there a better position", asked of the same
+ * function that chose the first one.
+ */
+const SETTLE_MIN = 24;
 
 /**
  * Put the finished answer back on the screen.
@@ -183,13 +186,28 @@ function settleOnAnswer(stopId: StopId): void {
   // The reader has taken over. Their position is theirs.
   if (readerMoved) return;
 
-  const dock = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-h'), 10);
-  const readable = window.innerHeight - (Number.isFinite(dock) ? dock : 0);
-  const top = container.getBoundingClientRect().top;
-  if (top >= TOP_EDGE && top <= readable - BOTTOM_EDGE) return;
+  /*
+   * MEASURED THE WRONG WAY TWICE, and this is the second one.
+   *
+   * The version before this asked whether the answer's FIRST LINE was on the readable band,
+   * and moved the page only if it was not. That fixed the phone, where four flows of four
+   * had the answer above the top of the screen, and did nothing for the desktop, where the
+   * opposite failure was waiting: on §08 at 1440x900 the answer started at 506px, so its
+   * first line was perfectly visible and its last 274px were destroyed by the dock, with
+   * the visible text ending mid-sentence. Two of six desktop flows ran past it. A test for
+   * "is the start visible" cannot see that, because nothing is wrong at the start.
+   *
+   * So the test is not whether something is wrong. It is whether there is a better
+   * position, asked of the same function that chose the first one -- which already prefers
+   * the section's own top and gives it up only for as much of the answer as the band can
+   * hold. An answer that landed well produces a landing equal to where the page already is,
+   * and nothing moves.
+   */
+  const landing = landingFor(section, container);
+  if (Math.abs(landing - window.scrollY) < SETTLE_MIN) return;
 
   releaseWatch?.();
-  flyTo(landingFor(section, container));
+  flyTo(landing);
 }
 
 /**
