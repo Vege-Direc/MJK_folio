@@ -67,6 +67,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#0a0a0e',
   colorScheme: 'dark',
+  /*
+   * Ask the browser to resize the layout viewport when the on-screen keyboard opens,
+   * rather than leaving a `position: fixed` bar stranded underneath it. Chrome 108+
+   * honours it today and WebKit has it in trunk; where it is not honoured it is inert,
+   * so this is a free half of the fix and `ChatDock`'s measured inset is the half that
+   * works everywhere.
+   */
+  interactiveWidget: 'resizes-content',
 };
 
 /**

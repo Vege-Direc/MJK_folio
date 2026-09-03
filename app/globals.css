@@ -1602,12 +1602,7 @@ html[data-flying] .answer-layer-in {
 
 /* ── before / after ────────────────────────────────────────────────────────── */
 
-/*
- * The wipe. `--ba-split` is written from React as a percentage and is the only number
- * the whole component moves.
- */
 .ba {
-  --ba-split: 50%;
   position: absolute;
   inset: 0;
 }
@@ -1619,123 +1614,81 @@ html[data-flying] .answer-layer-in {
   height: 100%;
   object-fit: cover;
   /*
-   * The pair is composed tight around the motorcycle, and below 900px the hero crops to
-   * 16:10. Biased down the frame so the crop takes background off the top rather than
-   * the ground the bike is standing on — losing the tyres' contact with the floor is
-   * what would make the two frames stop reading as one machine.
+   * Both files are cut to 780x585 — the hero's own 4:3 — so on desktop `cover` is an
+   * identity and neither photograph is touched. Below 900px the hero is 16:10 and 16.7%
+   * of the height goes. Biased to the top because the expendable part of both frames is
+   * the bare ground under the tyres: at 15% the window keeps source rows 2.6%–85.9%, and
+   * in the tighter of the two the handlebars sit at 3.4% and the tyres' ground line at
+   * 82.2%. Losing either end is what would stop the two frames reading as one machine.
    */
-  object-position: center 55%;
+  object-position: center 15%;
 }
 
 /*
- * The stock bike is drawn over the finished one and clipped from the right, so the
- * finished bike is never hidden behind an image at zero opacity and the stock one is
- * never a raster under a wash. `clip-path` rather than a sized wrapper: no nested
- * element has to be told the container's width to avoid squashing.
+ * The stock bike is drawn over the finished one and clipped away rather than faded, so
+ * neither is ever an image at zero opacity — a raster under a wash is a raster that never
+ * reached the screen. `visibility` cannot do this job here: a carousel frame that is not
+ * showing hides the whole `.ba` with it, and a child set back to `visible` would punch
+ * straight through that. Clipped, the raster still decodes.
  */
 .ba-stock {
-  clip-path: inset(0 calc(100% - var(--ba-split)) 0 0);
-  transition: clip-path 0.12s linear;
+  clip-path: inset(0 100% 0 0);
 }
 
-.ba-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: var(--ba-split);
-  width: 2px;
-  margin-left: -1px;
-  background: var(--color-accent);
-  transition: left 0.12s linear;
-  /* The input behind it owns every pointer event; this is the drawing, not the control. */
-  pointer-events: none;
-  z-index: 2;
-}
-
-.ba-knob {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  width: 34px;
-  height: 34px;
-  border: 2px solid var(--color-accent);
-  border-radius: 50%;
-  background: rgba(10, 10, 14, 0.55);
-  backdrop-filter: blur(4px);
-}
-
-/* Two chevrons, pointing at the two things the knob moves between. */
-.ba-knob::before,
-.ba-knob::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border: 2px solid var(--color-accent);
-  border-width: 2px 2px 0 0;
-}
-
-.ba-knob::before {
-  left: 9px;
-  rotate: -135deg;
-  translate: 0 -50%;
-}
-
-.ba-knob::after {
-  right: 9px;
-  rotate: 45deg;
-  translate: 0 -50%;
+.ba-stock[data-show] {
+  clip-path: inset(0);
 }
 
 /*
- * A real range input, stretched over the whole photograph and made invisible. The thumb
- * is transparent because `.ba-line` is the thumb as far as a sighted visitor is
- * concerned; what the input keeps is everything that is expensive to rebuild — arrow
- * keys, Home and End, click-to-jump, touch, and a slider role with a value.
+ * The whole photograph is the control. The two photographs are not registered — they
+ * cannot be, see BeforeAfter.tsx — so this is a cut with no transition on it: any moment
+ * with both on screen is a moment of two mismatched bikes ghosting through each other.
+ * One `<button>` rather than a slider, because there is nothing between the two states to
+ * scrub through, and because a button carries keyboard, touch and a pressed state without
+ * any of them being rebuilt.
  */
-.ba-range {
+.ba-swap {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 12px;
   margin: 0;
-  padding: 0;
-  appearance: none;
-  background: transparent;
-  cursor: ew-resize;
-  z-index: 3;
-}
-
-.ba-range::-webkit-slider-thumb {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: transparent;
-  cursor: ew-resize;
-}
-
-.ba-range::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
   border: 0;
-  border-radius: 50%;
-  background: transparent;
-  cursor: ew-resize;
+  background: none;
+  font: inherit;
+  cursor: pointer;
 }
 
-.ba-range::-moz-range-track {
-  background: transparent;
+/* Same chip as `.carousel-cap`, which sits in the opposite corner of the same frame. */
+.ba-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-type);
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  background: rgba(10, 10, 14, 0.55);
+  backdrop-filter: blur(4px);
+  opacity: 0.55;
+}
+
+.ba-tag[data-on] {
+  opacity: 1;
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 /*
- * The input covers the frame, so its focus ring is the frame's — which is the right
+ * The button covers the frame, so its focus ring is the frame's — which is the right
  * answer anyway: the thing that has focus is the comparison, not a dot on it. Same
  * accent, same offset as the thumbnails beneath it.
  */
-.ba-range:focus-visible {
+.ba-swap:focus-visible {
   outline: 1px solid var(--color-accent);
   outline-offset: 2px;
 }
@@ -1751,6 +1704,55 @@ html[data-flying] .answer-layer-in {
   align-items: baseline;
   gap: 6px 20px;
   padding-bottom: 14px;
+}
+
+/*
+ * One suggestion at a time below 768px, cross-fading in a single grid cell.
+ *
+ * Four wrapped suggestions made the dock 214px of a 390x664 viewport — 32% of the screen,
+ * and 41% at 320 — which is what MJK meant by "take up too much space at the bottom …
+ * and cover a lot of other information". One at a time takes it to 137px.
+ *
+ * The fixed height is a guard, not the fix. The fix is the copy rule: at 320px this row
+ * has 272px of usable width, and a suggestion that wraps republishes `--dock-h` and
+ * relays out all nine sections mid-rotation. `evals/tier-a/voice.test.ts` asserts the
+ * length so a future edit cannot reintroduce one; `overflow: hidden` means that if it
+ * ever does, the row clips instead of resizing the dock.
+ */
+.prompt-row[data-rotating] {
+  display: grid;
+  grid-template-areas: 'chip';
+  height: 41px;
+  align-items: center;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.prompt-row[data-rotating] .prompt-chip {
+  grid-area: chip;
+  padding: 11px 0;
+  margin: -11px 0;
+  animation: prompt-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes prompt-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Swapping text under a reader is worse than not swapping it, so reduced motion gets the
+ * first suggestion and no fade at all. The component stops the timer as well; this is
+ * only the half that would still animate if it did not.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .prompt-row[data-rotating] .prompt-chip {
+    animation: none;
+  }
 }
 
 .prompt-chip {
@@ -2191,16 +2193,11 @@ html[data-flying] .answer-layer-in {
   }
 
   /*
-   * The wipe holds at a static split and the seam stops sliding: the eased 0.12s on the
-   * clip and the line is the only thing in the component that moves on its own once a
-   * value changes, and it is the thing to take out. The control itself stays — a slider
-   * a visitor drags is motion they asked for, and removing it would take the comparison
-   * away from exactly the people least able to work around its absence.
+   * Nothing is reset for the before/after frame, because there is nothing there to reset:
+   * the eased seam went with the wipe, and a cut has no duration. The control stays — a
+   * button a visitor presses is motion they asked for, and taking it out would remove the
+   * comparison from exactly the people least able to work around its absence.
    */
-  .ba-stock,
-  .ba-line {
-    transition: none;
-  }
 
   /*
    * The timeline keeps its height transition, and that is deliberate. An accordion that

@@ -1,31 +1,114 @@
 'use client';
 
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { suggestedPrompts } from '@/content/static-copy';
 
+/** Above this width all four are shown at once and nothing rotates. */
+const WIDE = '(min-width: 768px)';
+
+/** How long each suggestion holds before the next one fades in. */
+const DWELL = 4500;
+
 /**
- * Four ways in.
+ * Two full passes, then it stops for good.
  *
- * They used to run as one horizontally scrollable row. At 375px that showed exactly one
- * prompt, clipped mid-word — "…aircraft to age" — with the other three off-screen and
- * nothing to say they existed. A scroller with no affordance is a scroller nobody
- * scrolls, and the edge mask was not enough to rescue it: the first prompt is wider than
- * the viewport on its own, so there was never a second one peeking to imply more.
- *
- * They wrap now. That costs height, and height stopped being expensive when the dock
- * began publishing `--dock-h` from a ResizeObserver: every stop reserves whatever the
- * dock actually is, so this row can be as tall as it needs and nothing ends up
- * underneath it. All four visible, none clipped, no affordance required.
- *
- * `TRY` is gone. It was mono chrome wearing a technical costume — the register the
- * timeline's years and the § labels earn and the dock's furniture does not — and on a
- * phone it also spent 40px of a 327px row saying what four questions already say by
- * being questions.
+ * A perpetual animation in the corner of the eye of someone reading is the thing this
+ * project's own performance notes warn about, and by the eighth change every suggestion
+ * has been seen twice. After that the chip holds whatever it was showing.
  */
-export default function SuggestedPrompts({ onPick }: { onPick: (p: string) => void }) {
+const ROTATIONS = suggestedPrompts.length * 2;
+
+function subscribeWide(cb: () => void) {
+  const mq = window.matchMedia(WIDE);
+  mq.addEventListener('change', cb);
+  return () => mq.removeEventListener('change', cb);
+}
+
+/**
+ * Ways in to the site, one at a time on a phone and all four on a desktop.
+ *
+ * MJK: "On mobile the suggested questions … take up too much space at the bottom when
+ * viewing on mobile and cover a lot of other information." He is right and the numbers
+ * are worse than they look. The dock is 214px of a 390x664 viewport — 32% of the screen,
+ * and 41% at 320px — because this row wraps to four lines on every phone. Showing one at
+ * a time takes the dock to 137px and roughly doubles the page still visible behind it
+ * with the keyboard up.
+ *
+ * His own suggestion was to cycle them inside the input as a placeholder. That recovers
+ * a little more height and it was not taken, for two reasons that survive the trade: a
+ * placeholder is not a control, so a one-tap affordance becomes retyping the sentence on
+ * a phone keyboard; and it disappears on the first keystroke, which is the moment a
+ * hesitant visitor most wants to see what can be asked. This keeps a real button.
+ *
+ * The rotation stops the moment the visitor does anything — types a character, asks a
+ * question, focuses or hovers the row. A control that changes between the visitor
+ * deciding to press it and pressing it is an unusable control, and that is the single
+ * most important line in this file.
+ */
+export default function SuggestedPrompts({
+  onPick,
+  frozen = false,
+}: {
+  onPick: (p: string) => void;
+  /** The visitor has typed or asked something. They no longer need to be shown the way in. */
+  frozen?: boolean;
+}) {
+  const wide = useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE).matches,
+    // The server has no viewport. Rendering all four is the honest default: it is what a
+    // desktop gets, it is what a phone gets before hydration, and it never hides a
+    // suggestion that was on screen a frame ago.
+    () => true,
+  );
+
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const turns = useRef(0);
+  const stopped = useRef(false);
+
+  useEffect(() => {
+    if (wide || frozen || paused || stopped.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = window.setTimeout(() => {
+      turns.current += 1;
+      if (turns.current >= ROTATIONS) stopped.current = true;
+      setIndex((i) => (i + 1) % suggestedPrompts.length);
+    }, DWELL);
+    return () => window.clearTimeout(id);
+  }, [wide, frozen, paused, index]);
+
+  const shown = wide ? suggestedPrompts : [suggestedPrompts[index]];
+
   return (
-    <div className="prompt-row">
-      {suggestedPrompts.map((p) => (
-        <button key={p} type="button" onClick={() => onPick(p)} className="prompt-chip">
+    <div
+      className="prompt-row"
+      data-rotating={wide ? undefined : ''}
+      /*
+       * Never a live region. A control whose label changes every four and a half seconds
+       * and announces each change is the worst possible version of this feature.
+       */
+      aria-live="off"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+    >
+      {shown.map((p) => (
+        <button
+          // Keyed on the text so the cross-fade has two elements to fade between rather
+          // than one element whose text content changes underneath the transition.
+          key={p}
+          type="button"
+          onClick={() => {
+            stopped.current = true;
+            onPick(p);
+          }}
+          className="prompt-chip"
+          // The visible text reads as a question addressed to the visitor. The label says
+          // what pressing it does.
+          aria-label={`Suggested question: ${p}`}
+        >
           {p}
         </button>
       ))}

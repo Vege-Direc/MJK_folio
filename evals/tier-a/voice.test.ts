@@ -108,6 +108,19 @@ describe('visitor-facing copy never explains the machine', () => {
     ).toEqual([]);
   });
 
+  /*
+   * Below 768px the dock shows one suggestion at a time, in a row 272px wide at the
+   * narrowest phone. A suggestion that wraps there makes the row two lines, which
+   * republishes `--dock-h`, which relays out all nine sections — in the middle of a
+   * cross-fade. 40 characters is the measured budget at 14px Inter, and the guard is here
+   * rather than in CSS because the copy is the fix and the clipping is only the net.
+   */
+  it('keeps every suggestion to one line on the narrowest phone', () => {
+    for (const p of suggestedPrompts) {
+      expect(p.length, `"${p}" is ${p.length} characters and will wrap at 320px`).toBeLessThanOrEqual(40);
+    }
+  });
+
   it('lets the privacy page name the machinery, because that is what it is for', () => {
     const privacy = readFileSync(join(process.cwd(), 'app', 'privacy', 'page.tsx'), 'utf-8');
     // If this ever stops being true the rule above has quietly become a gag order rather

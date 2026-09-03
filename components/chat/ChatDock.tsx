@@ -43,23 +43,89 @@ export default function ChatDock() {
   }, []);
 
   /**
-   * Lift the dock clear of the on-screen keyboard on iOS.
+   * Lift the dock clear of the on-screen keyboard, by measuring rather than computing.
    *
-   * The keyboard shrinks the visual viewport without touching the layout viewport, so a
-   * `position: fixed; bottom: 0` bar slides underneath it and the field the visitor is
-   * typing into is the thing they can no longer see.
+   * MJK reported this: "the chatbox disappears on mobile when I click to type and then
+   * reappears only after i click the send key". The old version computed the inset as
+   * `innerHeight - vv.height - vv.offsetTop` and applied it on `resize` and `scroll`.
+   * The arithmetic is the textbook one and it is right when it is fed clean numbers. The
+   * bug is that it only ever reacted to an event, and clamped disagreement to zero: iOS
+   * fires `resize` carrying PRE-keyboard metrics and then does not reliably fire a
+   * settled one afterwards, so the inset stayed 0, React stripped the transform, and the
+   * dock sat under the keyboard for the whole typing session. It came back on send
+   * because dismissing the keyboard finally produced an event it could believe. Measured
+   * against the real component with a synthetic visual viewport at 390x664: three of five
+   * event sequences left 332px of dock — the input and the send control — below the
+   * visible band.
+   *
+   * The reason not to fix the formula is one row of that trace. On iOS 26 a bottom-fixed
+   * bar can land at a `bottom` of 847 while `innerHeight` is 932 and `offsetTop + height`
+   * is 604: it coincides with neither, so any formula built on an assumption about what
+   * the fixed containing block is will be wrong on some configuration, and wrong
+   * silently. So this does not ask where the dock should be. It measures where the dock
+   * IS, and closes the gap to the bottom of the visible band. That converges in one step
+   * and needs no model of the browser's viewport arithmetic at all.
+   *
+   * The settle loop is the second half. WebKit bugs 237851, 265578 and 226689 between
+   * them describe stale metrics, resizes that only arrive when the keyboard animation
+   * ends, and spurious resizes back to full height. A bounded rAF re-read after each
+   * trigger survives all three. It writes only when the gap is at least a pixel, so it
+   * costs one `getBoundingClientRect` per frame for at most 0.7s and nothing at rest.
    */
   const [kbInset, setKbInset] = useState(0);
   useEffect(() => {
     const vv = window.visualViewport;
-    if (!vv) return;
-    const onResize = () => setKbInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    const dock = dockRef.current;
+    const input = inputRef.current;
+    if (!vv || !dock) return;
+
+    let raf = 0;
+    let until = 0;
+
+    const apply = () => {
+      const band = vv.offsetTop + vv.height;
+      const delta = dock.getBoundingClientRect().bottom - band;
+      // Under a pixel is converged. The guard also stops the loop oscillating around a
+      // fractional gap, which would write state every frame for the whole settle window.
+      if (Math.abs(delta) < 1) return;
+      setKbInset((prev) => Math.max(0, Math.round(prev + delta)));
+    };
+
+    const settle = (ms: number) => {
+      until = Math.max(until, performance.now() + ms);
+      if (raf) return;
+      const tick = () => {
+        apply();
+        raf = performance.now() < until ? requestAnimationFrame(tick) : 0;
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    // The windows are the keyboard's own animation, roughly: opening is slower than
+    // closing, and a viewport scroll settles fastest of the three.
+    const onResize = () => {
+      apply();
+      settle(400);
+    };
+    const onScroll = () => {
+      apply();
+      settle(200);
+    };
+    const onFocus = () => settle(700);
+    const onBlur = () => settle(400);
+
     vv.addEventListener('resize', onResize);
-    vv.addEventListener('scroll', onResize);
-    onResize();
+    vv.addEventListener('scroll', onScroll);
+    input?.addEventListener('focus', onFocus);
+    input?.addEventListener('blur', onBlur);
+    apply();
+
     return () => {
+      cancelAnimationFrame(raf);
       vv.removeEventListener('resize', onResize);
-      vv.removeEventListener('scroll', onResize);
+      vv.removeEventListener('scroll', onScroll);
+      input?.removeEventListener('focus', onFocus);
+      input?.removeEventListener('blur', onBlur);
     };
   }, []);
 
@@ -144,6 +210,7 @@ export default function ChatDock() {
         */}
         {!showInline && (
           <SuggestedPrompts
+            frozen={input.length > 0 || asking}
             onPick={(p) => {
               setInput(p);
               inputRef.current?.focus();

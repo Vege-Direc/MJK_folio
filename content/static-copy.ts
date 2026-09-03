@@ -12,7 +12,7 @@
  * They are questions, not claims, and `evals/tier-a/claims.test.ts` scans them anyway.
  */
 export const suggestedPrompts = [
-  'Walk me through the arc — aircraft to agents.',
+  'The arc: aircraft to agents.',
   'Show me the AI work.',
   'What’s the paid-media track record?',
   'Brief me for a project.',
