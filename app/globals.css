@@ -589,11 +589,43 @@ html[data-flying] {
   max-width: 620px;
 }
 
-.fig-ga svg {
+/*
+ * The stage: the drawing, and the canvas that sits exactly on top of it.
+ *
+ * `aspect-ratio` rather than letting the SVG size the box, because the canvas is absolutely
+ * positioned and would otherwise have no height to inherit until the SVG had laid out. The
+ * ratio is the viewBox's, so the two are registered by construction and nothing has to
+ * measure anything at runtime.
+ */
+.fig-ga-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 300 / 232;
+}
+
+.fig-ga-stage > svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   overflow: visible;
+}
+
+/*
+ * The particle cloud, and the reason it is a canvas.
+ *
+ * Measured at 390x844 under 4x CPU throttle, one-shot 1.7s: 150 SVG circles on CSS
+ * transitions run at 60fps, 800 at 21fps, 2,400 at 6fps, and 4,000 completed no frames at
+ * all. So "denser and smaller", which is what MJK asked for, is not reachable in the DOM —
+ * the old technique was already at its ceiling. Canvas 2D holds 58fps at 2,400. WebGL was
+ * measured too and is SLOWER at this count (18.6ms against 17.4ms), so the third GL context
+ * is not bought. Mounted only for the ~3.0s of the transition and unmounted afterwards.
+ */
+.fig-ga-dust {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 /*
@@ -644,33 +676,6 @@ html[data-flying] {
 .fig-ga[data-phase='scatter'] .ga-engine {
   transition: opacity 420ms ease-in;
   opacity: 0;
-}
-
-/*
- * The particles, and the only moving part of this figure.
- *
- * Each dot carries its start and end as custom properties, so crossing the frame is one
- * `transform` transition per element with a staggered delay — compositor work, no
- * per-frame JavaScript, and nothing on the raster threads that the text halo already
- * taxes. They are mounted for about 1.6 seconds and then unmounted: at rest this figure
- * has no dots in the DOM at all.
- */
-.ga-dust circle {
-  fill: var(--color-accent);
-  transform: translate(var(--x0), var(--y0));
-  opacity: 0;
-  transition:
-    transform 900ms cubic-bezier(0.42, 0, 0.58, 1) var(--d),
-    opacity 260ms ease-out var(--d);
-}
-
-.fig-ga[data-phase='scatter'] .ga-dust circle {
-  opacity: 1;
-}
-
-.fig-ga[data-phase='fly'] .ga-dust circle {
-  transform: translate(var(--x1), var(--y1));
-  opacity: 1;
 }
 
 .ga-case {
@@ -807,8 +812,27 @@ html[data-flying] {
 /*
  * Offered rather than advertised: quiet until it is wanted, and a real button so it is
  * one tab stop with a focus ring and a press state like every other control here.
+ *
+ * MJK asked "where is loop btw?", which is the honest verdict on the first version — 10px
+ * of `--color-type-dim` at 0.18em tracking, sitting at the end of a caption line, reads as
+ * part of the caption. Three changes, none of which make it louder:
+ *
+ *   1. A glyph. A word set in caption type is a label; a word with a circular arrow beside
+ *      it is a control. This is the change that does the work.
+ *   2. `--color-type-muted` instead of `--color-type-dim` — #c2bfb3 against #9d998e on
+ *      #0a0a0e, which is 8.8:1 against 5.4:1. Still quieter than the `MJK-101` opposite it,
+ *      and now above the 4.5:1 the rest of this page holds its small type to.
+ *   3. It arrives instead of appearing. One 8px slide and one single turn of the glyph, at
+ *      the moment there is finally something to replay, and then it never moves again.
+ *
+ * The one thing it is not is a loop. A perpetually running animation on this site measured
+ * -11% framerate and took the worst frame from 66ms to 92ms, and it would sit in the corner
+ * of the eye of someone reading the paragraph beside it.
  */
 .fig-ga-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   cursor: pointer;
@@ -818,14 +842,54 @@ html[data-flying] {
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-type-dim);
+  color: var(--color-type-muted);
   text-shadow: var(--halo-mono);
   transition: color 0.15s;
+  animation: ga-replay-in 520ms cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+.fig-ga-replay-mark {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The single turn. `both` so it holds its end state and never runs again. */
+  animation: ga-replay-turn 760ms cubic-bezier(0.5, 0, 0.2, 1) 160ms both;
 }
 
 .fig-ga-replay:hover,
 .fig-ga-replay:focus-visible {
   color: var(--color-accent);
+}
+
+/* A press state on the glyph alone: the control answers without the label flickering. */
+.fig-ga-replay:active .fig-ga-replay-mark {
+  transform: rotate(-40deg);
+  transition: transform 0.12s;
+}
+
+@keyframes ga-replay-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes ga-replay-turn {
+  from {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-ga-replay,
+  .fig-ga-replay-mark {
+    animation: none;
+  }
 }
 
 .fig-ga-name {
@@ -1799,7 +1863,13 @@ html[data-flying] .answer-layer-in {
  * neither is ever an image at zero opacity — a raster under a wash is a raster that never
  * reached the screen. `visibility` cannot do this job here: a carousel frame that is not
  * showing hides the whole `.ba` with it, and a child set back to `visible` would punch
- * straight through that. Clipped, the raster still decodes.
+ * straight through that.
+ *
+ * It does NOT keep the raster decoding, and this comment used to claim it did. Measured in
+ * a bare page: a clipped `loading="lazy"` image sits at naturalWidth 0 indefinitely while
+ * a plain one and a `visibility: hidden` one both reach 780, because Chrome reads a
+ * zero-area visual rect as "not visible" and never releases the lazy load. BeforeAfter.tsx
+ * takes the frame off lazy as the carousel comes within reach; see the note there.
  */
 .ba-stock {
   clip-path: inset(0 100% 0 0);
@@ -1955,31 +2025,105 @@ html[data-flying] .answer-layer-in {
 
 /* ── §07's before and after ─────────────────────────────────────── */
 
+/*
+ * Four pairs, one at a time, in a box whose height never changes.
+ *
+ * WHY A STEPPER AND NOT A STACK. §07's media column is a 623px band at 1440x900 —
+ * `100svh - 8vh - (--dock-h 173 + 32)` — and `.panel` is `overflow: hidden`, so anything
+ * past the band is destroyed rather than scrolled. One pair plus two cards already
+ * measured ~646px there, which is why a 1280x720 laptop loses 188px off this section on
+ * every visit. A second always-visible pair costs another ~310px and would silently
+ * delete a card and half a photograph. A stepper costs +0px for every pair after the
+ * first, so the fifteenth would be as free as the second; four is an editorial number
+ * rather than a budget one.
+ *
+ * THE BOX IS A CONTRACT. Other states are being built into this same column, so its
+ * height is stated rather than emergent: `--pair-h` + the 7px cell gap + one 11px meta
+ * line. That is 302.5px at 1440x900 and 365.5px at 390x664.
+ */
 .pair {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  /*
+   * Caption left, the pager right, sharing ONE line. A pager on a row of its own is
+   * 24.5px and the band has about 5px of slack, so the row it shares has to be one that
+   * already exists. `figcaption` has to be the figure's first or last child, so the tabs
+   * come first in the DOM and the grid puts them second on the screen.
+   */
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 14px 16px;
   width: 100%;
   margin-bottom: 22px;
+  /*
+   * `cqw` reads the media column itself. Deriving it instead from `.section-inner`'s
+   * max-width, its 5vw padding and its clamp()ed gap disagrees with the real column
+   * wherever the max-width binds: at 1920 the column is 557px, which is NARROWER than
+   * the 581px it is at 1440.
+   */
+  container-type: inline-size;
+  /*
+   * The photograph's height, and the only free variable in the figure.
+   *
+   * 1.769 = 0.963 + 0.806. 0.963 is set 104, the widest of the four supplier frames;
+   * 0.806 is every generated frame, all eighteen of which are 1856x2304. Solving the
+   * column for the widest pair is what lets four pairs of different shapes share one
+   * height with none of them overflowing. 56px is two 18px gutters plus the 20px arrow.
+   *
+   * 31svh is the other half. 623px of band at 1440x900, less 339px of rows that are not
+   * the photograph, leaves 284px; 31svh is 279px there and is the largest round
+   * coefficient that clears the band. It is also what stops the figure growing on a tall
+   * monitor into a section that has no room for it.
+   */
+  --pair-h: min(31svh, calc((100cqw - 56px) / 1.769));
+}
+
+.pair-frames {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: grid;
+}
+
+/*
+ * All four pairs occupy one grid cell, so the box cannot resize when the pair changes.
+ *
+ * The ones not showing are `visibility: hidden`, not `display: none` — the reasoning
+ * `.carousel-frame` already records: a hidden frame still lays out, still lazy-loads and
+ * still decodes, so paging is a cut rather than a wait. It also drops them out of the
+ * accessibility tree and the tab order, which is what a tabpanel that is not selected
+ * should do.
+ */
+.pair-set {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: center;
+  align-items: end;
+  /*
+   * 18px, not `clamp(14px, 2.4vw, 26px)`. The `--pair-h` arithmetic above hard-codes
+   * 2x18 + 20 = 56px, and a viewport-dependent gutter would put the two out of agreement
+   * by several pixels at the bottom of the desktop range — where the section is already
+   * clipping and has nothing to give.
+   */
+  gap: 7px 18px;
+  visibility: hidden;
+}
+
+.pair-set[data-on] {
+  visibility: visible;
 }
 
 /*
  * Equal height, unequal width, and no crop on either photograph.
  *
- * The two frames are 0.926 and 0.806, and they are different shapes because the second is
- * a different photograph rather than a retouch of the first. The column tracks are those
- * ratios, so both images run to the same height and take whatever width that height gives
- * them — nothing is squeezed on one axis, which is the whole requirement. `min-width: 0`
- * is what stops a grid item refusing to shrink below its intrinsic width and pushing the
- * pair out of the column.
+ * Within a pair the two frames are different shapes because the second is a different
+ * photograph rather than a retouch of the first. Across the four pairs the supplier
+ * frames are different shapes again — 0.926, 0.963, 0.857, 0.938 — because they are four
+ * separate phone photographs. Measured: masking the white PVC wall leaves between 0 and
+ * 3% of slack on every edge of all four, so there is no common crop that does not cut
+ * into a garment. Fixing the height and letting each width fall out of it is the only
+ * arrangement that squeezes nothing, and centring the row keeps the jog between pairs
+ * under 16px on either side.
  */
-.pair-frames {
-  display: grid;
-  grid-template-columns: 0.926fr auto 0.806fr;
-  align-items: end;
-  gap: 0 clamp(14px, 2.4vw, 26px);
-}
-
 .pair-cell {
   display: flex;
   min-width: 0;
@@ -1993,15 +2137,16 @@ html[data-flying] .answer-layer-in {
  * Measured: the catalogue photograph's own outer pixels sit at 1.49:1 against the page,
  * and `--color-rule` around it at 1.47:1 — so the frame had no boundary at all, and a
  * generated interior simply dissolved into the scene. All eighteen generated frames fall
- * between 1.30 and 2.06:1, so this is the set, not one unlucky file. The inner ring is
- * 3.65:1 against the page, which clears WCAG 1.4.11's 3:1 for a non-text boundary while
- * staying above 2.4:1 against both photographs; the outer one is the page's own casing
- * trick, keeping the ring off the scene.
+ * between 1.30 and 2.06:1 — the four shipped here are 1.87, 1.53, 1.51 and 1.39 — so
+ * this is the set, not one unlucky file. The inner ring is 3.65:1 against the page,
+ * which clears WCAG 1.4.11's 3:1 for a non-text boundary while staying above 2.4:1
+ * against both photographs; the outer one is the page's own casing trick, keeping the
+ * ring off the scene.
  */
 .pair-cell img {
   display: block;
-  width: 100%;
-  height: auto;
+  height: var(--pair-h);
+  width: auto;
   box-shadow:
     0 0 0 1px #6b6879,
     0 0 0 3px #08080c;
@@ -2023,10 +2168,16 @@ html[data-flying] .answer-layer-in {
  * has nothing to do with the two frames it points between.
  */
 .pair-arrow {
-  width: clamp(18px, 2.6vw, 28px);
+  width: 20px;
   height: auto;
   align-self: center;
-  margin-bottom: 18px;
+  /*
+   * 12px, not 18. The arrow centres in a row that is the photograph plus a 7px gap plus
+   * a 16.5px meta line, so the PHOTOGRAPH's centre sits (7 + 16.5) / 2 = 11.75px above
+   * the row's. 18px was tuned by eye against a 289px frame and drifts as soon as
+   * `--pair-h` tracks the viewport.
+   */
+  margin-bottom: 12px;
   overflow: visible;
 }
 
@@ -2047,6 +2198,514 @@ html[data-flying] .answer-layer-in {
 }
 
 .pair-cap {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
+/*
+ * The pager: `.carousel-strip`'s grammar — a real tablist with a roving tabindex — set as
+ * numerals rather than thumbnails.
+ *
+ * Thumbnails would be better at saying WHICH four, and they cost a 64px row that this
+ * section does not have. Four numerals are 112px on a line that is already being drawn.
+ */
+.pair-nav {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  gap: 2px;
+}
+
+.pair-nav button {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  /* `.carousel-toggle`'s trick: padding makes a 28px target and the negative block
+     margin keeps the row it sits in at its 16.5px line height. */
+  padding: 6px 5px;
+  margin: -6px 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+  transition: color 0.15s, border-color 0.2s;
+}
+
+.pair-nav button:hover {
+  color: var(--color-type);
+}
+
+.pair-nav button[aria-selected='true'] {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.pair-nav button:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * The swap, phone only. Two chips in one button, `.ba-tag` verbatim — the same control
+ * §05 already ships for two photographs that cannot be registered, and for the same
+ * reason: there is nothing between the two states to scrub through.
+ *
+ * It sits UNDER the frame rather than over it, which is where §05 puts it. §05's chips
+ * can lie on the photograph because the top of both frames is background; here every
+ * pixel of both frames is either printed cloth or the invented room, and the whole point
+ * of the figure is that a visitor can check the cloth.
+ */
+.pair-swap {
+  display: none;
+  grid-row: 2;
+  justify-self: start;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pair-swap:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  /*
+   * One frame at a time, at 1.9x the size.
+   *
+   * There was no `.pair` rule below 900px at all, so the three-column desktop grid
+   * survived onto the phone and the pair rendered at its SMALLEST exactly where the
+   * column is widest relative to the viewport: 163x176 and 142x176 in a 351px column,
+   * with the garment inside the catalogue frame about 60px across. The claim the figure
+   * exists to support — that the print, the zari border and the tassels survive while
+   * the room is invented — cannot be checked at 60px, so at that size the evidence was
+   * not evidence.
+   *
+   * `research-aiwork` rejected a cut for this pair on the grounds that two frames this
+   * different are too different to remember across. That is true at 268px and false at
+   * 163px: there is no side-by-side comparison happening on a phone today for a cut to
+   * destroy. Side by side survives where the frames are big enough to compare, which is
+   * desktop.
+   */
+  .pair {
+    /*
+     * 0.963 is set 104 again, so the widest supplier frame still fits the column at
+     * 320px — the one viewport where width binds before height does. 50svh is 332px on a
+     * 390x664 phone, against 176px today.
+     */
+    --pair-h: min(50svh, calc(100cqw / 0.963));
+  }
+
+  .pair-set {
+    grid-template-columns: 1fr;
+    justify-content: start;
+    justify-items: start;
+  }
+
+  /*
+   * Both cells in one track, so the box's height is fixed by whichever is showing and the
+   * left edge never moves. The clip is on the CELL, so a frame and its label leave
+   * together. Clipped, never `display: none`, never `visibility`, never `opacity: 0` —
+   * the same device as `.ba-stock` and for the same reason: both rasters stay decoded and
+   * both alt strings stay in the document, so a screen-reader user gets the whole
+   * comparison without operating anything.
+   */
+  .pair-cell {
+    grid-area: 1 / 1;
+  }
+
+  .pair-cell[data-off] {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  /* Nothing to point between. */
+  .pair-arrow {
+    display: none;
+  }
+
+  /* The chips are the label now: at 307px there is not room for `SUPPLIER · AS SHOT` and
+     a control on the same line, and only one frame is showing to be labelled. */
+  .pair-meta {
+    display: none;
+  }
+
+  .pair-swap {
+    display: flex;
+  }
+}
+
+/* ── §07's JewelAI states ─────────────────────────────────────── */
+
+/*
+ * WHY THESE SHARE §07's BOX INSTEAD OF BEING ADDED TO IT.
+ *
+ * Measured on the built page, not estimated. `.section-inner` pads
+ * `8vh 5vw calc(var(--dock-h) + 32px)`, and at 1440x900 `--dock-h` resolves to 143px, so
+ * the media column has 900 - 72 - 175 = 653px of height. §07 already spends 647 of those
+ * 653 on the apparel pair (383px) plus two cards (242px) plus the pair's 22px margin.
+ * Above 900px `.panel` is `overflow: hidden`, so a figure ADDED to that column would not
+ * scroll out of sight, it would be destroyed. These are therefore STATES of the column,
+ * each sized to the 383px the pair occupies, and only one is ever in the DOM.
+ *
+ * Below 900px `.panel` is `height: auto; overflow: visible`, so the phone box is soft.
+ * The states are still held close to the pair's 289px there, because §07 is already
+ * 1,119px on a 390x664 phone and is on the "Open, not started" list for exactly that.
+ */
+
+.jp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  /*
+   * 436px is derived, not chosen: with the arrow's own track and a 20px gutter either side
+   * of it, it is the width at which the output tile lands at 276px, which is inside the
+   * 303px `.pair-frames` box the apparel stepper fixed for this column.
+   *
+   * It was 461px, which put the tile at 295px and the whole column at 637px of a 653px
+   * readable band — 19px taller than the pair state and 16px off the ceiling. Since
+   * `.panel` is `overflow: hidden` above 900px, 16px of headroom is not a margin, it is a
+   * fuse: the next change to a caption's line count blows it. 6% off the tile buys 19px
+   * back and makes this state exactly as tall as the pair it replaces, which is what
+   * "a question changes WHICH thing is showing, never HOW MUCH" asks for.
+   *
+   * The svh term is not decoration either — on a 720px-tall laptop it takes the figure to
+   * 235px rather than letting it clip.
+   *
+   * It caps the flow and the meta row and NOT the caption, because the caption has no
+   * column to align with and reads better on the full 581px: capped, it wrapped to three
+   * lines and took the whole column past its budget.
+   */
+  --jp-w: min(436px, 56svh);
+  margin-bottom: 22px;
+}
+
+/*
+ * The geometry is one relationship and everything else follows from it.
+ *
+ * Three abutting square references in a 1fr track beside a 1:1 output in a 3fr track make
+ * both columns exactly the same height by construction: three tiles of width w stack to
+ * 3w, and an output 3w wide is 3w tall. So nothing is measured at runtime, there is no
+ * second layout to keep in sync, and the two groups share a baseline and a cap height
+ * without either being cropped to fit the other. Same principle as `.pair-frames`, which
+ * makes its tracks the two photographs' own aspect ratios.
+ */
+.jp-flow {
+  /*
+   * 20px, not 36. The arrow sits in a track of its own, so the gutter is paid twice: at
+   * 36px the two groups were 100px apart on a 1440 desktop — more than the reference
+   * strip's own 98px width — and the strip read as orphaned on the far left rather than
+   * as the left end of one flow. At 20px the gap is 68px. The phone was right at 38px all
+   * along, which is what said the desktop value was wrong rather than the ratio.
+   */
+  --jp-g: clamp(10px, 1.4vw, 20px);
+  display: grid;
+  grid-template-columns: 1fr auto 3fr;
+  column-gap: var(--jp-g);
+  align-items: start;
+  width: 100%;
+  max-width: var(--jp-w);
+}
+
+/*
+ * ZERO GAP, and it is the load-bearing detail of the whole figure.
+ *
+ * MJK's own Krunch Labs deck draws this pipeline with the input as ONE dashed box holding
+ * three abutting photographs and a single arrow leaving it. Three arrows converging would
+ * say "three things were combined"; what actually happens is "one thing was photographed
+ * three times". Three tiles inside one casing ring with no gutter read as one rectangle
+ * because they are one rectangle. Put 3px between them and the claim inverts.
+ */
+.jp-refs {
+  display: grid;
+  gap: 0;
+  align-self: start;
+  min-width: 0;
+  /*
+   * The frame edge as a ring rather than a border, and brighter than `--color-rule`.
+   * Measured for `.pair-cell img` and true here for the same reason: `--color-rule` on
+   * the page ground is 1.47:1, which is not a line, it is a suggestion. The inner ring
+   * clears WCAG 1.4.11's 3:1 for a non-text boundary and the outer one is the casing that
+   * keeps it off the scene.
+   */
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
+}
+
+.jp-refs img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.jp-out {
+  position: relative;
+  align-self: start;
+  min-width: 0;
+  aspect-ratio: 1;
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
+}
+
+.jp-out img,
+.jp-out video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * Drawn, not typed, for `ApparelPair`'s reason: a character would inherit the body face
+ * and sit on a baseline that has nothing to do with the two things it points between.
+ */
+.jp-arrow {
+  width: clamp(18px, 2.6vw, 28px);
+  height: auto;
+  align-self: center;
+  overflow: visible;
+}
+
+.jp-arrow path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jp-arrow-case {
+  stroke: #08080c;
+  stroke-width: 3.4;
+}
+
+.jp-arrow-ink {
+  stroke: var(--color-accent);
+  stroke-width: 1.3;
+}
+
+/*
+ * An opaque chip, and that is not the wash `DESIGN.md` forbids twice.
+ *
+ * That rule is about covering the WebGL scene to protect words from it. This sits on the
+ * photograph it controls, and it has to: measured on `generated.jpg`, the accent over the
+ * darkest quarter of the frame averages 5.95:1, but the 95th-percentile pixels in that
+ * same quarter — the lit moss and the wet edge of the slate — take it to 2.84:1, under
+ * the 4.5:1 an 11px label needs. On `#08080c` it is 11.34:1 everywhere, which turns a
+ * measurement into a constant. The button covers the whole frame, so the target is 295px
+ * square rather than the 60x19px the carousel's toggle measured before it was enlarged.
+ */
+.jp-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 9px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.jp-play > span {
+  margin-right: 7px;
+}
+
+.jp-play::before {
+  content: '';
+  position: absolute;
+  inset: auto 9px 9px 9px;
+  height: 26px;
+  background: #08080c;
+  z-index: -1;
+}
+
+.jp-play:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Capped to the flow's width so `GENERATED` lands on the output tile's own right edge. */
+.jp-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--jp-w);
+  font-family: var(--font-mono);
+  /* 11px, not 10. `DESIGN.md` sets that floor with no argument and no exception. */
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+}
+
+.jp-meta-out {
+  color: var(--color-accent);
+}
+
+.jp-cap {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
+/* ── §07's gates ──────────────────────────────────────────────── */
+
+.jg {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.jg-lane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* 10px, measured: at 12px the eight rows come to 366px against a 383px box, which
+     leaves nothing for the caption. At 10px they come to 312px. */
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 40rem;
+}
+
+/*
+ * The spine, cased.
+ *
+ * A 1px accent line with a 2px `#08080c` ring around it is the same move `.pair-cell img`
+ * makes for its frame edge, and it is what lets a hairline survive a lit filament passing
+ * behind it without anything being laid over the scene. `top`/`bottom` stop at the first
+ * and last marks, so the lane begins and ends on a shape rather than in mid-air.
+ */
+.jg-lane::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  /* 9px is the mark's own vertical centre in an 18px box, so the spine begins and ends on
+     the first and last marks rather than in mid-air above and below them. */
+  top: 9px;
+  bottom: 9px;
+  width: 1px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px #08080c;
+}
+
+.jg-step {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  column-gap: 9px;
+  align-items: start;
+}
+
+/*
+ * `position: relative` is the whole of this rule and it is not a tidy-up.
+ *
+ * The spine is an absolutely-positioned `::before` and the marks are in-flow content, so
+ * the spine painted OVER them: its 5px casing band ran straight down the diamonds' vertical
+ * axis and covered the top and bottom vertices, leaving a left chevron and a right chevron
+ * with a gap between. Every decision on the lane printed as `<|>` — punctuation, not a
+ * shape. Lifting the marks into the positioned layer puts the spine back underneath, where
+ * the `#08080c` plug can do the job it was written for and hide the line inside each mark.
+ */
+.jg-mark {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  width: 34px;
+  height: 18px;
+  overflow: visible;
+}
+
+.jg-mark path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The casing stays 3.6 device pixels at any rendered size. Stripe's diagrams omit this
+     and are effectively desktop-only as a result. */
+  vector-effect: non-scaling-stroke;
+}
+
+.jg-mark .jg-case {
+  stroke: #08080c;
+  stroke-width: 3.2;
+}
+
+/* Fills the mark so the spine behind it does not print through its middle. */
+.jg-mark .jg-plug {
+  fill: #08080c;
+  stroke: none;
+}
+
+.jg-mark .jg-ink {
+  stroke: var(--color-accent);
+  stroke-width: 1.3;
+}
+
+/*
+ * Dashed for what goes in, solid for what comes out. Lifted from MJK's own deck, where
+ * both pipeline pages use that convention and use it consistently. The casing underneath
+ * stays solid, so the dashes have a dark bed rather than gaps onto the scene.
+ */
+/* 2.2/1.8, not 3/2.4: the input rectangle's perimeter is 42 units, and the coarser dash
+   put six marks on it, which printed as registration crop-marks rather than a dashed box. */
+.jg-step[data-kind='in'] .jg-ink {
+  stroke-dasharray: 2.2 1.8;
+}
+
+.jg-q {
+  grid-column: 2;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-type);
+  text-wrap: pretty;
+}
+
+/*
+ * The consequence, and on the three rows that have an exit it is the entire point of the
+ * drawing. 11px is the floor, exactly, and it is not rounded down anywhere.
+ */
+.jg-a {
+  grid-column: 2;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-type-muted);
+  text-wrap: pretty;
+}
+
+/* The three rows that carry a way off the lane are the ones worth finding at a glance. */
+.jg-step[data-exit] .jg-a {
+  color: var(--color-accent);
+}
+
+.jg-cap {
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--color-type-muted);
@@ -2071,6 +2730,8 @@ html[data-flying] .answer-layer-in {
 .dock-send:active,
 .answer-toggle:active,
 .carousel-toggle:active,
+.pair-nav button:active,
+.pair-swap:active,
 .tl-row > button:active,
 .contact-links a:active {
   transform: translateY(0.5px);
@@ -2082,6 +2743,8 @@ html[data-flying] .answer-layer-in {
   .dock-send:active,
   .answer-toggle:active,
   .carousel-toggle:active,
+  .pair-nav button:active,
+  .pair-swap:active,
   .tl-row > button:active,
   .contact-links a:active {
     transform: none;
@@ -2340,6 +3003,15 @@ html[data-flying] .answer-layer-in {
   .section-body {
     font-size: 16px;
     max-width: none;
+  }
+
+  /*
+   * No svh cap on a phone. Below 900px `.panel` is `height: auto; overflow: visible`, so
+   * height stopped being the binding constraint and width became it — and 56svh at a
+   * 664px-tall viewport is 372px, which would have squeezed a 351px column for no reason.
+   */
+  .jp {
+    --jp-w: none;
   }
 
   .card-row {

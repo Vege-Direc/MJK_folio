@@ -8,6 +8,7 @@ import MJK101Figure from './MJK101Figure';
 import { cardKicker } from './card-kicker';
 import Carousel from './Carousel';
 import Timeline from './Timeline';
+import WorkFigure from './WorkFigure';
 import { timelineGroups } from './timeline-data';
 
 /**
@@ -202,10 +203,18 @@ function media(stop: Stop): ReactNode {
      * retires both cards about the third-party assessment, whose volume numbers that same
      * review called volume rather than outcomes.
      */
+    /*
+     * The photograph is now the DEFAULT state of that column rather than its only one.
+     * §07 carries eighteen memories, seven of them JewelAI's, and there is no room to add
+     * a second figure: the column has 653px at 1440x900 and this already spends 647 of
+     * them, under a `.panel` that is `overflow: hidden`. So `WorkFigure` swaps the box's
+     * contents on the first memory a streamed answer cited, and `ApparelPair` is handed
+     * through as a prop so it stays a Server Component and this file stays out of it.
+     */
     case 'proof':
       return (
         <>
-          <ApparelPair />
+          <WorkFigure pair={<ApparelPair />} />
           <Cards stop={stop} limit={2} />
         </>
       );

@@ -695,3 +695,17 @@
     private bucket read only through signed URLs. Every model call has something behind it: two image
     providers, three video providers, and the text models routed through whichever endpoint still has
     credit. Sentry and OpenTelemetry run in all of the Node services.
+- id: jewelai-the-ring
+  section: projects
+  stopId: work
+  title: The ring I use to show what JewelAI Studio does
+  tags: [ai, jewelai, jewellery, photography, video, example, krunch]
+  body: >
+    The piece I show people is a handmade ring, a twisted gold wire band with a rose quartz bead held
+    in a wire wrap, and the pictures of it are exactly what JewelAI Studio is built for: three
+    photographs taken on a phone on a white windowsill, unlit and unstyled, with one photograph looking
+    almost straight down the band so the wrap around the bead reads clearly. I sent that set through and
+    it came back with the ring on wet slate, moss growing out of a crack behind it, the sun low. Then a
+    short clip that begins on that same frame and pulls the camera away. Nothing in the prompt described
+    the ring. The wrap in the picture that came back is the wrap in the photographs, turn for turn, and
+    that is the only test of this I trust.
