@@ -299,14 +299,14 @@ The panel is task 27. Its list, with status:
 |---|---|---|
 | 1 | Six of ten buying enquiries refused by name; the eval printed 100% | **fixed** — `b22b5c0` |
 | 2 | On a phone the answer lands off the top of the screen, 4 of 4 flows | **fixed** — `b333132` |
-| 3 | A long answer's tail destroyed by the dock on desktop | partly — same fix; needs re-measuring at 1440x900 |
+| 3 | A long answer's tail destroyed by the dock on desktop | **fixed** — `0fea4e9`; 1440x900 now 100% on all four flows |
 | 4 | The refusal contradicts itself, then talks for 1,100 characters | **fixed** — `d440f43` |
-| 5 | Nothing in §07 is clickable; two card descriptions clamped mid-word | open — the clamp is in `globals.css`, which agents hold |
+| 5 | Nothing in §07 is clickable; two card descriptions clamped mid-word | the clamp is **measured and handed to task 28** — see below. The links stay blocked on MJK |
 | 6 | The prompt chips have no affordance: transparent, borderless | open |
 | 7 | Contact links typographically identical to the card headings beside them | open |
 | 8 | §08 prints its own headline twice | open |
 | 9 | §02's caption named the RD 350 beside a BITS answer | open — the vectors agent owns that file |
-| 10 | The section heading is scrolled off at the moment of landing | partly — the re-anchor now leaves 64px above |
+| 10 | The section heading is scrolled off at the moment of landing | partly — 64px of section is kept above an over-long answer, and three of four desktop flows keep the heading. Where a section has ~500px above its answer, as §02 does on a phone, the whole answer wins over the heading; the answer carries the visitor's own question in its ASKED line |
 | 11 | Six of nine sections overrun the dock at 390x664 (§04 by 808px) | open |
 | 12 | The scene is nearly absent on the phone's first screen | folded into 29 |
 | 13 | Markdown lists render as inline hyphens | open |
@@ -315,6 +315,38 @@ Two of its own findings it retracted, and both retractions are the useful kind: 
 measurement taken 160ms into a smooth scroll, and a contrast reading taken with the wrong
 instrument (brightest pixel in a box). It also found a real defect while measuring
 something else — see the RD 350's unfetched photograph in the Done table.
+
+### The card clamp, measured — a defect traded for a defect
+
+`-webkit-line-clamp: 2` on `.mini-card .mb` (globals.css:1280) truncates three card
+descriptions **mid-word**, each wanting exactly one more line (`clientHeight` 43 against
+`scrollHeight` 65). The text is already trimmed once by `firstSentence()`, so this is two
+truncations stacked and the second one lands inside a word.
+
+Measured on the built page, media-column height and slack against the readable band:
+
+| viewport | clamp 2 · §06 / §07 | clamp 3 · §06 / §07 | cards clipped |
+|---|---|---|---|
+| 1440x900 (band 757) | 506 / 618 | 527 / 661 | 3 → **0** |
+| 1536x864 (band 721) | 506 / 607 | 527 / 650 | 3 → 0 |
+| 1280x720 (band 577) | 506 / 562, −15 slack | 527 / **605, +28 over** | 3 → 0 |
+| 390x664 | 488 / 694 | 553 / 737 | 6 → 3 |
+
+So three is right everywhere except 1280x720, where §07 already had 15px of slack and
+would overflow by 28px into a rule that destroys rather than scrolls. Not shipped: this is
+a height-budget decision at one viewport, and task 28 is measuring exactly that across
+eight. The likely right answer makes the clamp unnecessary rather than picking a better
+number for it.
+
+### Two "the images do not load" reports, both wrong, both mine to record
+
+An agent reported two catalogue frames still at `naturalWidth: 0` four seconds after §07
+scrolled into view, and I then screenshotted §07 with all four frames empty and concluded
+the stepper was broken. Both were **the standalone image optimizer resizing on first
+request**. At 2.5s every frame was empty; at 9s all eight had decoded, `naturalWidth` 270
+and 226, and the `w=3840` in the `src` attribute is next/image's fallback candidate — the
+request actually made is `w=640`. Wait 8–9s after a cold navigation before judging an
+image on this build, or you measure the optimizer rather than the page.
 
 ---
 
