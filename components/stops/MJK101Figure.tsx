@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
-import { ENGINE, FIG_VIEWBOX, MJK101_LENGTH, MJK101_PATH, MJK101_SPAN, MORPH } from './mjk101';
+import { ENGINE, FIG_VIEWBOX, MJK101_INNER, MJK101_PATH, MORPH } from './mjk101';
 
 /**
  * §02's figure: a two-stroke engine that becomes the aircraft he designed.
@@ -130,8 +130,8 @@ export default function MJK101Figure() {
       <svg viewBox={FIG_VIEWBOX} role="img" aria-labelledby="ga-title">
         <title id="ga-title">
           {reduced
-            ? 'Plan view of the MJK-101, a high-wing dual-role airliner with two underwing engines and a T-tail, with its wingspan and length dimensioned.'
-            : 'A two-stroke parallel-twin motorcycle engine, drawn in isometric, which scatters into particles and reforms as the plan view of the MJK-101: a high-wing dual-role airliner with two underwing engines and a T-tail, with its wingspan and length dimensioned.'}
+            ? 'A three-quarter view of the MJK-101, a high-wing dual-role airliner with two underwing engines and a T-tail, beside its wingspan, length and range.'
+            : 'A two-stroke parallel-twin motorcycle engine, drawn in isometric, which scatters into particles and reforms as the MJK-101: a high-wing dual-role airliner with two underwing engines and a T-tail, seen from the same three-quarter angle.'}
         </title>
 
         {phase === 'engine' || phase === 'scatter' ? (
@@ -173,6 +173,10 @@ export default function MJK101Figure() {
           <>
             {/* The casing pass: the same geometry, fat, in the background colour, underneath. */}
             <path className="ga-case" d={MJK101_PATH} />
+            {MJK101_INNER.map((d, i) => (
+              <path key={`c${i}`} className="ga-case ga-case-thin" d={d} />
+            ))}
+
             {/*
               `pathLength` renormalises the outline's own arc length to 1, so the CSS can
               draw it on with `stroke-dasharray: 1` and never has to know how long it is.
@@ -181,31 +185,31 @@ export default function MJK101Figure() {
             */}
             <path className="ga-ink" d={MJK101_PATH} pathLength={1} />
 
-            <g className="ga-dims" aria-hidden="true">
-              {/* Extension lines, tying each dimension back to the feature it measures. */}
-              <line className="ga-ext" x1={MJK101_SPAN.x0} y1={MJK101_SPAN.y - 4} x2={MJK101_SPAN.x0} y2={MJK101_SPAN.y - 26} />
-              <line className="ga-ext" x1={MJK101_SPAN.x1} y1={MJK101_SPAN.y - 4} x2={MJK101_SPAN.x1} y2={MJK101_SPAN.y - 26} />
-              <line className="ga-ext" x1={MJK101_LENGTH.x + 4} y1={MJK101_LENGTH.y0} x2={MJK101_LENGTH.x + 62} y2={MJK101_LENGTH.y0} />
-              <line className="ga-ext" x1={MJK101_LENGTH.x + 4} y1={MJK101_LENGTH.y1} x2={MJK101_LENGTH.x + 62} y2={MJK101_LENGTH.y1} />
+            {/*
+              The structural lines, drawn after the silhouette and slightly later, so the
+              aircraft arrives as an outline and then gains its depth rather than both at
+              once. Without them a three-quarter view reads as a flat blob.
+            */}
+            <g className="ga-inner">
+              {MJK101_INNER.map((d, i) => (
+                <path key={i} className="ga-iline" d={d} pathLength={1} />
+              ))}
+            </g>
 
-              <line x1={MJK101_SPAN.x0} y1={MJK101_SPAN.y} x2={MJK101_SPAN.x1} y2={MJK101_SPAN.y} />
-              <line x1={MJK101_SPAN.x0} y1={MJK101_SPAN.y - 4} x2={MJK101_SPAN.x0} y2={MJK101_SPAN.y + 4} />
-              <line x1={MJK101_SPAN.x1} y1={MJK101_SPAN.y - 4} x2={MJK101_SPAN.x1} y2={MJK101_SPAN.y + 4} />
-              <text className="ga-label" x={(MJK101_SPAN.x0 + MJK101_SPAN.x1) / 2} y={MJK101_SPAN.y - 5} textAnchor="middle">
-                110 ft
-              </text>
-
-              <line x1={MJK101_LENGTH.x} y1={MJK101_LENGTH.y0} x2={MJK101_LENGTH.x} y2={MJK101_LENGTH.y1} />
-              <line x1={MJK101_LENGTH.x - 4} y1={MJK101_LENGTH.y0} x2={MJK101_LENGTH.x + 4} y2={MJK101_LENGTH.y0} />
-              <line x1={MJK101_LENGTH.x - 4} y1={MJK101_LENGTH.y1} x2={MJK101_LENGTH.x + 4} y2={MJK101_LENGTH.y1} />
-              <text
-                className="ga-label ga-label-v"
-                x={MJK101_LENGTH.x - 6}
-                y={(MJK101_LENGTH.y0 + MJK101_LENGTH.y1) / 2}
-                textAnchor="middle"
-              >
-                97 ft
-              </text>
+            {/*
+              A title block rather than dimension lines. On a plan view a span arrow
+              measures what it points at; on a three-quarter view it would measure a
+              foreshortened projection and quietly lie about it. Every figure here is
+              licensed by `mjk-101` in the corpus.
+            */}
+            <g className="ga-block" aria-hidden="true">
+              <line x1={18} y1={188} x2={128} y2={188} />
+              <text x={18} y={202}>WINGSPAN</text>
+              <text x={122} y={202} textAnchor="end">110 FT</text>
+              <text x={18} y={214}>LENGTH</text>
+              <text x={122} y={214} textAnchor="end">97 FT</text>
+              <text x={18} y={226}>RANGE</text>
+              <text x={122} y={226} textAnchor="end">4112 NM</text>
             </g>
           </>
         ) : null}

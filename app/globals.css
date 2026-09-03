@@ -699,52 +699,65 @@ html[data-flying] {
 }
 
 /*
- * Dimension lines, with the extension lines that make them draughting rather than
- * decoration. Without them the length dimension floats outboard of the wing tip with
- * nothing tying it to the nose and tail it measures, and reads as a stray rule.
+ * The interior lines, and the title block.
+ *
+ * The aircraft used to be a plan view with span and length arrows across it. It is a
+ * three-quarter view now, because an isometric engine turning into a top-down aeroplane
+ * changes projection halfway through the transformation. On a three-quarter view a
+ * dimension arrow would measure a foreshortened projection and quietly lie about it, so
+ * the numbers moved into a title block — which is what a general arrangement does anyway.
  */
-.ga-dims line {
+.ga-inner {
+  opacity: 0;
+}
+
+.fig-ga[data-phase='plane'] .ga-inner {
+  transition: opacity 520ms ease-out 640ms;
+  opacity: 1;
+}
+
+.ga-iline {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.ga-case-thin {
+  stroke-width: 2.2;
+}
+
+.ga-block line {
   stroke: var(--color-type-dim);
   stroke-width: 0.6;
 }
 
-.ga-ext {
-  stroke: var(--color-type-dim);
-  stroke-width: 0.4;
-  stroke-dasharray: 2 3;
-  opacity: 0.75;
-}
-
-.ga-label {
+.ga-block text {
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-size: 7.6px;
+  letter-spacing: 0.14em;
   fill: var(--color-type-muted);
-  /* The text's own casing: stroke first, fill over it. */
   stroke: #08080c;
-  /* 2.5, not 3.5: at 9px the heavier casing closed up around the vertical label and read
-     as a black plate behind the type rather than an edge on it. */
-  stroke-width: 2.5;
+  stroke-width: 2.2;
   paint-order: stroke;
 }
 
-.ga-label-v {
-  writing-mode: vertical-rl;
-}
 
-.ga-dims {
+.ga-block {
   opacity: 0;
 }
 
-.fig-ga[data-phase='plane'] .ga-dims {
-  transition: opacity 620ms ease-out 780ms;
+.fig-ga[data-phase='plane'] .ga-block {
+  transition: opacity 620ms ease-out 900ms;
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .fig-ga .ga-ink,
   .fig-ga .ga-case,
-  .fig-ga .ga-dims {
+  .fig-ga .ga-inner,
+  .fig-ga .ga-block {
     transition: none;
     opacity: 1;
     stroke-dashoffset: 0;
