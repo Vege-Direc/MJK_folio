@@ -302,19 +302,40 @@ judged — two performance claims in this project were retracted because they we
 under headless software rendering, so the panel reports no timing numbers from headless.
 It ranks by what costs MJK work, and it names what is good and must not be touched.
 
-## 28. The images are small, and the layout stops growing — `doing`
+## 28. The images are small, and the layout stops growing — `done`
 
 "the images which really show off the work seem quite small. Why does the layout not
 dynamically match screen sizes?"
 
-Part of the mechanism is already found: `.section-inner` has `max-width: 1460px`, so above
-that width the layout stops growing and the extra pixels become empty margin. A 2560px
-display shows the same photographs at the same size as a 1460px one. The rest of the
-question is harder, because a section is one viewport tall with `overflow: hidden` that
-*destroys* what does not fit, and a wider image at a fixed aspect is a taller image. Out
-for measurement across eight viewports with the height arithmetic for each proposal.
+I told him it stopped growing at 1460px. That was half the mechanism and the wrong half:
+**it shrinks.** `max-width` caps the container, but the padding and gap are in `vw` and go
+on growing after the cap binds, so they eat it from both sides. The column peaks at 589.5px
+on a 1460px viewport and falls away — 556.7 at 1920, 526.3 at 2560. A 2560 monitor has 3.1x
+the pixel area of a 1440 laptop and drew the photographs **9.5% narrower**; a 430px phone
+drew §07's supplier frame 51% larger than a 2560 desktop did.
 
-## 29. The scene is too much seen from inside it — `doing`
+Fixed above 1500px only, with a fixed 72px gutter and the prose track frozen at 640px so
+every extra pixel goes to the media column. The supplier photograph goes 262 → 407px at
+1920 and 246 → 495px at 2560, and 1280, 1366, 1440 and both phones are untouched by
+construction, because 1440x900 is the best screen on this site.
+
+Still open from that measurement, and worth doing:
+
+- **`object-fit: cover` throws away more than the width bug did.** Three of five RD 350
+  frames are 560x900 portrait inside a 4:3 hero, so **46.6% of them is visible on desktop
+  and 38.8% on a phone** — over half of three photographs of the finished bike never
+  reaches the screen, at every viewport. Fixable today with no new photographs by re-cutting
+  those four frames to 4:3 by hand, choosing the crop.
+- **§05 cannot grow until the files do.** The widest source is 780x585 and the optimizer
+  never upscales — asked for `w=1920` it returns the file's own size. The section MJK most
+  wants larger is the one that cannot get larger. That is the wider RD 350 photograph
+  already in Blocked.
+- **A landmine in the `cqw` code.** `--pair-h` is declared on `.pair`, which is its own
+  container — and an element is never its own query container, so `cq*` there would fall
+  back to the viewport. It works only because the property is consumed on a descendant.
+  Move that `height` onto `.pair` itself and the frame silently becomes 1054px.
+
+## 29. The scene is too much seen from inside it — `done`, one band open
 
 "the entire flashing and nueron system seems to be a bit overwhelming for some users
 especially when they actually enter the scroll pathway... ideally when fully zoomed out
@@ -327,8 +348,32 @@ particles are close, large, fast and bright, where the same field seen whole rea
 structure. Two constraints pull against each other and both are measured: reduced motion
 already takes pixel change from 7.88% to 0.01% on desktop and must not be weakened, and a
 judge panel found the scene *nearly absent* on the phone's first screen at 1.16%. So
-anything global makes one of the two worse. Out for research into how comparable sites
-handle a camera inside a particle field, and for a graded curve rather than a switch.
+anything global makes one of the two worse.
+
+**Done.** The loud thing is one object and it is literally one: the camera flies at
+`spineNode + (0, 1.4, 0)` and spine somas are 2.5x a secondary node, so every segment is a
+flight straight at the brightest thing in the field. The cause is structural — every
+material has a far falloff and no near falloff, and three.js provides none. A proximity
+term deepened by camera speed now fades the white-hot core near the camera and leaves
+everything past 9 world units alone, which is the half he said was fine.
+
+Measured on two builds differing only in the flag, scene isolated by hiding the DOM:
+bright-pixel coverage at 1440x900 falls 71% at the median and 50% at the worst frame; on a
+phone the median falls 58% and mean luminance 24%.
+
+**Open: on a phone the worst band, u = 0.78 to 0.86, did not move** — 16.26% against 16.25%
+of the frame above luminance 160. Whatever is bright there is not the billboard core this
+touches. It is the last stretch of the path, around §08.
+
+**Spec'd, and MJK's call: a visible intensity control.** The research is specific and it is
+not a matter of taste — WCAG 2.2.2 Pause, Stop, Hide is **Level A**, applies to decorative
+content through Conformance Requirement 5.2.5 Non-Interference, has no decorative
+exception, and its sufficient technique is a control in the page. `prefers-reduced-motion`
+satisfies 2.3.3, which is AAA. So the site has the AAA one and is missing the Level A one.
+The mechanism already exists and is already measured: a button wired to
+`setReducedMotion(true)`. What is his call is where it lives — the canvas and the dock are
+the only two fixed elements, and the dock is already 147px of a 664px phone screen, so the
+proposal is one item in the existing prompt-chip row at zero added height.
 
 ## 30. A judge panel's ranked defects — `doing`, four fixed
 
