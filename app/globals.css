@@ -652,6 +652,24 @@ html[data-flying] {
   animation: answer-in 220ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
 }
 
+/*
+ * Hold the entrance until the page has actually arrived.
+ *
+ * The envelope lands about 48ms after the question is sent and the answer's fade-and-rise
+ * starts there — while the page is still travelling, on a flight that runs 370ms for one
+ * stop and up to 820ms for eight. So the one cue that says "your answer is here" played
+ * out entirely during the journey, and what greeted the visitor on arrival was a
+ * paragraph that had finished announcing itself to an empty screen.
+ *
+ * `both` holds the first keyframe, so pausing here leaves the answer at opacity 0 and 6px
+ * low, and `lib/flight.ts` dropping the attribute on arrival is what starts it. It also
+ * starts on an interrupt, because `cancelFlight` clears the attribute on every path —
+ * which is right: if the visitor took the page back, they have arrived somewhere.
+ */
+html[data-flying] .answer-layer-in {
+  animation-play-state: paused;
+}
+
 @keyframes answer-in {
   from {
     opacity: 0;
@@ -1141,6 +1159,36 @@ html[data-flying] {
 .tl-row[data-open] > div {
   grid-template-rows: 1fr;
   transition-duration: 260ms;
+}
+
+/*
+ * The text fades in behind the opening row rather than being revealed at full strength.
+ *
+ * The row animates its height from `0fr` to `1fr`, which is what lets it animate a height
+ * nobody had to measure — but the paragraph inside is already at full opacity while the
+ * clip is still moving, so the effect is a shutter passing over finished text rather than
+ * an entry opening. 180ms behind a 90ms delay puts the words a third of a beat behind the
+ * edge, which is the difference between the two readings.
+ *
+ * Opacity only. The row is one of a dozen in a column, and a transform here would move
+ * text inside a box that is itself resizing.
+ */
+.tl-panel-inner p {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.tl-row[data-open] .tl-panel-inner p {
+  opacity: 1;
+  transition-delay: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-panel-inner p,
+  .tl-row[data-open] .tl-panel-inner p {
+    transition: none;
+    opacity: 1;
+  }
 }
 
 .tl-panel-inner {
