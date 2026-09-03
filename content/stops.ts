@@ -94,7 +94,20 @@ export const STOPS = [
      */
     compose: 'figure',
     align: 'left',
-    title: { strong: 'I drew an airliner', muted: 'called the MJK-101.' },
+    /*
+     * General on purpose, and it took a live failure to see why. The title read "I drew an
+     * airliner called the MJK-101", which is true, specific and provokes a question —
+     * every property the copy rewrite was aiming for. Then MJK asked about his BITS
+     * education, landed here, and read a headline about an aeroplane over an answer about
+     * a mechanical degree in Dubai.
+     *
+     * This stop spans two degrees at two institutions on two continents. A title naming
+     * only the second one is wrong for every question about the first, and roughly half of
+     * them are. So the heading names the span and the FIGURE carries the specificity — it
+     * now rests on the engine or the aircraft depending on what the answer was licensed
+     * by, which is a better place for that job than a fixed line of type.
+     */
+    title: { strong: 'I read mechanical at BITS,', muted: 'then aerospace at Brunel.' },
     body: 'BITS Pilani had no aeronautical course, so I read mechanical and came to aerospace afterwards, at Brunel. It was the Airbus design project there: 100 passengers on short European routes, or 28 in business class across continents, sized for London City’s short runway. The UK aerospace market had stopped hiring by the time I finished it.',
   },
   {

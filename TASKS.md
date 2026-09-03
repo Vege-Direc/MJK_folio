@@ -133,7 +133,7 @@ site's behaviour.
 
 ---
 
-## 21. The section must match the question — `doing`
+## 21. The section must match the question — `done`, one half deferred
 
 **Reported:** asking "what can you tell me about his bits education" lands on §02, whose
 title says "I drew an airliner called the MJK-101" and whose figure shows the aircraft.
@@ -149,13 +149,21 @@ of exactly the kind this site allows: the choice comes from the memory ids the a
 licensed by, so it is deterministic and the model has no say in it, which is the rule the
 whole architecture is built on.
 
-The heading is the harder half. `DESIGN.md` treats a stop's title as its identity and the
-anchor a flight lands on, so replacing it is not free. The answer already carries a dek
-that was made to match what the answer actually says. The honest options are to swap the
-heading for that dek while an answer is showing, or to write a title general enough to
-cover both halves of the section — and §02 spans a mechanical degree at BITS and an
-aerospace masters at Brunel, so a title naming only the aircraft will always be wrong for
-half the questions it receives.
+**Done: the figure follows the answer.** Verified end to end — the BITS question rests on
+the engine with 90 engine paths and no aircraft; the Brunel question rests on the aircraft
+with none. The caption follows too. A routing miss surfaced on the way: "tell me about the
+aircraft you designed at Brunel" was landing on §01, because the arc summary there names
+Brunel and aircraft in one sentence and outscored the aircraft's own memory.
+
+**Done, the cheap way: the heading is general now.** "I read mechanical at BITS, then
+aerospace at Brunel" spans both halves, where "I drew an airliner called the MJK-101" was
+wrong for every question about the first degree — and roughly half of them are.
+
+**Deferred: headings that follow the answer.** MJK's first option, and the stronger one.
+The answer already carries a dek that was built to match what it says, so the machinery
+exists; what does not is a way for a server-rendered title to know an answer has landed,
+and `DESIGN.md` treats a stop's title as its identity and the anchor a flight lands on, so
+replacing it is not free. Worth doing if a general title turns out not to be enough.
 
 ---
 
