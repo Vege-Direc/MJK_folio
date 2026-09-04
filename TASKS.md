@@ -436,6 +436,90 @@ and 226, and the `w=3840` in the `src` attribute is next/image's fallback candid
 request actually made is `w=640`. Wait 8–9s after a cold navigation before judging an
 image on this build, or you measure the optimizer rather than the page.
 
+## 31. The motion control — `doing`, approved
+
+WCAG 2.2.2 Pause, Stop, Hide is **Level A**, applies to decorative content through
+Conformance Requirement 5.2.5 Non-Interference, has no decorative exception, and its
+sufficient technique is a control *in the page*. `prefers-reduced-motion`, which this site
+already honours and measures, satisfies 2.3.3 — which is AAA. So the site holds the harder
+criterion and misses the mandatory one. MJK has approved building it.
+
+## 32. Re-cut §05's sources — `doing`, approved
+
+Three of the five RD 350 frames are portrait inside a 4:3 hero, so `object-fit: cover`
+discards 47.5%–53.4% of each file. Per-frame `object-position` (task 28) made the surviving
+half the *right* half; it could not make it bigger. MJK has approved re-cutting the files.
+
+## 33. Cards advertise and then withhold — `doing`, spec out
+
+"some sections have information cutting off prematurely and user can't expand to see more
+either? for example section 6 has AI agents, Engineering etc... on the left which has
+sentences getting cut off - poor user experience right? We need to show what user can
+explore."
+
+He is right, and the interesting part is that the fix may not be an expander. Every card's
+DOM id **is** its memory's id, and retrieval cites memory ids — so a card is already
+addressable. The hypothesis being tested is that **a card is a question that has not been
+asked yet**, which would make the ellipsis an invitation rather than a defect, and would
+answer task 34 at the same time. Out for research and a spec.
+
+## 34. Scroll behaviour, remapped to chat behaviour — `doing`, spec out
+
+"across the entire website have you considered how the user is ecouraged to chat about
+information? How do we guide them towards chat based behaviour instead of just scroll based
+typical website behavior? Always consider how this website is different and thus how we
+have to remap and guide user behaviour."
+
+The deepest question asked about this site so far. Today the whole of the teaching is a
+fixed dock with four rotating suggestions; everything else trains the visitor to scroll,
+because that is what every other site has trained them to do. Out for research into how
+conversational rather than navigational sites teach the behaviour, with the first ten
+seconds treated as the unit.
+
+## 35. Design consistency, affordance and mobile — `doing`, audit out
+
+"please consider basic design principles along with skills are correctly applied across the
+website consistently... And are the buttons for user engagement easy enough for them to
+spot and use? Are you consistently auditing and maintaining mobile behaviour as well?"
+
+A vision audit across all nine sections at four viewports, including the wide-screen mode
+added this week that has never had a design pass. Carries forward the judge panel's open
+items 6 and 7 — the prompt chips computing to `rgba(0,0,0,0)` with `border: 0px none` in
+body-text colour beside a bordered Send button, and the contact links being typographically
+identical to the card headings next to them.
+
+## 36. How the answers are written — `doing`, spec out
+
+"Some responses from the AI are not well written... there needs to be some guide on the
+language, structure of response, header, grammar etc."
+
+Three separate defects, and the first one is diagnosed:
+
+1. **The dek names one thing when the answer is about seven.** `dekFor` scores a licensed
+   memory's title by the fraction of its 4+ letter words that appear in the answer, above a
+   0.5 bar. **A one-word title scores 1.0 the moment it is mentioned at all** — so
+   "TallyBridge" headed an answer that listed seven projects and mentioned it once.
+2. **The prose is monotonous.** Seven sentences, six opening "I built". `system-prompt.md`
+   has no writing guide, and the one MJK has already given — *no AI slop, no rhythmic
+   duality-style sentences, no poetic framing for no reason* — pulls against "vary your
+   openings", so the guide has to resolve that rather than paper over it.
+3. **It is too short and unstructured for the room it now has.** The desktop answer area
+   was widened for exactly this. `finishReason` was `stop` on all 19 measured calls and
+   never `length`, so it is not a token cap: it is the prompt and the guard, and salvage
+   was removing 21% of everything the model wrote.
+
+## 37. JewelAI: what a visitor actually sees — `doing`, plan out
+
+"are the jewel AI assets and video not in place? do you need additional sections for it?
+what is the plan?"
+
+The assets are in place and the two figures are built, but they are **states** of §07's
+media column rather than additions to it, so a visitor who scrolls the whole site and never
+asks the right question sees nothing of JewelAI at all. That is a real gap for the strongest
+technical claim in the corpus — seven of §07's eighteen memories are JewelAI's, more
+material than any other project has. Out for a plan, including whether it warrants a tenth
+section and what that would cost the camera path.
+
 ---
 
 ## Blocked — needs MJK
