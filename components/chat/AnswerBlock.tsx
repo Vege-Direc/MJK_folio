@@ -91,8 +91,17 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
         An empty title is a decision, not a missing value: the server drops the dek when
         no memory it licensed is actually reflected in the answer, because a heading that
         contradicts the paragraph beneath it is worse than no heading at all.
+
+        And the client drops it again when the question already contains it. Cards ask
+        `Tell me about {title}.`, so a card answer printed its own dek directly under an
+        ASKED line that had just said the same words — "Tell me about AI agents." above
+        "AI agents" above the prose. This is the same argument AnswerBlock already makes
+        for suppressing the kicker on a docked answer: the same word twice is not a
+        heading, it is an echo.
       */}
-      {envelope?.title && <p className="answer-dek">{envelope.title}</p>}
+      {envelope?.title && !question.toLowerCase().includes(envelope.title.toLowerCase()) && (
+        <p className="answer-dek">{envelope.title}</p>
+      )}
 
       {/*
         A refusal has no body, and an empty paragraph is not nothing: it still takes its

@@ -14,6 +14,9 @@ import { stopById, type StopId } from '../../content/stops';
 import type { AskUIMessage, EnvelopeData } from './types';
 import { fallbackBlock, type FallbackBlock, type FallbackReason } from '../fallback';
 import { guard, salvageDetailed } from '../grounding/guard';
+// The same splitter the guard licenses by, so the dek is measured in the same units the
+// answer is checked in -- and so a salvaged answer's dek is counted over what survived.
+import { sentences } from '../grounding/text';
 import { askModel, hasApiKey } from '../provider';
 import { retrieve, type RetrievalResult } from '../retrieve';
 import { admit, clientIp, type AdmitResult } from '../security/limits';
@@ -152,25 +155,83 @@ function stripModelArtefacts(text: string): string {
  * "What that looked like in numbers" — a dek promising figures over a paragraph with no
  * figures in it. A review found the same mismatch on two of eight questions.
  *
- * So the final envelope re-titles from the memory the answer actually used, measured by
- * how much of that memory's title turns up in the prose. It changes once, at the moment
- * the caret stops, which is the only point where it can be right rather than likely.
+ * So the final envelope re-titles from the memory the answer actually used. It changes
+ * once, at the moment the caret stops, which is the only point where it can be right
+ * rather than likely.
  *
- * When nothing scores, the dek is dropped rather than guessed. A missing dek costs a
- * visitor nothing; a wrong one contradicts the paragraph under it, and on a site whose
- * entire claim is that it does not make things up, that is the more expensive mistake.
+ * WHICH DIRECTION THE MATCH RUNS IS THE WHOLE THING, and the first version had it
+ * backwards. It scored a memory by the fraction of ITS TITLE's words that appeared
+ * anywhere in the prose, so a one-word title scored a perfect 1.0 the moment it was
+ * mentioned at all. MJK asked "Show me the AI work", got a seven-project survey, and read
+ * it under the heading "TallyBridge" -- one of the seven, named once. Measured again on
+ * this corpus, that rule put a dek on 19 of 30 real answers and 9 of the 19 named a
+ * subject the answer was not about: "The Triad Co" over a whole career, "How I actually
+ * direct an agent" over the Paxel report, "The ring I use to show what JewelAI Studio
+ * does" over JewelAI's infrastructure.
+ *
+ * A dek is a heading, and WCAG 2.4.6 asks a heading to describe the topic of what follows
+ * it. Lemarie, Lorch & Pery-Woodley (2012) measured what a partial one costs: readers
+ * given a title that reflects only part of a document "fail to identify topics that are
+ * not represented in the title", building their picture of the text around the title
+ * instead. A dek naming one of seven projects does not merely look wrong -- it hides the
+ * other six. Google's AI Overviews and Kagi's Quick Answer both put a fixed generic label
+ * over a synthesised answer for the same reason.
+ *
+ * So the measurement runs the other way: how much of THE ANSWER does this memory account
+ * for. A sentence mentions a memory when every one of its title's content words is in that
+ * sentence, on word boundaries -- `includes` matched "agent" inside "directing an agents"
+ * and that is how the Paxel dek happened. A sentence naming nothing carries on from the
+ * one before it, once, no chaining: the guard's own pronoun rule, and unchained because
+ * chaining hands the whole tail of an answer to whatever was named last, which is exactly
+ * how "Taboola" came to head a nine-sentence career answer.
+ *
+ * The bar is a majority. "Describes what follows" means most of what follows.
+ *
+ * The cost is deks that were harmless: 8 of the same 30 answers keep one, and "Paid
+ * media", "Why aircraft" and "What JewelAI Studio runs on" are dropped along with the
+ * nine that were wrong. That is the intended trade. A missing dek costs a visitor nothing
+ * -- `AnswerBlock` treats an empty title as a decision and renders nothing -- while a
+ * wrong one contradicts the paragraph under it, and on a site whose entire claim is that
+ * it does not make things up, that is the more expensive mistake.
  */
+const DEK_BAR = 0.5;
+
 function dekFor(answer: string, licences: readonly { title: string }[]): string {
-  const prose = answer.toLowerCase();
+  // The unit is a sentence OR a semicolon clause, because a series is written with
+  // semicolons -- "MruNN-ERP is a chat-native ERP; TallyBridge, an open-source bridge" --
+  // and a series counted as one unit hands the whole answer to whichever item comes
+  // first. MEASURED: asked what he had built with AI agents, the site answered in a
+  // single 621-character sentence listing a photoshoot pipeline, MruNN-ERP, JewelAI
+  // Studio and this site, and JewelAI scored a perfect 1.0. That is the same "one of
+  // several, named once" heading this function was rewritten to stop, arriving inside one
+  // sentence instead of across seven.
+  const prose = sentences(answer)
+    .flatMap((s) => s.split(';'))
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (prose.length === 0) return '';
+
   let best = '';
-  let bestScore = 0.5; // the bar, not a starting score: below this the dek is dropped
+  let bestCoverage = DEK_BAR; // the bar, not a starting score: at or below it, no dek
 
   for (const m of licences) {
     const words = m.title.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
+    // "The RD 350" and "The MJK-101" reduce to nothing, and a title with no content words
+    // can never be shown to describe anything.
     if (words.length === 0) continue;
-    const score = words.filter((w) => prose.includes(w)).length / words.length;
-    if (score > bestScore) {
-      bestScore = score;
+    const named = words.map((w) => new RegExp(`\\b${w}\\b`));
+
+    let covered = 0;
+    let previousNamedIt = false;
+    for (const sentence of prose) {
+      const namesIt = named.every((re) => re.test(sentence));
+      if (namesIt || previousNamedIt) covered++;
+      previousNamedIt = namesIt;
+    }
+
+    const coverage = covered / prose.length;
+    if (coverage > bestCoverage) {
+      bestCoverage = coverage;
       best = m.title;
     }
   }

@@ -215,39 +215,64 @@ function escapeRegExp(s: string): string {
  * rather than a fragment: at least half the sentences survive, and either two are left or
  * the one that is left is long enough to carry a thought on its own. Otherwise null, and
  * the caller should show the licensed memory text rather than a shrug.
+ *
+ * PARAGRAPHS SURVIVE. `sentences()` normalises whitespace, because the licence unit is a
+ * sentence and a newline inside a YAML folded scalar is not a boundary -- so an earlier
+ * `kept.join(' ')` returned every salvaged answer as a single block. Measured on 14 model
+ * answers on 2026-09-04: the four longest all wrote real paragraph breaks (four, four,
+ * two and two blank lines), all four tripped the guard, and the visitor read every one of
+ * them as one slab. `.answer-prose` carries `white-space: pre-wrap`, so a blank line is
+ * the only formatting the answer surface has, and this was deleting it on the one answer
+ * shape long enough to need it. Salvage now runs paragraph by paragraph and rejoins with
+ * the break; a paragraph emptied by the guard goes rather than leaving a gap. Behaviour on
+ * an answer with no blank line is unchanged, which is every fixture in the test suite.
  */
 export function salvageDetailed(answer: string, result: GuardResult): Salvage | null {
-  const all = sentences(answer);
   const bySentence = new Map<string, Violation[]>();
   for (const v of result.violations) bySentence.set(v.sentence, [...(bySentence.get(v.sentence) ?? []), v]);
 
-  const kept: string[] = [];
+  const paragraphs: string[] = [];
+  let total = 0;
+  let keptCount = 0;
   let dropped = 0;
   let redacted = 0;
+  let onlySurvivor = '';
 
-  for (const sentence of all) {
-    const faults = bySentence.get(sentence);
-    if (!faults) {
-      kept.push(sentence);
-      continue;
+  for (const paragraph of answer.split(/\n[ \t]*\n\s*/)) {
+    const all = sentences(paragraph);
+    total += all.length;
+    const kept: string[] = [];
+
+    for (const sentence of all) {
+      const faults = bySentence.get(sentence);
+      if (!faults) {
+        kept.push(sentence);
+        continue;
+      }
+      const onlyCounts = faults.every((v) => v.kind === 'unlicensed-quantity' && v.quantity && isCountedWord(v.quantity));
+      if (!onlyCounts) {
+        dropped++;
+        continue;
+      }
+      let text = sentence;
+      for (const v of faults) {
+        text = text.replace(new RegExp(`\\b${escapeRegExp(v.quantity!.raw.trim())}\\b\\s*`, 'i'), '');
+      }
+      kept.push(text.replace(/\s{2,}/g, ' ').trim());
+      redacted++;
     }
-    const onlyCounts = faults.every((v) => v.kind === 'unlicensed-quantity' && v.quantity && isCountedWord(v.quantity));
-    if (!onlyCounts) {
-      dropped++;
-      continue;
+
+    keptCount += kept.length;
+    if (kept.length) {
+      onlySurvivor = kept[0];
+      paragraphs.push(kept.join(' '));
     }
-    let text = sentence;
-    for (const v of faults) {
-      text = text.replace(new RegExp(`\\b${escapeRegExp(v.quantity!.raw.trim())}\\b\\s*`, 'i'), '');
-    }
-    kept.push(text.replace(/\s{2,}/g, ' ').trim());
-    redacted++;
   }
 
-  if (kept.length * 2 < all.length) return null;
-  const substantive = kept.length >= 2 || (kept.length === 1 && kept[0].split(/\s+/).length >= 12);
+  if (keptCount * 2 < total) return null;
+  const substantive = keptCount >= 2 || (keptCount === 1 && onlySurvivor.split(/\s+/).length >= 12);
   if (!substantive) return null;
-  return { text: kept.join(' '), dropped, redacted };
+  return { text: paragraphs.join('\n\n'), dropped, redacted };
 }
 
 /** The text alone. See `salvageDetailed`. */
