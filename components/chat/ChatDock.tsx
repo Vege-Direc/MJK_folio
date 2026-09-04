@@ -257,6 +257,7 @@ export default function ChatDock() {
             could not see where they were.
           */}
           <input
+            id="ask"
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}

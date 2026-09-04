@@ -24,10 +24,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ANSWERABLE_STOP_IDS, STOPS } from '../../content/stops';
-import { suggestedPrompts } from '../../content/static-copy';
+import { ANSWERABLE_STOP_IDS, STOPS, type StopId } from '../../content/stops';
+import { stopPrompts, suggestedPrompts } from '../../content/static-copy';
 import { cardKicker } from '../../components/stops/card-kicker';
 import { loadMemories } from '../../lib/corpus/load';
+import { retrieve } from '../../lib/retrieve';
 import { fallbackBlock } from '../../lib/fallback';
 
 /**
@@ -116,9 +117,44 @@ describe('visitor-facing copy never explains the machine', () => {
    * rather than in CSS because the copy is the fix and the clipping is only the net.
    */
   it('keeps every suggestion to one line on the narrowest phone', () => {
-    for (const p of suggestedPrompts) {
+    // Widened to cover the per-stop sets when the chips became section-aware. Same budget,
+    // same reason, and there are now 36 of them rather than four -- which is exactly why the
+    // rule is asserted rather than remembered.
+    for (const p of [...suggestedPrompts, ...Object.values(stopPrompts).flat()]) {
       expect(p.length, `"${p}" is ${p.length} characters and will wrap at 320px`).toBeLessThanOrEqual(40);
     }
+  });
+
+  it('offers every stop a set the size the dock already draws', () => {
+    /*
+     * Four on a desktop, one rotating on a phone. A stop offering three or five would
+     * republish `--dock-h` on the scroll that reached it, and every one of the nine sections
+     * derives its bottom padding from that -- nine relayouts to change a suggestion.
+     */
+    for (const [stopId, prompts] of Object.entries(stopPrompts)) {
+      expect(prompts.length, `${stopId} offers ${prompts.length} suggestions, not ${suggestedPrompts.length}`).toBe(
+        suggestedPrompts.length,
+      );
+    }
+  });
+
+  it('asks every stop’s questions of the stop they belong to', () => {
+    /*
+     * A suggestion is a promise that pressing it goes somewhere useful. These are authored
+     * per section, so a chip on §04 that flies the visitor to §07 is a broken promise made
+     * by the page itself -- and it is the kind that only shows up when someone presses it.
+     *
+     * `viewing` is set because the chip is in the dock and the visitor is on that stop, which
+     * is what `prepareSendMessagesRequest` sends on every question.
+     */
+    const wrong = Object.entries(stopPrompts).flatMap(([stopId, prompts]) =>
+      prompts.flatMap((p) => {
+        const r = retrieve(p, { viewing: stopId as StopId });
+        if (r.stopId === stopId) return [];
+        return [`  ${stopId}: ${JSON.stringify(p)} -> ${r.stopId}`];
+      }),
+    );
+    expect(wrong, `suggestions did not route to their own stop:\n${wrong.join('\n')}`).toEqual([]);
   });
 
   it('lets the privacy page name the machinery, because that is what it is for', () => {

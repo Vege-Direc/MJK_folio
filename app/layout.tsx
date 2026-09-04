@@ -109,6 +109,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${mono.variable}`}>
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: personJsonLdString }} />
+        {/*
+          First in the body, so it is the first tab stop on the page.
+          
+          It was not needed until the cards became controls. Before that the tab order was
+          25 stops and the ask field was near the end of it; making eight cards pressable
+          pushed the field from stop 35 to stop 43, on a page whose entire purpose is that
+          field. Type-to-focus already covers a sighted keyboard visitor and covers a screen
+          reader not at all — single characters are quick-navigation keys in browse mode, so
+          typing a letter jumps to the next heading instead of reaching the input.
+
+          A plain anchor to a focusable target, deliberately: browsers move focus into an
+          `<input>` addressed this way, and it keeps working with JavaScript off, which is
+          the state the rest of this page is careful to survive.
+        */}
+        <a href="#ask" className="skip-to-ask">
+          Skip to the ask box
+        </a>
         <ChatProvider>
           {children}
           <AnswerPortal />

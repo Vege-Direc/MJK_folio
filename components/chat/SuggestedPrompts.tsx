@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { suggestedPrompts } from '@/content/static-copy';
+import { STOPS, type StopId } from '@/content/stops';
+import { stopPrompts, suggestedPrompts } from '@/content/static-copy';
 
 /** Above this width all four are shown at once and nothing rotates. */
 const WIDE = '(min-width: 768px)';
@@ -22,6 +23,26 @@ function subscribeWide(cb: () => void) {
   const mq = window.matchMedia(WIDE);
   mq.addEventListener('change', cb);
   return () => mq.removeEventListener('change', cb);
+}
+
+/**
+ * Which stop is on screen, read from the attribute `ScrollProgress` already maintains.
+ *
+ * The same source `ChatProvider.viewingStop()` uses when it tells the server where the
+ * visitor is, so the chips and the routing cannot disagree about what "here" means. An
+ * attribute rather than shared state because `ScrollProgress` writes it from a rAF loop and
+ * has one authority over it; a second copy in React would be a second thing to keep in step.
+ */
+function subscribeStop(cb: () => void) {
+  const observer = new MutationObserver(cb);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-stop'] });
+  return () => observer.disconnect();
+}
+
+function readStop(): StopId | null {
+  const index = Number(document.documentElement.dataset.stop);
+  if (!Number.isInteger(index)) return null;
+  return STOPS.find((s) => s.index === index)?.id ?? null;
 }
 
 /**
@@ -62,10 +83,48 @@ export default function SuggestedPrompts({
     () => true,
   );
 
+  /*
+   * The stop the visitor is on, so the four questions are the ones THIS section provokes.
+   *
+   * The server snapshot is `null`, which resolves to the hero's four — the honest answer
+   * before a scroll position exists, and the set a visitor sees on arrival anyway.
+   */
+  const stop = useSyncExternalStore(subscribeStop, readStop, () => null);
+  const prompts = (stop && stopPrompts[stop]) ?? suggestedPrompts;
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const turns = useRef(0);
   const stopped = useRef(false);
+
+  /*
+   * A new section is a new set, and a new budget.
+   *
+   * Adjusted during render rather than in an effect, the same bargain `ChatProvider` strikes
+   * for `showOriginal`: an effect would render one frame of the new section showing the old
+   * section's suggestion at whatever index it had reached. Resetting the index matters
+   * because the sets are the same length but not the same strings — index 2 of §04 is not
+   * index 2 of §07 — and resetting the two-pass budget matters because the budget is about
+   * having seen every suggestion, and these are suggestions nobody has seen yet.
+   */
+  const [lastStop, setLastStop] = useState(stop);
+  if (stop !== lastStop) {
+    setLastStop(stop);
+    setIndex(0);
+  }
+
+  /*
+   * The two-pass budget is per stop, and it is reset in an effect rather than beside the
+   * index above because these two are refs and a ref may not be written during render — the
+   * index is state, so it can be. The split is not merely lint appeasement: the effect runs
+   * after the render that changed the set, which is the correct moment. It costs at most one
+   * dwell of delay before the new section starts rotating, and buys that the visitor is
+   * never shown a suggestion mid-swap.
+   */
+  useEffect(() => {
+    turns.current = 0;
+    stopped.current = false;
+  }, [stop]);
 
   useEffect(() => {
     if (wide || frozen || paused || stopped.current) return;
@@ -73,12 +132,12 @@ export default function SuggestedPrompts({
     const id = window.setTimeout(() => {
       turns.current += 1;
       if (turns.current >= ROTATIONS) stopped.current = true;
-      setIndex((i) => (i + 1) % suggestedPrompts.length);
+      setIndex((i) => (i + 1) % prompts.length);
     }, DWELL);
     return () => window.clearTimeout(id);
-  }, [wide, frozen, paused, index]);
+  }, [wide, frozen, paused, index, prompts.length]);
 
-  const shown = wide ? suggestedPrompts : [suggestedPrompts[index]];
+  const shown = wide ? prompts : [prompts[index % prompts.length]];
 
   return (
     <div
