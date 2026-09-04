@@ -61,6 +61,21 @@ export type MindConfig = {
   pulseTailSharp: number;
   pulsePeak: number;
   exciteDecay: number;
+  /**
+   * How fast a soma's visible brightness climbs toward the charge it just took, per second.
+   *
+   * Without this the climb was instant: `fireNode` wrote the saturating combine straight
+   * into the attribute the shader reads, so every arrival was a step from dark to hot in
+   * one frame, decaying with a 110ms half-life. A step followed by a fast fall is a flash,
+   * and MJK described the result as flashing. The charge still arrives instantly - that is
+   * the physiology, and `refractory` is tuned against it - but what is DRAWN now eases
+   * toward it, so a firing swells and falls instead of snapping.
+   *
+   * It also lowers the peak without dimming anything: the drawn value chases a target that
+   * is already decaying, so it never reaches it. That is a smaller bright core in the same
+   * palette, rather than a global brightness cut that would take the far field with it.
+   */
+  exciteRise: number;
   refractory: number;
   triggerPulses: number;
   triggerJitter: number;
@@ -113,7 +128,7 @@ export const CFG: Record<Tier, MindConfig> = {
     nodeCoreWhite: 0.32, nodeBody: 0.32, nodeSizeScale: 1.7,
     pulseWidthRatio: 1.2, pulseElong: 1.15, pulseWidthEnd: 0.15, pulseOpacity: 1.0,
     pulseSpeed: 0.36, pulseGap: 0.5, pulseTailSharp: 6.0, pulsePeak: 1.35,
-    exciteDecay: 6.3, refractory: 0.35,
+    exciteDecay: 3.4, exciteRise: 5.2, refractory: 0.35,
     triggerPulses: 20, triggerJitter: 1.2, triggerEarly: 0.5,
     nebulaPoints: 9000, nebulaSize: 3.2, nebulaOpacity: 0.5, nebulaSpread: 5.0,
     nebulaDrift: 0.4, nebulaMouse: 10, nebulaMouseRadius: 7,
@@ -180,7 +195,7 @@ export const CFG: Record<Tier, MindConfig> = {
     nodeCoreWhite: 0.42, nodeBody: 0.40, nodeSizeScale: 1.6,
     pulseWidthRatio: 1.2, pulseElong: 1.15, pulseWidthEnd: 0.15, pulseOpacity: 1.0,
     pulseSpeed: 0.30, pulseGap: 0.6, pulseTailSharp: 6.0, pulsePeak: 1.35,
-    exciteDecay: 6.3, refractory: 0.35,
+    exciteDecay: 3.4, exciteRise: 5.2, refractory: 0.35,
     triggerPulses: 12, triggerJitter: 1.0, triggerEarly: 0.4,
     nebulaPoints: 2700, nebulaSize: 3.0, nebulaOpacity: 0.6, nebulaSpread: 4.0,
     nebulaDrift: 0.2, nebulaMouse: 7, nebulaMouseRadius: 6,

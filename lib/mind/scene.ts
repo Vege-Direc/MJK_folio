@@ -575,12 +575,29 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     // whether 2 or 10 pulses arrive together past a point, the postsynaptic response
     // saturates. fireNode is the SINGLE entry point for every depart/arrive boost.
     const refractUntil = new Float32Array(totalNodes); // absolute-refractory gate (seconds)
+    /*
+     * The charge, held apart from the brightness that is drawn.
+     *
+     * These used to be one array: `fireNode` wrote the saturating combine directly into
+     * the attribute the shader samples, so a soma went from dark to hot in a single frame
+     * and fell with a 110ms half-life. That is a flash, and it is what MJK meant by "the
+     * entire flashing and neuron system". The physiology is not the problem — an action
+     * potential IS a step, and `refractory` is tuned against exactly that — so the charge
+     * still arrives instantly here and the REMEMBERED value is what eases toward it.
+     *
+     * Two consequences, both wanted. The visible event has a rise as well as a fall, so it
+     * reads as a swell rather than a snap. And the drawn value chases a target that is
+     * already decaying, so it never quite arrives: the peak comes down on its own, which
+     * is a smaller bright core in the same palette rather than a global dim that would
+     * take the far field — the half MJK said was fine — down with it.
+     */
+    const exciteCharge = new Float32Array(totalNodes);
     function fireNode(idx: number, env: number, now: number){
       if (idx < 0 || idx >= exciteArr.length) return;
       if (now < refractUntil[idx]) return;                 // absolute refractory: ignore input
       const w = env * 0.9;                                 // per-event input weight
-      const e = 1 - (1 - exciteArr[idx]) * (1 - w);         // saturating combine (plateaus <=1)
-      exciteArr[idx] = e;
+      const e = 1 - (1 - exciteCharge[idx]) * (1 - w);      // saturating combine (plateaus <=1)
+      exciteCharge[idx] = e;
       if (e > 0.4) refractUntil[idx] = now + cfg.refractory; // crossed firing threshold -> refractory
     }
     const dummy = new THREE.Object3D();
@@ -1797,7 +1814,14 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       // (same visible decay rate on 30fps mobile as 60fps desktop). k=6.3 matches the
       // prior ~0.90/frame @ 60fps feel (halflife ~0.11s -> a clean repolarization fall).
       const excDecay = Math.exp(-cfg.exciteDecay * dt);
-      for (let i = 0; i < exciteArr.length; i++) exciteArr[i] *= excDecay;
+      // Framerate-independent both ways, the same law the decay already used: the charge
+      // falls, and the drawn value eases toward wherever the charge now is.
+      const excRise = 1 - Math.exp(-cfg.exciteRise * dt);
+      for (let i = 0; i < exciteArr.length; i++) {
+        const c = exciteCharge[i] * excDecay;
+        exciteCharge[i] = c;
+        exciteArr[i] += (c - exciteArr[i]) * excRise;
+      }
 
       /*
        * `&& !reduced` is the fix, and hiding the mesh was never enough.
@@ -2188,6 +2212,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
        * Clearing is one pass over two arrays and removes the whole question.
        */
       if (reduced) {
+        exciteCharge.fill(0);
         exciteArr.fill(0);
         aExciteAttr.needsUpdate = true;
         if (t3ExciteArr) {
