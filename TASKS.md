@@ -37,10 +37,12 @@ Status: `done` · `doing` · `spec'd` (researched, awaiting a decision or a buil
 
 ---
 
-## Doing — agents running
+## Research landed — all four agents complete
 
-Four research agents, dispatched 2026-09-05 against the asks in "New, from 2026-09-05"
-below. Each checkpoints to a file it can be resumed from.
+Four research agents, dispatched 2026-09-05. All four were killed twice by process exits
+and both times resumed from their own checkpoint files with no lost work — the checkpoint
+protocol earned its place. **All four have now delivered; their verdicts are in "Research
+verdicts, 2026-09-05" below.**
 
 | # | Task | What it owes |
 |---|---|---|
@@ -722,6 +724,209 @@ constants elsewhere in `lib/mind/` assume nine.
 
 ---
 
+# Research verdicts, 2026-09-05
+
+Four agents. All four were killed twice by process exits and both times resumed from their
+own checkpoint files with no lost work. The full reports are in the session scratchpad as
+`A-embedding.md`, `B-animated-flowcharts.md`, `C-architecture.md` and `D-intro.md`.
+
+## A retraction, and it is mine
+
+**The "attract loop lost by 90% over 502 sessions" figure is unsourced. Do not repeat it.**
+It was quoted twice — in the task 34 write-up and again to MJK — as the argument for
+section-aware chips and against a passive intro. A targeted search of the public-display
+HCI literature found no primary source stating that magnitude.
+
+What survives, and it carries the same conclusions:
+
+- **The direction is well supported.** The honeypot effect is named and defined in Wouters,
+  Downs et al., "Uncovering the Honeypot Effect", DIS 2016.
+- **The closest measured analogue** is 8.6s average viewing passive against 20.9s
+  interactive — about 2.4x, and on dwell time rather than interaction rate. Its authorship
+  and venue could not be cleanly confirmed, so it is credible rather than settled.
+- The 502 sessions belong to a different study: Müller et al., "Looking Glass", CHI 2012
+  Best Paper, whose finding is that a mirrored representation of the passer-by's **own
+  body** signalled interactivity better than an avatar, with noticing at about 1.2s.
+
+The direction survives; the number does not. This repo has retracted its own measurements
+for being taken in the wrong environment, and this one was never taken here at all.
+
+## 46 and 40 — the architecture. `spec'd`
+
+**Twelve stops on the spine, and it stops growing there — because §07 becomes an index, and
+an index absorbs new work without costing a stop. Depth hangs off three of those stops as
+server-rendered routes.** The extension point is a tile, not a chapter, which is what stops
+this question having to be re-litigated every time MJK builds something.
+
+**The real diagnosis of task 40, and it is not the column arithmetic.** TASKS 24's rule is
+that anything a question can reveal must ALSO be reachable without asking. Seventeen of the
+nineteen `work` memories are reachable **only** by asking. The site is in violation of its
+own rule, and the chat is carrying content the page never shows. The 653px column is the
+symptom.
+
+That also settles whether branches duplicate the chat. A branch built as a scroll remap or
+as a JS insertion is reachable only through a JS interaction — the same class of
+reachability the chat already has, so those two **duplicate** it. A server-rendered route is
+reachable by a crawler, by a JS-off visitor and by a pasted link, so it **completes** it.
+Ranking: **routes > on-demand insertion > tree scroll > nested scroll.**
+
+Measured, by re-implementing `buildWaypoints` and running it:
+
+- `S[0..8]` are **bit-identical** at n=9 and n=14. Inserting moves no geometry either; it
+  re-photographs later stops from vantages further down an unchanged spine.
+- **Per-stop scroll distance and camera speed are invariant with n.** One section of scroll
+  is one segment of about 10.5 units at any n. The flight gets longer, not faster.
+- `V[8]` is the exception. The 9-unit pullback that took §08's whole-frame luminance from
+  127.6 to 92.2 is attached to **the last node, not to `contact`**. Append before contact and
+  it follows correctly. **Append after contact and §08 silently reverts to the pale frame.**
+- **`mulberry32(0x5eed ^ M)` seeds the entire secondary field, the sub-branches, the
+  midground and the dust — a different stream for every stop count.** The nine somas stay
+  put; everything around them re-rolls. Every screenshot-derived number in `PLAN.md` and
+  `TASKS.md` is invalidated by any change to M. This is the largest line item in the
+  migration, and it is measurement work rather than code.
+- **`far-network.json` is a fixed volume**, bbox z from +56.24 to -199.04. Camera z reaches
+  -94.8 at n=9, -125.7 at n=12, -146.2 at n=14 and about -199 at n≈19. Comfortable to 14,
+  hard ceiling around 16, after which the desktop background empties. Mobile never draws it.
+- **`lib/flight.ts`'s 820ms clamp is already saturated.** The longest flight peaks at 274
+  px/frame against a stated tearing threshold of about 141 — **1.94x over at n=9**, 2.67x at
+  n=12. One-line fix: raise the clamp to `820*(n-1)/8`. Not re-measured in a browser; it is
+  arithmetic on the file's own recorded figures.
+- **`scene.ts:162` hard-codes `buildWaypoints(9)`, and nothing throws if stops are added.**
+  `handle.pulse(i)` silently ignores an out-of-range index, so a routed answer landing on
+  stop 9 or beyond would fire no light and log nothing, and `ScrollProgress` would map 12
+  sections onto 8 camera segments. Make it structural, driven from `content/stops.ts`.
+- **The existing dendrites cannot carry a camera.** The branch geometry that looked free is
+  not, which is part of why routes win rather than a flight down a filament.
+
+**The cost specific to a naive split: the routing vote.** `retrieve()` accumulates BM25 mass
+per stop, and all nineteen work memories currently vote for the same one. Split `work` four
+ways and that mass splits four ways; ten cases in `routing-table.ts` expect `work`, and CI
+gates at `MIN_ACCURACY = 0.9`.
+
+**On the drop-off premise.** Half holds and half does not. Forcing *reading* costs visitors —
+attention decays monotonically with scroll distance in every source. But that a project stop
+is a toll at all is **unverified**: no source measures the cost of *passing* a figure, only
+of reading prose. And the opposite risk is the one the evidence supports — optional depth
+means most visitors never see the work, and the fractions multiply badly.
+
+> **The premise is right about the mechanism and wrong about the remedy. Do not hide the
+> EXISTENCE of a project behind an optional turn. Hide only its DEPTH.**
+
+Nielsen's progressive-disclosure guidance caps disclosure at two levels. Spine to branch is
+two; a branch that itself branches is one too many.
+
+**No published dataset measures drop-off by chapter count** on a scroll-driven page. Every
+number in circulation comes from text articles where scrolling is incidental. The
+recommended twelve comes from this repo's four measurable walls, not from a percentile.
+
+## 38 — the mechanism behind it, found while measuring something else
+
+`app/globals.css:3256-3265` sets `order: 1` on `.content-zone` at the mobile breakpoint —
+**prose first, media second, on every stop, on every phone.** That single rule is what puts
+the aircraft, the timeline rows and the RD 350 photographs below the fold. The desktop
+already alternates via `.media-zone.left` / `.right`, so the machinery exists and is simply
+not used on mobile.
+
+Task 38 may therefore be cheaper than it is recorded as being: the lever is one declaration,
+not a rebuild. It is still a per-section judgement, and **the flip has not been tested** —
+screenshot it before believing it. The three new stops should be media-first on mobile from
+the start, with an authored body of **2 to 4 lines, not 8**.
+
+## 42 — the two websites. `spec'd`
+
+**Rank 1, and the cheapest thing that gets most of the value: a hero still, the real URL as
+a link, and a true caption.** Works for both sites, works at 390px, adds zero foreign hosts,
+zero tab stops and zero dependencies. Measured at AVIF q50, 640x400: ad-symphony 11,668 B,
+asanjokutch 18,049 B — **under 30 kB for both**, 66 kB if retina.
+
+**Rank 2, and it gets better with a branch:** a tall full-page capture scrolled inside a
+window — one `transform: translateY()` in an `overflow: hidden` box, compositor-only. At
+640px wide: 69,262 B and 46,648 B. In a 581px column beside prose it is a stamp; on a branch
+screen it is the point of the screen. **Hard constraint: WebP and AVIF refuse anything taller
+than 16,383px** — four of six full-page captures exceeded it.
+
+**Rank 5, a live iframe: no.** Impossible for asanjokutch, confirmed three ways, and possible
+but wrong for ad-symphony.
+
+Two build details found by looking at the captures rather than reasoning about them:
+**ad-symphony's cookie banner is in the picture unless it is dismissed first**, and **the
+Shopify admin Draft bar is burned into every frame of the `preview_theme_id` URL**.
+
+Browser chrome, if wanted: hand-rolled at **751 B gzipped**, against 1,923 B for the cheapest
+npm package, 7,080 B for `devices.css` and 9,919 B for `react-device-frameset`. All three
+fail this repo's bar. The only part of the chrome that carries information is the URL line,
+and that is a `<span>`.
+
+## 43 — animated workflow diagrams. `spec'd`
+
+**No library and no JavaScript.** `JewelGates` today is 735 B gzipped of markup and zero JS.
+Animated it is **+129 B of markup and +674 B of CSS, still zero JS** — because `WorkFigure`
+already mounts it at the moment it becomes relevant, and a CSS animation on a newly-mounted
+element runs on mount. An IntersectionObserver would re-solve a problem the state machine
+already solved. The JS that would otherwise have been needed measures 1,004 B gzipped and
+buys nothing.
+
+**Animate the return edge and the token. Do not animate the eight rows.** About 3 kpx of
+raster against 1.02 Mpx for the full staged reveal, every animated property on Chromium's
+accelerated list, and what the full version buys is a flourish that says nothing the static
+lane does not already say.
+
+`stroke-dashoffset` draw-on is **rejected**: it is not accelerated. No frame timing was
+taken — headless Chromium here has no GPU, and the repo's own rule forbids quoting paint
+cadence from it.
+
+Two diagrams, not three, sharing one visual grammar.
+
+## 44 — the opening portrait. `spec'd`, and the brief names the one family that cannot work
+
+**A wireframe of a face fails at any resolution.** Not because the photograph is small, but
+because faces are carried by **tone, not edges**, and four decades of face-perception work
+say so: Davies, Ellis and Shepherd 1978 (line drawings without shading are extremely hard to
+recognise even though every edge is preserved); Bruce et al. 1992 (the same drawings become
+recognisable once the light and dark pattern is added back); Bruce et al. 1991 (3D surface
+shape without texture is a poor identity cue); and photographic negation, which destroys
+recognition while leaving every edge's size, position and extent unchanged.
+
+So edge tracing — Canny, Hough, `imagetracerjs`, `potrace`, anything called a wireframe —
+**fails**, as do SDF, depth-map displacement, and a face-landmark mesh, which is the same
+mesh for everyone. What works is a **tone quantiser**: ASCII, halftone, dither, or a
+luminance-sampled point cloud. Those work at surprisingly low resolution and need
+**directional light far more than they need pixels**.
+
+`MJK101Figure` works precisely because an aircraft and an engine **are** their edges. A face
+is not. The RD 350 bogie failed on resolution alone; a traced face fails on both axes at once.
+
+On resolution regardless: the frame he sent gives an inter-pupil distance of about **54 px**
+against an ISO floor of 90 and best practice of 120, and its eye at 26 px reproduces the same
+3.7:1 downsampling ratio that produced "closer to noise than to structure" on the bogie. The
+phone original probably clears the floor at an IED of roughly 110 to 192 px, and should be
+measured before anything is redesigned — the copy looks like a messaging re-encode.
+
+**Rank 1, and it is not close: ship the sentence. It costs one string.** The instruction
+already exists in `content/stops.ts`, and it is in the worst possible place three ways at
+once — the *last* clause of the *last* paragraph, offering **scroll first and ask second**.
+The site's own hero copy is training the behaviour task 34 exists to retrain. Promote the
+imperative and invert the order. It carries no factual claim, so it passes `claims.test.ts`
+by construction, and it costs zero bytes, zero frames and zero risk.
+
+**Rank 2, the recommended shape: the portrait is the hero, it lives in the WebGL scene, and
+the scroll dissolves it. No gate.** It costs 0.0px of DOM height, which is the only way to
+survive 390x664; `<canvas>` is not an LCP candidate, so it can neither delay nor fake that
+metric; it needs no new motion contract because it **is** the scene and `lib/motion.ts`
+already covers it; no skip control is needed because there is nothing to skip; and it arrives
+*after* the idle callback, once the prose is interactive — the exact inversion of the brief,
+and the right way round. It is also the attract-loop winner rather than the loser: a display
+that reacts to what the visitor is already doing. And it answers the open `DESIGN.md`
+question about the name label being a caption on someone else's sentence.
+
+Honest cost: it lives in `lib/mind/scene.ts`, which owns the camera, the waypoints and the
+materials. It is not a weekend change. **The cheap variant** is desktop at 1500px and above
+only, in the DOM, in the emptiness task 39 already records — which fixes a recorded Tier 2
+defect on the way past.
+
+**Rank 4 is the gate as described, and rank 5 — scrapping it entirely — beats it.**
+
+---
 
 ## Blocked — needs MJK
 
