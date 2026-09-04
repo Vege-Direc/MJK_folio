@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { setMind } from '@/lib/mind/controller';
+import { motionReduced, subscribeMotion } from '@/lib/motion';
 import { STOPS } from '@/content/stops';
 import { CFG, detectTier } from '@/lib/mind/config';
 import type { FarNetwork, MindHandle } from '@/lib/mind/scene';
@@ -40,13 +41,23 @@ export default function MindCanvas() {
     let idle = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    /*
+     * The effective preference, not the media query.
+     *
+     * This used to read `matchMedia` directly, both to seed the scene and to follow the OS
+     * while the page was open. Since the dock gained the WCAG 2.2.2 control there are two
+     * writers, and the naive version let them disagree: a visitor who had turned motion
+     * back ON would have had it turned off again the next time the OS setting changed under
+     * them. `lib/motion.ts` owns the precedence — an explicit choice outranks the operating
+     * system, and the operating system is the default until there is one — and both of us
+     * ask it rather than answering for ourselves.
+     */
+    const unsubscribeMotion = subscribeMotion(() => handle?.setReducedMotion(motionReduced()));
     const observer = new ResizeObserver((entries) => {
       const box = entries[0]?.contentRect;
       if (box && handle) handle.resize(Math.round(box.width), Math.round(box.height));
     });
     const onVisibility = () => handle?.setPaused(document.hidden);
-    const onMotionChange = (e: MediaQueryListEvent) => handle?.setReducedMotion(e.matches);
 
     /**
      * The chat layer announces a routed answer as `mjk:route` with `{ stopId, index }`
@@ -97,7 +108,7 @@ export default function MindCanvas() {
         const { createMind } = await import('@/lib/mind/scene');
         if (cancelled || !canvas) return;
         handle = createMind(canvas, {
-          reducedMotion: motion.matches,
+          reducedMotion: motionReduced(),
           // Where each stop puts its words, so the reading light can sit on that side.
           // Read from the authored stop table rather than guessed at: `align` is the
           // same field the DOM lays the columns out with, so the light and the type
@@ -132,7 +143,6 @@ export default function MindCanvas() {
 
     observer.observe(canvas);
     document.addEventListener('visibilitychange', onVisibility);
-    motion.addEventListener('change', onMotionChange);
     window.addEventListener('mjk:route', onRoute);
 
     // requestIdleCallback is still not in Safari as of 26.
@@ -148,7 +158,7 @@ export default function MindCanvas() {
       if (timer) clearTimeout(timer);
       observer.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
-      motion.removeEventListener('change', onMotionChange);
+      unsubscribeMotion();
       window.removeEventListener('mjk:route', onRoute);
       setMind(null);
       handle?.dispose();

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AnswerBlock from './AnswerBlock';
 import { useAsk } from './ChatProvider';
+import MotionToggle from './MotionToggle';
 import SuggestedPrompts from './SuggestedPrompts';
 import { useAnswerTarget } from './useAnswerTarget';
 
@@ -257,6 +258,11 @@ export default function ChatDock() {
           <button type="submit" className="dock-send">
             Send
           </button>
+          {/*
+            Last, deliberately. See MotionToggle for the reasoning: always available, no
+            added height, and after the input in the tab order.
+          */}
+          <MotionToggle />
         </form>
       </div>
     </div>

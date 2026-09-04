@@ -1799,7 +1799,25 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       const excDecay = Math.exp(-cfg.exciteDecay * dt);
       for (let i = 0; i < exciteArr.length; i++) exciteArr[i] *= excDecay;
 
-      if (particleMesh){
+      /*
+       * `&& !reduced` is the fix, and hiding the mesh was never enough.
+       *
+       * MEASURED, three ways, at 1440x900 with the DOM hidden so only the scene is in
+       * frame: pixel change per frame runs 10.007% with motion on, 0.002% when the scene
+       * is CONSTRUCTED under prefers-reduced-motion, and 2.923% when `setReducedMotion`
+       * is called at runtime. The two reduced paths were supposed to be the same state
+       * and were not, which the dock's new WCAG 2.2.2 control turned from a curiosity
+       * into a defect: the button appeared to work and left a third of the movement
+       * running.
+       *
+       * The cause is that construction sets `particleCount = reduced ? 0 : pulseCount`,
+       * so under the OS setting there are no pulses to step. At runtime the pool exists,
+       * and `applyReducedMotion` only set `particleMesh.visible = false` — which hides
+       * the travelling dots and does nothing about the loop below, whose whole job is to
+       * call `excite()` as a pulse reaches a node. So the somas went on firing behind an
+       * invisible cause: the flashing MJK asked about, with the explanation removed.
+       */
+      if (particleMesh && !reduced){
         const t = clock.elapsedTime;
         const tna = particleMesh.geometry.attributes.aTangent.array;
         for (let i = 0; i < particleData.length; i++){
@@ -1866,7 +1884,10 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       // same smoothstep emerge/absorb envelope as ambient -> smooth depart/arrive.
       // dir<0 runs the curve reversed (1-tt) so the last node's backward fallback
       // still departs FROM S[i]. Slot frees itself once travel + tail is done.
-      if (trigMesh){
+      // The third pool, and the one that was still firing after the other two were gated.
+      // `trigMesh` is created inside `if (particleCount > 0)`, so the OS path never builds
+      // it at all — which is exactly why hiding it at runtime was not the same state.
+      if (trigMesh && !reduced){
         const t = clock.elapsedTime;
         const tna = trigMesh.geometry.attributes.aTangent.array;
         for (let s = 0; s < trigData.length; s++){
@@ -2017,7 +2038,10 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       // Tier-3 ambient pulses: same cycle/envelope/analytic-tangent logic as the
       // main ambient pool + the same personality-skip irregularity. Light and
       // randomized — no fire-wave/refractory simulation in the far field.
-      if (t3PulseMesh){
+      // The far field, for the same reason and with the same fix. Its pulses light tier-3
+      // somas through `t3ExciteArr`, so a hidden mesh here left the distant field
+      // twinkling on its own too.
+      if (t3PulseMesh && !reduced){
         const t = clock.elapsedTime;
         const tna = t3PulseMesh.geometry.attributes.aTangent.array;
         for (let i = 0; i < t3PulseData.length; i++){
@@ -2131,10 +2155,47 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       tubeMat.uniforms.uSwayAmt.value = reduced ? 0 : cfg.swayAmt;
       tubeMat.uniforms.uShimmer.value = reduced ? 0 : 0.28;
       if (nebulaMesh) (nebulaMesh.material as THREE.ShaderMaterial).uniforms.uDriftAmt.value = reduced ? 0 : cfg.nebulaDrift;
+      /*
+       * THE ONE THAT WAS MISSING, and it is the whole of the residual.
+       *
+       * `t3TubeMat = tubeMat.clone()`. A ShaderMaterial clone copies uniform VALUES at
+       * clone time and then owns its own uniform objects — so writing `tubeMat.uniforms
+       * .uSwayAmt.value` here reached the near filaments and never reached the far ones.
+       * At construction it looked correct, because the clone was taken after the value had
+       * already been set from `reduced`; only the runtime path could tell the difference,
+       * and until the dock had a control nothing exercised the runtime path in anger.
+       *
+       * Diffing two consecutive frames with the button pressed drew the answer plainly:
+       * every changed pixel was a filament, in a web across the whole viewport, with the
+       * near cluster still. Sway is what moves a tube.
+       *
+       * `t3NodeMesh` shares `nodeMat` outright rather than cloning, so the far somas were
+       * always covered; this is the only clone in the scene that carries animation
+       * uniforms, and the check above it is now the pair it should always have been.
+       */
       if (t3TubeMat) t3TubeMat.uniforms.uShimmer.value = reduced ? 0 : 0.28;
+      if (t3TubeMat) t3TubeMat.uniforms.uSwayAmt.value = reduced ? 0 : cfg.swayAmt;
       if (particleMesh) particleMesh.visible = !reduced;
       if (trigMesh) trigMesh.visible = !reduced;
       if (t3PulseMesh) t3PulseMesh.visible = !reduced;
+      /*
+       * And put out whatever is already lit.
+       *
+       * Stopping the pulses stops new firings; it does not darken a soma that was mid-flash
+       * when the visitor pressed the control. The decay would take it there in about 110ms
+       * on its own, which is fine, except that the decay loop is skipped for the far field
+       * once `t3ExciteHot` goes false — so a tier-3 soma could be left lit indefinitely.
+       * Clearing is one pass over two arrays and removes the whole question.
+       */
+      if (reduced) {
+        exciteArr.fill(0);
+        aExciteAttr.needsUpdate = true;
+        if (t3ExciteArr) {
+          t3ExciteArr.fill(0);
+          t3ExciteHot = false;
+          if (t3ExciteAttr) t3ExciteAttr.needsUpdate = true;
+        }
+      }
     }
 
     function setReducedMotion(on: boolean){

@@ -2759,6 +2759,7 @@ html[data-flying] .answer-layer-in {
  */
 .prompt-chip:active,
 .dock-send:active,
+.motion-toggle:active,
 .answer-toggle:active,
 .carousel-toggle:active,
 .pair-nav button:active,
@@ -2772,6 +2773,7 @@ html[data-flying] .answer-layer-in {
 @media (prefers-reduced-motion: reduce) {
   .prompt-chip:active,
   .dock-send:active,
+  .motion-toggle:active,
   .answer-toggle:active,
   .carousel-toggle:active,
   .pair-nav button:active,
@@ -2837,6 +2839,85 @@ html[data-flying] .answer-layer-in {
 .dock-send:focus-visible {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+/*
+ * The WCAG 2.2.2 control, in the dock's own row after Send.
+ *
+ * Bordered like `.dock-send` and not like `.prompt-chip`. That is the whole design
+ * decision: a review of this dock found the four chips computing to
+ * `background: rgba(0,0,0,0)` with `border: 0px none` in body-text colour, sitting beside
+ * a bordered Send — four controls that do not look like controls next to one that does.
+ * A Level A mechanism cannot afford to be the fifth. It borrows Send's border, radius and
+ * transition so the dock reads as one system, and it is set in the mono face at the
+ * kicker's size so it is quieter than the primary action without being invisible.
+ *
+ * `--color-type-muted` rather than `--color-type-dim`: 8.8:1 against the page instead of
+ * 5.4:1, which clears the 4.5:1 the rest of the small type here holds to. The scene moves
+ * behind it, so it carries the mono halo like every other small label over the canvas.
+ */
+.motion-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo-mono);
+  /*
+   * 8px block padding gives a 27px box, and the negative margin keeps that out of the
+   * form row's height so the dock does not grow — the same device `.carousel-toggle` and
+   * the apparel pager use. The row is 44px tall in total, which is where the tap target
+   * comes from; the control fills it.
+   */
+  padding: 8px 10px;
+  margin-block: -1px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.motion-toggle:hover,
+.motion-toggle:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.motion-toggle:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Pressed means held. `aria-pressed` is what a screen reader announces and it is set
+ * either way; this is the same fact for everyone else, and it has to be legible at a
+ * glance or the control cannot report its own state.
+ */
+.motion-toggle[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.motion-toggle-mark {
+  display: inline-flex;
+  flex: none;
+}
+
+/*
+ * The label is the state, so on a narrow phone the mark carries it alone and the word
+ * goes. 360px rather than a round number: at 390 the row still fits MOTION beside Send,
+ * and below that Send is what has to survive.
+ */
+@media (max-width: 360px) {
+  .motion-toggle {
+    font-size: 0;
+    gap: 0;
+    padding: 8px;
+  }
 }
 
 /* ── the ask field ─────────────────────────────────────────────────────────── */
