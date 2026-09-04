@@ -149,20 +149,41 @@ export default function BeforeAfter({ className }: { className?: string }) {
         it. The two chips report which frame is up; they are decoration, and the button's
         own label is what a screen reader reads.
       */}
-      <button
-        type="button"
-        className="ba-swap"
-        aria-pressed={stock}
-        aria-label="Show the stock motorcycle, before the rebuild"
-        onClick={() => setStock((s) => !s)}
-      >
-        <span className="ba-tag" data-on={stock || undefined} aria-hidden="true">
+      {/*
+        TWO BUTTONS, NOT ONE. It looked like a picker and behaved like a toggle.
+        Reproduced on the built page: with `rebuilt` selected, pressing `rebuilt` showed the
+        stock bike. A visitor who taps the label naming the thing they want to see gets the
+        other thing — and the accessible name never changed either, so after the flip
+        `aria-pressed` was true, the stock frame was showing, and the label still offered
+        "Show the stock motorcycle, before the rebuild": it was offering to do what it had
+        just done.
+
+        The whole photograph was the target for a good reason, recorded above — the
+        comparison itself should be pressable. What is kept instead is a target large enough
+        to hit: each tag was 59x26.5 on a phone, under the 44px guideline, and each is now a
+        real button padded past it. Pressing the one already selected does nothing, which is
+        what a picker means.
+      */}
+      <div className="ba-swap" role="group" aria-label="Which frame to show">
+        <button
+          type="button"
+          className="ba-tag"
+          data-on={stock || undefined}
+          aria-pressed={stock}
+          onClick={() => setStock(true)}
+        >
           stock
-        </span>
-        <span className="ba-tag" data-on={!stock || undefined} aria-hidden="true">
+        </button>
+        <button
+          type="button"
+          className="ba-tag"
+          data-on={!stock || undefined}
+          aria-pressed={!stock}
+          onClick={() => setStock(false)}
+        >
           rebuilt
-        </span>
-      </button>
+        </button>
+      </div>
     </div>
   );
 }

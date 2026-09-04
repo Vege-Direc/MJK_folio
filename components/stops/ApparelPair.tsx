@@ -148,8 +148,16 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 export default function ApparelPair() {
   const [pair, setPair] = useState(0);
-  // Which frame the phone is showing. Desktop shows both and ignores this entirely.
-  const [supplier, setSupplier] = useState(true);
+  /*
+   * Which frame the phone is showing. Desktop shows both and ignores this entirely.
+   *
+   * It opens on the CATALOGUE frame, and it used to open on the supplier photograph. Below
+   * 900px only one is on screen, so the section that exists to prove the pipeline works was
+   * opening on its raw input — an unimproved phone snap with a batch number composited into
+   * it — and the result was below the fold. The narrative order is before-then-after; the
+   * evidence order is the other way round, and on a phone there is only room for one.
+   */
+  const [supplier, setSupplier] = useState(false);
   const tabs = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLElement>(null);
 
@@ -274,20 +282,29 @@ export default function ApparelPair() {
                 is clipped, not removed — so this changes what is on screen and not what is
                 readable.
               */}
-              <button
-                type="button"
-                className="pair-swap"
-                aria-pressed={supplier}
-                aria-label="Show the supplier photograph instead of the catalogue frame"
-                onClick={() => setSupplier((s) => !s)}
-              >
-                <span className="ba-tag" data-on={supplier || undefined} aria-hidden="true">
+              {/* Two buttons, for the reason recorded in BeforeAfter: this looked like a
+                  picker and behaved like a toggle, so pressing the label of the frame you
+                  wanted showed you the other one. */}
+              <div className="pair-swap" role="group" aria-label="Which frame to show">
+                <button
+                  type="button"
+                  className="ba-tag"
+                  data-on={supplier || undefined}
+                  aria-pressed={supplier}
+                  onClick={() => setSupplier(true)}
+                >
                   supplier
-                </span>
-                <span className="ba-tag" data-on={!supplier || undefined} aria-hidden="true">
+                </button>
+                <button
+                  type="button"
+                  className="ba-tag"
+                  data-on={!supplier || undefined}
+                  aria-pressed={!supplier}
+                  onClick={() => setSupplier(false)}
+                >
                   catalogue
-                </span>
-              </button>
+                </button>
+              </div>
             </div>
           );
         })}

@@ -428,7 +428,17 @@ html[data-flying] {
   justify-content: center;
   align-items: flex-start;
   grid-template-columns: none;
-  padding: 8vh 6vw;
+  /*
+   * `padding-block` and `padding-inline`, not the `padding` shorthand.
+   *
+   * The shorthand is one declaration at specificity (0,2,0) and it silently beat the
+   * wide-screen block's `padding-inline: 73px` at (0,1,0) — so six stops used a fixed
+   * 73px gutter and these three kept a proportional 6vw one, and the disagreement grew
+   * without limit: 14px at 1440, 42px at 1920, 81px at 2560. Longhand loses to the media
+   * query the way it was always meant to.
+   */
+  padding-block: 8vh;
+  padding-inline: min(6vw, 73px);
 }
 
 /*
@@ -446,7 +456,32 @@ html[data-flying] {
   padding: 0;
 }
 
+/*
+ * The fix above was moved rather than made, and this is the half that moved.
+ *
+ * `align-self: stretch` gives the column the full width; an auto margin on the cross axis
+ * CANCELS that stretch in flexbox, so these two stops went back to shrink-to-fit and their
+ * left edge landed wherever the longest line happened to end — 880px against §02's 72px at
+ * 1440, and 1582 against 1465 at 2560. Four consecutive screens, four unchosen margins,
+ * which is the exact defect the comment above says was fixed.
+ *
+ * Pushing the TEXT inside a stretched column does the same job without unstretching it.
+ */
 .center-stage[data-align='right'] .content-zone {
+  /*
+   * `width: 100%` is the whole fix, and the auto margin was never the problem on its own.
+   *
+   * An auto cross-axis margin does cancel `align-self: stretch`, so the box fell back to
+   * shrink-to-fit and its left edge landed wherever the longest line ended — 880px against
+   * §02's 72px at 1440. Right-aligning the TEXT inside a stretched box fixes the left edge
+   * and breaks the right one instead, which is a ragged left margin and worse.
+   *
+   * A stated width restores what stretch was giving: the box is the container's width,
+   * `max-width: 46rem` caps it at 736px, and the auto margin then pushes those 736px to the
+   * right without any shrink-wrapping to cancel. Two rails, a left and a right, and nothing
+   * in between — which is what the comment above always claimed.
+   */
+  width: 100%;
   margin-inline-start: auto;
 }
 
@@ -1998,17 +2033,41 @@ html[data-flying] .answer-layer-in {
 }
 
 /* Same chip as `.carousel-cap`, which sits in the opposite corner of the same frame. */
+/*
+ * A real button now, in both places, because the thing it sits in stopped being one.
+ *
+ * The plate, the tracking and the accent border on the selected one are unchanged — that
+ * treatment is the good part and the audit said so. What changes is the target: 4px of
+ * block padding made it 26.5px tall on a phone, well under the 44px guideline, and it was
+ * a span so nobody could reach it. 11px of padding plus the 17px line box clears 44
+ * without moving the plate's visual weight, and the negative margin keeps the row of two
+ * exactly where it was over the photograph.
+ */
 .ba-tag {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-type);
-  padding: 4px 8px;
+  padding: 13px 12px;
+  margin: -9px -4px;
   border: 1px solid transparent;
+  border-radius: 2px;
   background: rgba(10, 10, 14, 0.55);
   backdrop-filter: blur(4px);
   opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ba-tag:hover {
+  opacity: 1;
+}
+
+.ba-tag:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+  opacity: 1;
 }
 
 .ba-tag[data-on] {
@@ -2836,7 +2895,9 @@ html[data-flying] .answer-layer-in {
 .answer-toggle:active,
 .carousel-toggle:active,
 .pair-nav button:active,
-.pair-swap:active,
+.ba-tag:active,
+.carousel-strip button:active,
+.ba-swap:active,
 .tl-row > button:active,
 .contact-links a:active {
   transform: translateY(0.5px);
@@ -2851,7 +2912,9 @@ html[data-flying] .answer-layer-in {
   .answer-toggle:active,
   .carousel-toggle:active,
   .pair-nav button:active,
-  .pair-swap:active,
+  .ba-tag:active,
+  .carousel-strip button:active,
+  .ba-swap:active,
   .tl-row > button:active,
   .contact-links a:active {
     transform: none;
@@ -3004,6 +3067,13 @@ html[data-flying] .answer-layer-in {
 .ask-input {
   border-bottom: 1px solid var(--color-rule);
   transition: border-color 0.15s;
+  /*
+   * An input's intrinsic `min-width: auto` refuses to shrink past its default size, so at
+   * 320px `flex-1` could not take the field below 182px and it pushed Send 27px out of its
+   * own row — 3px of it off the viewport, with the right border gone. `overflow-x: hidden`
+   * on the body kept `scrollWidth` at 320, so no overflow check saw it.
+   */
+  min-width: 0;
 }
 
 .ask-input:focus-visible {
@@ -3040,8 +3110,32 @@ html[data-flying] .answer-layer-in {
   transition: border-top-color 0.2s;
 }
 
-.contact-links a:hover {
+.contact-links a:hover,
+.contact-links a:focus-visible {
   border-top-color: var(--color-accent);
+}
+
+/*
+ * The four links are the only conversion paths on the page, and nothing said so.
+ *
+ * `.contact-links a` overrides the base anchor rule's accent colour and underline, so its
+ * 18px serif `.kl` under a 1px `--color-rule` top border was pixel-for-pixel the same
+ * object as `.mini-card .mt` beside it: "Download resume" and "What I take on" rendered
+ * identically. Contrast was never the problem — 18.03:1 — the problem was that a static
+ * heading and the site's only outbound link were indistinguishable.
+ *
+ * A mark rather than an underline. The cards below now carry an accent top rule of their
+ * own (they became controls too), so an accent rule here would say "pressable" and not
+ * "leaves the site", and an underline under an 18px serif in this design is heavier than
+ * anything else on the page. The arrow is the one thing on screen that means elsewhere.
+ */
+.contact-links a .kl::after {
+  content: ' ↗';
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  /* Off the accessible name: the label already says where it goes. */
+  speak: never;
 }
 
 .contact-links .kk {
