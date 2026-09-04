@@ -39,12 +39,19 @@ Status: `done` · `doing` · `spec'd` (researched, awaiting a decision or a buil
 
 ## Doing — agents running
 
+Four research agents, dispatched 2026-09-05 against the asks in "New, from 2026-09-05"
+below. Each checkpoints to a file it can be resumed from.
+
 | # | Task | What it owes |
 |---|---|---|
-| 11, 12, 13 | The copy, across the whole site | Exact replacement strings for `content/stops.ts`. §05's kicker and title, which assume the reader knows what the motorcycle is parallel to. §03's empty half-screen. Project descriptions that stop short. And the rule under all of it: every section should leave a specific askable question without teasing. **His hardest constraint: no rhythmic, duality-style sentences, no poetic framing for no reason.** |
-| 14, 17 | §07's display, and whether the site is innovative | Larger images, gallery, lightbox or none — argued from real examples with real bundle numbers, plus an honest answer on where the next real gain is. |
-| 16 | Answers cut short; desktop vs phone; reading without moving the camera | Which of five causes dominates, measured per question; whether the answer surface differs by viewport; and whether a long answer can be read without the page scroll flying the camera away. |
-| 20 | The engine matched to his own RD 350 | His pipes drop off the barrels and run back low and level, slim and chrome — not the fat swept chambers drawn from generic RD reference. Plus the ribbed crankcase cover and the cone filters. |
+| 42 | A site inside a site | How live sites are shown on portfolios, measured; whether an iframe, a capture or a video, and what builds it |
+| 43 | Animated workflow diagrams | Whether animation adds anything a static chart does not, and what draws it for what size |
+| 40, 45, 46 | The architecture: how many stops, and what each carries | What the camera can absorb, where a project video sits, and the corpus gaps that block any of it |
+| 44 | The opening portrait | Whether an intro gate costs more than it returns, what resolution a face needs, and the subtle version of it |
+
+**The agents listed here before have all landed**, and their work is in the history:
+11, 12, 13 (the copy) in `9daf08a`; 14 and 17 (§07's display) folded into 24 and 28;
+16 (answers cut short) in `3ab6763` and `382c8a8`; 20 (the engine) in `f78b9ea`.
 
 ---
 
@@ -592,6 +599,130 @@ per-frame carousel crops.
 
 ---
 
+# New, raised 2026-09-05
+
+## 40. §07 is one column for four projects — `open`, and this is the real defect
+
+"why did you remove the clothing examples and swapped with jewel AI? It shouldn't be one
+for the other because then we're missing out showing off our work to clients right?"
+
+He is right, and the swap was a symptom rather than a decision. §07 `work` carries
+**nineteen corpus memories across four projects** — JewelAI Studio (seven), the apparel
+photoshoot pipeline (three), MruNN-ERP (two), TallyBridge (one), plus the Paxel
+assessment, the awards, the outreach engine, Artha and the build overview. Its media
+column draws **one figure and two cards**. Seventeen of the nineteen are never drawn.
+
+`WorkFigure.tsx` became a state machine because the arithmetic left no choice: 653px of
+column at 1440x900, ~647px already spent by the pair plus two cards, and
+`.panel { overflow: hidden }` destroys the excess rather than scrolling it. So JewelAI
+could only be made visible by taking the floor away from the apparel work. The file
+records that trade as "a content call, not a layout one, so it is left as MJK's" — and he
+has now made it: **neither displaces the other.**
+
+What changed is the constraint itself: "if this means more steps along the way of the
+scroll that's fine... Don't constrain what we're showing because you can't fit it into the
+existing few steps." So the question is no longer which figure wins one column. It is how
+many stops the work deserves — task 46.
+
+**Independent of that outcome:** the default must stop hiding the apparel work.
+
+## 41. The JewelAI figure should read three photographs → image → video — `open`
+
+"even with the ring example it should be 3 rings to image and then image to video right?
+that's the flow and also shows that we can do just image if required."
+
+He is right, and it is also the more truthful drawing. `JewelEvidence.tsx` draws **two**
+stations today — the three references, one arrow, and a single output tile whose still is
+the video's poster. The reason on file is sound as far as it goes: the generated still IS
+frame 0 of the clip, mean absolute luma difference 3.37 of 255, so two tiles side by side
+would have printed the same picture twice.
+
+But that argues against printing it twice, not against drawing three stations. The corpus
+already states the sequence: `jewelai-video` licenses "the clip starts from the still — an
+image it had already made and already checked". Three marks and two arrows says what the
+pipeline does, and says the second thing he wants said — **the image is a deliverable on
+its own**, and a client who needs only stills can stop at the middle station.
+
+## 42. Two websites he built — `researching`
+
+`https://asanjokutch.org/` and `https://www.ad-symphony.com/`. "Website within website -
+research how people have done this creatively as well."
+
+**Measured first, because it decides the shape of every answer:**
+
+| site | platform | `x-frame-options` | `frame-ancestors` | framable? |
+|---|---|---|---|---|
+| asanjokutch.org | Shopify | `DENY` | `'none'` | **no, and nothing on our side changes it** |
+| www.ad-symphony.com | Vercel | absent | absent | yes, as of today |
+
+So one uniform treatment is not available. Two further flags. The URL he sent carries
+`preview_theme_id=186809876844`, which is a Shopify **unpublished theme preview** —
+publishing that link may expose work a client has not launched, and preview links are not
+durable. And **the corpus licenses nothing about either site**: no memory names them,
+their stack, their dates, his role or any outcome. Nothing can be written about them until
+he supplies facts. See Blocked.
+
+## 43. Animated workflow diagrams — `researching`
+
+"We were also supposed to have animated flowchart diagrams for the workflows i've built."
+
+The static chart shipped: `JewelGates.tsx`, 24 inline paths, 1.4 kB, server-rendered, zero
+JavaScript, drawn as a vertical lane with three exits because branching is what prose is
+bad at. Task 23 is therefore closed and this is the next question rather than a repeat of
+it.
+
+What any answer has to survive: a perpetual animation measured on this page cost 11% of
+framerate and took the worst frame 66ms to 92ms; WCAG 2.2.2 is Level A here; and the
+cheapest node-and-edge library measured ~190x the size of what `JewelGates` draws.
+
+## 44. An opening portrait that disperses into the network — `researching`
+
+"'My Name is Mathew, welcome to my mind - lets chat'... a highly detailed wireframe or
+ascii text or something modeled on just my head... full screen before the neural networks
+loads so kinda like a loading screen... it will zoom into my head which will disperse into
+particles which will fade and then the nueral network with the first step shows. Too
+dramatic? Too much? or can you improve it to be qualitatively subtle while still being a
+great way to guide users? Or scrap it all together?"
+
+Two halves, and they may not deserve the same verdict. **The sentence is the most valuable
+thing in the proposal** — "welcome to my mind, let's chat" is the clearest instruction this
+site has ever been offered, and task 34 is precisely the problem that visitors do not know
+to chat. **The mechanism is the expensive half**: `lib/mind/controller.ts` imports the
+scene from an idle callback so that nine sections of prose are interactive first, and a
+gate in front of it inverts that priority deliberately.
+
+Also handed to the research, because it is the risk that sinks this kind of thing: the head
+is roughly **130x200 pixels** in the frame he sent, and this repo has already shipped the
+failure where detail traced below its source resolution reads as noise — the RD 350's
+landing-gear bogie, six wheels at 28 source pixels. A face is the least forgiving subject
+there is.
+
+## 45. The MruNN ERP demo video — `blocked on the asset`, slot to be designed
+
+"I also intend to record a video of Mrunn erp in action later but that's just and FYI and
+you don't have to do anythign about it now."
+
+Nothing to build yet. Recorded so the slot is designed with the architecture rather than
+bolted on afterwards. The bar is the clip already on the site: 225 kB at 640x640, h264
+CRF 30, `preload="none"` behind a real control.
+
+## 46. How many stops the site should have — `researching`
+
+"if this means more steps along the way of the scroll that's fine, but really think out the
+content on the site and consider this is a portfolio demonstration... You can even extend
+the neural network animation if you feel it's needed."
+
+This unblocks 40, 42 and 45 at once, and it is the largest structural question the site has
+been asked. `buildWaypoints(n)` in `lib/mind/waypoints.ts` already takes the stop count as
+a parameter and generates the spine from a seeded RNG, so the scene does not hard-code
+nine. What has to be established before anything moves: that appending stops leaves the
+existing nine vantages bit-identical while inserting moves everything after the insertion
+point; what more stops do to total scroll length and to camera speed per stop; and which
+constants elsewhere in `lib/mind/` assume nine.
+
+---
+
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
@@ -605,7 +736,29 @@ per-frame carousel crops.
    volume rather than outcomes.
 5. **Whether to store visitors' questions** — see lead capture.
 6. **Fonts.** Fraunces with Inter is flagged as a saturated pairing.
-7. **The hero's name label**, which is a genuine eyebrow.
+7. **The hero's name label**, which is a genuine eyebrow. Task 44 may answer this by
+   accident: a portrait at the top would give his name its own presence rather than
+   leaving it a caption on someone else's sentence.
+
+Raised 2026-09-05, and each of these blocks a build rather than a decision:
+
+8. **Facts about the two websites**, because the corpus licenses nothing about either and
+   nothing can be written that the corpus does not license. For `asanjokutch.org` and
+   `www.ad-symphony.com` each: what he actually did (built it, designed it, ran the media
+   for it), when, on what stack, whether the client may be named or must stay anonymous
+   like every other client on this site, and any outcome he can stand behind. Without
+   these, a screenshot on the page would carry a caption that says nothing.
+9. **Whether the Shopify preview link may be published.** He sent
+   `asanjokutch.org/?preview_theme_id=186809876844`, which previews an **unpublished
+   theme**. If that theme is not live, showing it publicly may expose a client's unlaunched
+   work. The live storefront is a different design and it is the one that is safe to show.
+10. **A proper photograph of his head**, if task 44 goes ahead in any form. The frame he
+    sent is a full-body seated shot in which the head is roughly 130x200 pixels. Detail
+    traced below its source resolution reads as noise, and a face is the least forgiving
+    subject there is.
+11. **The MruNN ERP screen recording** (task 45), when he records it. Useful to know in
+    advance whether it can show real data or needs a seeded demo tenant — the site names no
+    client, and an ERP screen is full of client names.
 
 ---
 
