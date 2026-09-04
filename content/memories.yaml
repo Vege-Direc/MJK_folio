@@ -26,6 +26,15 @@
     everything — a cafe racer from an RD350, a chat-native ERP, a multi-agent creative pipeline for
     jewellery, a website that behaves like a mind.
 
+- id: project-jewel-ai
+  section: projects
+  stopId: work
+  title: JewelAI Studio
+  tags: [ai, agents, creative, langgraph]
+  body: >
+    A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
+    for jewellery brands. LangGraph orchestration, custom retouching agents, brand-voice guardrails.
+
 - id: project-mrunn-erp
   section: projects
   stopId: work
@@ -45,15 +54,6 @@
     An open-source project, MIT licensed, that syncs Indian accounting software into a queryable
     database and puts an AI assistant in front of it — 27 MCP tools for plain-English financial
     queries.
-
-- id: project-jewel-ai
-  section: projects
-  stopId: work
-  title: JewelAI Studio
-  tags: [ai, agents, creative, langgraph]
-  body: >
-    A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
-    for jewellery brands. LangGraph orchestration, custom retouching agents, brand-voice guardrails.
 
 - id: project-taboola
   section: timeline

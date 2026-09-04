@@ -3368,4 +3368,21 @@ html[data-flying] .answer-layer-in {
   .carousel {
     max-width: 560px;
   }
+
+  /*
+   * The JewelAI figure was the one thing on the page that did not grow with the screen.
+   *
+   * `--jp-w: min(436px, 56svh)` is a hard cap, so above 780px of height it is 436px at
+   * 1440, at 1920 and at 2560 alike — refs 92px square, output 276px square — while the
+   * apparel pair beside it in the same column grew to 407px and 495px photographs. That is
+   * MJK's "the images which really show off the work seem quite small", located precisely,
+   * on the figure that carries the strongest technical claim in the corpus.
+   *
+   * 600px, not more: it puts the output tile at 420px and the whole flow at about 479.5px,
+   * for a §07 total of 743.3 in an 818.6px band at 1920 — 75.3px spare. 680px leaves 15.3,
+   * which is the same fuse that was removed once already and should not be re-lit.
+   */
+  .jp {
+    --jp-w: 600px;
+  }
 }

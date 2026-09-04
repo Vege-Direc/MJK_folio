@@ -44,13 +44,25 @@ import JewelGates from './JewelGates';
  * JewelAI beside a picture of JewelAI is right even when the picture is not of the exact
  * clause, and an answer about JewelAI beside a picture of a kaftan is not.
  */
-const FIGURE_BY_CITE: Readonly<Record<string, 'evidence' | 'gates'>> = {
+type Figure = 'evidence' | 'gates' | 'pair';
+
+const FIGURE_BY_CITE: Readonly<Record<string, Figure>> = {
   'jewelai-gates': 'gates',
   'jewelai-reads-the-piece': 'evidence',
   'jewelai-the-ring': 'evidence',
   'jewelai-video': 'evidence',
   'jewelai-platform': 'evidence',
   'project-jewel-ai': 'evidence',
+  /*
+   * The apparel work is a state now rather than the floor, because the DEFAULT changed.
+   *
+   * It used to be that anything not recognised fell through to the pair, so these three
+   * needed no entry. Now that the default is `evidence` they do, or a question about the
+   * photoshoot pipeline would be answered beside a photograph of a ring.
+   */
+  'project-photoshoot-pipeline': 'pair',
+  'photoshoot-how-it-works': 'pair',
+  'photoshoot-numbers': 'pair',
 };
 
 /**
@@ -70,7 +82,7 @@ const FIGURE_BY_CITE: Readonly<Record<string, 'evidence' | 'gates'>> = {
  */
 const AMBIGUOUS_CITE = 'jewelai-infrastructure';
 
-function figureFor(cites: readonly string[]): 'evidence' | 'gates' | undefined {
+function figureFor(cites: readonly string[]): Figure | undefined {
   const first = cites[0];
   if (!first) return undefined;
   if (first !== AMBIGUOUS_CITE) return FIGURE_BY_CITE[first];
@@ -89,12 +101,30 @@ export default function WorkFigure({ pair }: { pair: ReactNode }) {
   const state = envelope?.stopId === 'work' ? figureFor(envelope.cites) : undefined;
 
   if (state === 'gates') return <JewelGates />;
-  if (state === 'evidence') return <JewelEvidence />;
+  if (state === 'pair') return <>{pair}</>;
 
   /*
-   * `pair` arrives as a prop rather than an import because `ApparelPair` is a Server
-   * Component and a parallel change is adding more pairs to it. Passing it through keeps
-   * it server-rendered and keeps this file out of that component entirely.
+   * THE DEFAULT IS THE JEWELAI EVIDENCE, and it used to be the apparel pair.
+   *
+   * MJK asked what the plan was for JewelAI and whether it needed a section of its own.
+   * The honest answer to the first half is that a visitor who scrolled all nine sections
+   * and never typed saw NOTHING of it — the assets were in place, both figures worked, and
+   * neither was reachable without knowing to type the name. Meanwhile §07's authored
+   * paragraph opens with the words "JewelAI Studio" and every clause of it is JewelAI,
+   * beside a photograph of a kaftan the paragraph does not mention. And a motorcycle hobby
+   * has the largest media treatment on the site.
+   *
+   * It was worse than an oversight. None of the four suggested prompts reached a JewelAI
+   * figure: "Show me the AI work." cites `build-overview` first, and `build-overview`'s
+   * body LEADS with JewelAI Studio — so the broadest question the site offers produced an
+   * answer about JewelAI printed next to a kaftan.
+   *
+   * The height objection that made this a state machine still holds and is unchanged; this
+   * only swaps which state is the floor. Measured: 0.0px at 1440x900, and it SAVES 141.8px
+   * at 1920, 255.7px at 2560 and 104.3px at 390x664, the last on a section already flagged
+   * for overrunning the dock.
+   *
+   * It is one line to put back, and it is a content decision rather than a layout one.
    */
-  return <>{pair}</>;
+  return <JewelEvidence />;
 }
