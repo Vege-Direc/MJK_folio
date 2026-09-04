@@ -463,7 +463,7 @@ addressable. The hypothesis being tested is that **a card is a question that has
 asked yet**, which would make the ellipsis an invitation rather than a defect, and would
 answer task 34 at the same time. Out for research and a spec.
 
-## 34. Scroll behaviour, remapped to chat behaviour — `done`, first move shipped
+## 34. Scroll behaviour, remapped to chat behaviour — `done`
 
 "across the entire website have you considered how the user is ecouraged to chat about
 information? How do we guide them towards chat based behaviour instead of just scroll based
@@ -475,6 +475,24 @@ fixed dock with four rotating suggestions; everything else trains the visitor to
 because that is what every other site has trained them to do. Out for research into how
 conversational rather than navigational sites teach the behaviour, with the first ten
 seconds treated as the unit.
+
+**Both moves shipped.** A card is a question that has not been asked yet (33), and the dock
+now offers the four questions *this* section provokes rather than the same four everywhere.
+Together they cover a section: the cards address the memories that are drawn, the chips
+address the ones that are not — seventeen of nineteen on §07.
+
+A regression came with the first and is fixed with the second: making eight cards pressable
+pushed the ask field from tab stop 35 to 43, so there is a skip link now, first in the body.
+
+Two things from the spec were **not** built, with its reasons. A first-run overlay: NN/g's
+controlled test at n=70 found task success unchanged and perceived ease *worse* with the
+tutorial, 4.92 against 5.49, p=.047. And an in-place expander on the cards: §04's accordion
+already puts more than half its text behind a tap, and the answer delivers the same facts
+better. The headline research finding also inverted a premise I had been working from — in
+the only large field trial, the attract loop was the control condition and **lost by 90%**
+over 502 sessions; what won was making the display visibly react to something people were
+already doing, which is a better argument for section-aware chips than the height budget I
+had built it on.
 
 ## 35. Design consistency, affordance and mobile — `done` in part; see 38 and 39
 
