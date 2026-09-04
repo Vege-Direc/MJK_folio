@@ -3,6 +3,7 @@ import { SITE } from '@/content/site';
 import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
 import ApparelPair from './ApparelPair';
+import AskCard from './AskCard';
 import AuthoredBody from './AuthoredBody';
 import MJK101Figure from './MJK101Figure';
 import { cardKicker } from './card-kicker';
@@ -155,12 +156,13 @@ function Cards({ stop, limit = MAX_CARDS }: { stop: Stop; limit?: number }) {
     <div className="card-row">
       {memories.map((m) => (
         // The card's id IS the memory's id: retrieval cites memory ids, so a pulse or a
-        // scroll target can address the exact card an answer came from.
-        <div className="mini-card" id={m.id} key={m.id}>
-          <div className="mk">{cardKicker(m)}</div>
-          <div className="mt">{m.title}</div>
-          <div className="mb">{firstSentence(m.body)}</div>
-        </div>
+        // scroll target can address the exact card an answer came from — and, since the
+        // card became a control, so can the question it asks about itself.
+        <AskCard key={m.id} id={m.id} title={m.title} stopId={stop.id}>
+          <span className="mk">{cardKicker(m)}</span>
+          <span className="mt">{m.title}</span>
+          <span className="mb">{firstSentence(m.body)}</span>
+        </AskCard>
       ))}
     </div>
   );
@@ -213,11 +215,11 @@ function Contact({ stop }: { stop: Stop }) {
         ))}
       </div>
       {memories.map((m) => (
-        <div className="mini-card" id={m.id} key={m.id}>
-          <div className="mk">{cardKicker(m)}</div>
-          <div className="mt">{m.title}</div>
-          <div className="mb">{firstSentence(m.body)}</div>
-        </div>
+        <AskCard key={m.id} id={m.id} title={m.title} stopId={stop.id}>
+          <span className="mk">{cardKicker(m)}</span>
+          <span className="mt">{m.title}</span>
+          <span className="mb">{firstSentence(m.body)}</span>
+        </AskCard>
       ))}
     </div>
   );

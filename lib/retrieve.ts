@@ -677,7 +677,19 @@ type Engine = {
    * bands overlap: the loudest deictic question scores 20.2 and "what's mrunn" scores 19.8.
    */
   anchors: Set<string>;
+  /**
+   * Tokenised title -> memory id, for the case where the visitor typed a title and nothing
+   * else. Built with the index because it is derived from the same corpus and must not drift
+   * from it; a Map because the lookup happens on every question and tokenising 54 titles per
+   * keystroke to answer a question that usually has no title in it would be absurd.
+   */
+  byTitle: Map<string, string>;
 };
+
+/** The key both sides of the title lookup are built from. Order-independent, stemmed. */
+function titleKey(text: string): string {
+  return tokenize(text).slice().sort().join(' ');
+}
 
 let engine: Engine | null = null;
 
@@ -728,6 +740,7 @@ function getEngine(): Engine {
     byId: new Map(memories.map((m) => [m.id, m])),
     aliases: buildAliases(memories),
     anchors: buildAnchors(memories),
+    byTitle: new Map(memories.flatMap((m) => (titleKey(m.title) ? [[titleKey(m.title), m.id] as [string, string]] : []))),
   };
   return engine;
 }
@@ -848,7 +861,7 @@ export function retrieve(
   opts: { k?: number; viewing?: StopId | null } = {},
 ): RetrievalResult {
   const k = Math.max(1, opts.k ?? DEFAULT_K);
-  const { index, byId, aliases, anchors } = getEngine();
+  const { index, byId, aliases, anchors, byTitle } = getEngine();
 
   const terms = tokenize(question);
   const expansions = expand(tokenizeAll(question), terms, aliases);
@@ -867,6 +880,49 @@ export function retrieve(
           return memory ? [{ memory, score: result.score }] : [];
         })
     : [];
+
+  /*
+   * A question that IS a memory's title is a question about that memory.
+   *
+   * BM25 does not know that, and the case where it matters is now a shipped feature: every
+   * card on the page asks `Tell me about {title}.`, whose stopwords drop away to leave the
+   * bare title. "Tell me about JewelAI Studio." returned `jewelai-the-ring` first — a memory
+   * TITLED "The ring I use to show what JewelAI Studio does", which contains the phrase and
+   * repeats its terms — ahead of the memory whose title is exactly those two words. So
+   * pressing the JewelAI Studio card would have produced an answer, and a dek, about the
+   * ring.
+   *
+   * Set equality on the tokenised title, not a boost. A boost is a thumb on a scale and has
+   * to be re-tuned every time the corpus grows; this fires only when the visitor typed a
+   * title and nothing else, which is unambiguous, and never fires otherwise. One point above
+   * the incumbent is enough — it is a tie-break, not a new ranking.
+   */
+  const askedTitle = titleKey(question);
+  /*
+   * The empty key is not a title and must never match one.
+   *
+   * "What do you do" is four stopwords and tokenises to nothing, so it keyed on `''` — and
+   * a corpus title that also tokenises to nothing put that memory at the top of every
+   * content-free question. It cost `route:eval` a row on the way in: "what do you do" went
+   * from `now` to `origin` at 153.8. Content-free questions are the viewport's job, a few
+   * lines below.
+   */
+  const exactId = askedTitle ? byTitle.get(askedTitle) : undefined;
+  if (exactId) {
+    /*
+     * Looked up in the corpus rather than searched for in the results, because the memory it
+     * has to find may not be in them. "Tell me about JewelAI Studio." returned SIX other
+     * JewelAI memories ahead of it and `project-jewel-ai` did not make the top six at all —
+     * every one of the others has "JewelAI Studio" inside a longer title and repeats the
+     * words in its body, and the memory actually titled "JewelAI Studio" is two words long.
+     * BM25 is behaving correctly and is answering a different question from the one asked.
+     */
+    const at = searched.findIndex((h) => h.memory.id === exactId);
+    if (at !== 0) {
+      const memory = at > 0 ? searched.splice(at, 1)[0].memory : byId.get(exactId);
+      if (memory) searched.unshift({ memory, score: (searched[0]?.score ?? 0) + 1 });
+    }
+  }
 
   const topScore = searched[0]?.score ?? 0;
 

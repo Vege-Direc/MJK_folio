@@ -15,9 +15,19 @@ import { useAnswerTarget } from './useAnswerTarget';
  * the page to receive it. Palette: DOM tokens only, never the WebGL orange.
  */
 export default function ChatDock() {
-  const { answer, asking, error, ask } = useAsk();
+  const { answer, asking, error, ask, draft, setDraft } = useAsk();
   const docked = useAnswerTarget(answer?.envelope?.stopId ?? null) !== null;
-  const [input, setInput] = useState('');
+  /*
+   * The field's value lives in `ChatProvider` now, not here.
+   *
+   * A card in `<main>` prefills it and sends in the same action, so the visitor sees their
+   * question arrive in the box and run — which is the only way anything on this page teaches
+   * what the box is for. Nothing else about this component changed: the ResizeObserver, the
+   * keyboard inset and type-to-focus never read the value, and `SuggestedPrompts` still goes
+   * through `onPick`.
+   */
+  const input = draft;
+  const setInput = setDraft;
   const inputRef = useRef<HTMLInputElement>(null);
   const dockRef = useRef<HTMLDivElement>(null);
 

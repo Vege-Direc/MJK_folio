@@ -1250,9 +1250,62 @@ html[data-flying] .answer-layer-in {
   max-width: 100%;
 }
 
+/*
+ * A card is a control now, and the button reset is what keeps it looking exactly as it did.
+ *
+ * `display: block` and `width: 100%` because a button is inline-block and shrink-wraps;
+ * `text-align: left` because it centres; `font: inherit` and `color: inherit` because a
+ * button takes the UA's font and colour. Measured at 0.0px delta against the div it
+ * replaces, at every viewport.
+ *
+ * THE SIGNIFIER IS THE RULE IT ALREADY HAD. The card owns exactly one piece of chrome — the
+ * hairline above it — so making that hairline the accent says "pressable" without adding a
+ * second thing to look at. DESIGN.md's standing objection to cards is that they accumulate
+ * chrome, and an `ASK` label repeated eight times down a column is the thing it names as
+ * "interface chrome wearing the costume". The alternative of putting a cue inside `.mb` was
+ * measured and is ruled out: `.mb` is clamped to two lines, and at 320px an inline cue took
+ * the cards that overflow from four of eight to six of eight — an affordance that disappears
+ * on the screen that needs it most.
+ */
 .mini-card {
-  border-top: 1px solid var(--color-rule);
-  padding-top: 12px;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--color-accent);
+  padding: 12px 0 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.mini-card .mk,
+.mini-card .mt,
+.mini-card .mb {
+  display: block;
+}
+
+/*
+ * Brighter still on hover and focus. Not a hover-only reveal: nobody hovers a card they do
+ * not already believe is interactive, and a touch screen has no hover at all, so the resting
+ * state has to carry the affordance and this only confirms it.
+ */
+.mini-card:hover,
+.mini-card:focus-visible {
+  border-top-color: var(--color-type);
+}
+
+.mini-card:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* Open. The same accent the dock's controls use for a pressed state. */
+.mini-card[aria-expanded='true'] {
+  border-top-color: var(--color-type);
 }
 
 .mini-card .mk {
@@ -1280,6 +1333,25 @@ html[data-flying] .answer-layer-in {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/*
+ * Three lines below 360px, where a third line costs nothing that can be destroyed.
+ *
+ * `CARD_CHARS` in StopSection.tsx is documented as two lines at the narrowest column a card
+ * gets, "351px on a 390px phone". It is not the narrowest: at a 320px viewport the column is
+ * 288px, where 88 characters is three lines — so the clamp fired and cut mid-word on four of
+ * eight cards, which is the exact defect that budget was written to remove.
+ *
+ * Raising the budget to ~72 characters would fix it by throwing a line of scent away on every
+ * screen. Raising the clamp fixes it where the problem is: below 900px the panel is
+ * `height: auto`, so the third line is scrolled rather than destroyed, and every wider screen
+ * keeps all 88 characters in two lines.
+ */
+@media (max-width: 360px) {
+  .mini-card .mb {
+    -webkit-line-clamp: 3;
+  }
 }
 
 /* ── timeline ──────────────────────────────────────────────────────────────── */
@@ -2759,6 +2831,7 @@ html[data-flying] .answer-layer-in {
  */
 .prompt-chip:active,
 .dock-send:active,
+.mini-card:active,
 .motion-toggle:active,
 .answer-toggle:active,
 .carousel-toggle:active,
@@ -2773,6 +2846,7 @@ html[data-flying] .answer-layer-in {
 @media (prefers-reduced-motion: reduce) {
   .prompt-chip:active,
   .dock-send:active,
+  .mini-card:active,
   .motion-toggle:active,
   .answer-toggle:active,
   .carousel-toggle:active,

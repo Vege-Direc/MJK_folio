@@ -34,6 +34,25 @@ type ChatContextValue = {
   error: Error | undefined;
   ask: (question: string) => void;
   /**
+   * What is in the ask field.
+   *
+   * Lifted out of `ChatDock` because a card in `<main>` now writes it. A card prefills the
+   * question and then sends it in the same action, so the visitor watches their question
+   * land in the box and run — which is how they learn what the box is for. Focus does not
+   * move: the card can be 700px from the input on a desktop, and on a phone the input is in
+   * a fixed bar, so following it would raise the keyboard over the answer they just asked for.
+   */
+  draft: string;
+  setDraft: (value: string) => void;
+  /**
+   * Put the answer away without asking another one.
+   *
+   * The only undo the site had was `Show original`, which brings the authored paragraph back
+   * ALONGSIDE the answer and never removes it. A card is a toggle, so pressing it again has
+   * to mean "never mind" — and that is the undo, in the place the visitor's pointer already is.
+   */
+  dismiss: () => void;
+  /**
    * The visitor has asked for the stop's own paragraph back.
    *
    * It restores the authored copy *alongside* the answer rather than instead of it —
@@ -310,6 +329,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const asking = status === 'submitted' || status === 'streaming';
 
+  const [draft, setDraft] = useState('');
+  /*
+   * The question the visitor has put away, by question text.
+   *
+   * `useChat` owns the message list and it is not ours to mutate, so dismissing is a filter
+   * rather than a deletion: the exchange stays in history, where the next question can still
+   * use it for continuity, and only the rendering stops. It clears on the next `ask`.
+   */
+  const [dismissed, setDismissed] = useState<string | null>(null);
+
   const answer = useMemo<Answer | null>(() => {
     const lastUserIndex = messages.findLastIndex((m) => m.role === 'user');
     if (lastUserIndex < 0) return null;
@@ -317,9 +346,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const reply = messages[lastUserIndex + 1];
     const envelope = envelopeOf(reply);
     const text = textOf(reply);
+    if (question === dismissed) return null;
     const shown = envelope?.body ?? text;
     return { question, envelope, text, streaming: asking, shown };
-  }, [messages, asking]);
+  }, [messages, asking, dismissed]);
 
   /*
    * One correction per answer, after it has stopped growing.
@@ -362,14 +392,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     (question: string) => {
       const q = question.trim();
       if (!q || asking) return;
+      // A new question un-dismisses, including the same question asked again on purpose.
+      setDismissed(null);
       void sendMessage({ text: q });
     },
     [asking, sendMessage],
   );
 
+  const dismiss = useCallback(() => {
+    // Also close the authored paragraph back up: `showOriginal` is about an answer that is
+    // on screen, and there is about to be none.
+    setShowOriginal(false);
+    setDismissed(answer?.question ?? null);
+  }, [answer?.question]);
+
   const value = useMemo<ChatContextValue>(
-    () => ({ answer, asking, error: error ?? undefined, ask, showOriginal, setShowOriginal }),
-    [answer, asking, error, ask, showOriginal],
+    () => ({ answer, asking, error: error ?? undefined, ask, draft, setDraft, dismiss, showOriginal, setShowOriginal }),
+    [answer, asking, error, ask, draft, dismiss, showOriginal],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
