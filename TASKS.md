@@ -436,7 +436,7 @@ and 226, and the `w=3840` in the `src` attribute is next/image's fallback candid
 request actually made is `w=640`. Wait 8–9s after a cold navigation before judging an
 image on this build, or you measure the optimizer rather than the page.
 
-## 31. The motion control — `doing`, approved
+## 31. The motion control — `done`
 
 WCAG 2.2.2 Pause, Stop, Hide is **Level A**, applies to decorative content through
 Conformance Requirement 5.2.5 Non-Interference, has no decorative exception, and its
@@ -450,7 +450,7 @@ Three of the five RD 350 frames are portrait inside a 4:3 hero, so `object-fit: 
 discards 47.5%–53.4% of each file. Per-frame `object-position` (task 28) made the surviving
 half the *right* half; it could not make it bigger. MJK has approved re-cutting the files.
 
-## 33. Cards advertise and then withhold — `doing`, spec out
+## 33. Cards advertise and then withhold — `done`
 
 "some sections have information cutting off prematurely and user can't expand to see more
 either? for example section 6 has AI agents, Engineering etc... on the left which has
@@ -463,7 +463,7 @@ addressable. The hypothesis being tested is that **a card is a question that has
 asked yet**, which would make the ellipsis an invitation rather than a defect, and would
 answer task 34 at the same time. Out for research and a spec.
 
-## 34. Scroll behaviour, remapped to chat behaviour — `doing`, spec out
+## 34. Scroll behaviour, remapped to chat behaviour — `done`, first move shipped
 
 "across the entire website have you considered how the user is ecouraged to chat about
 information? How do we guide them towards chat based behaviour instead of just scroll based
@@ -476,7 +476,7 @@ because that is what every other site has trained them to do. Out for research i
 conversational rather than navigational sites teach the behaviour, with the first ten
 seconds treated as the unit.
 
-## 35. Design consistency, affordance and mobile — `doing`, audit out
+## 35. Design consistency, affordance and mobile — `done` in part; see 38 and 39
 
 "please consider basic design principles along with skills are correctly applied across the
 website consistently... And are the buttons for user engagement easy enough for them to
@@ -488,7 +488,7 @@ items 6 and 7 — the prompt chips computing to `rgba(0,0,0,0)` with `border: 0p
 body-text colour beside a bordered Send button, and the contact links being typographically
 identical to the card headings next to them.
 
-## 36. How the answers are written — `doing`, spec out
+## 36. How the answers are written — `done`
 
 "Some responses from the AI are not well written... there needs to be some guide on the
 language, structure of response, header, grammar etc."
@@ -508,7 +508,7 @@ Three separate defects, and the first one is diagnosed:
    never `length`, so it is not a token cap: it is the prompt and the guard, and salvage
    was removing 21% of everything the model wrote.
 
-## 37. JewelAI: what a visitor actually sees — `doing`, plan out
+## 37. JewelAI: what a visitor actually sees — `done`
 
 "are the jewel AI assets and video not in place? do you need additional sections for it?
 what is the plan?"
@@ -519,6 +519,58 @@ asks the right question sees nothing of JewelAI at all. That is a real gap for t
 technical claim in the corpus — seven of §07's eighteen memories are JewelAI's, more
 material than any other project has. Out for a plan, including whether it warrants a tenth
 section and what that would cost the camera path.
+
+## 38. Mobile: four sections show only prose above the fold — `open`, the biggest one left
+
+The audit's Tier 1 finding, and the one thing on this list that costs MJK work. At 390x664
+the readable band is 517px, and in the four sections that have something to show it is spent
+entirely on prose:
+
+| § | panel | above the fold | what is lost |
+|---|---|---|---|
+| 02 engineering | 1067 | kicker, title, 8-line body | the whole aircraft figure and Replay |
+| 04 apac | 1386 | title, body, one era label | **every timeline row** — the best component on the site |
+| 05 rd350 | 1077 | kicker, title, 9-line body | **every photograph** — the only photography on the site |
+| 07 work | 1266 | one frame, cut by the dock | the result, the arrow, the caption, the pager |
+
+Widening the phone media was the fix for a different problem and it worked; this is the one
+underneath it. A prospect who opens §05 on a phone, reads the title and thumbs on never sees
+that he rebuilt a motorcycle. **Not attempted yet** — it is a composition decision per
+section, not a CSS fix, and it deserves its own pass.
+
+## 39. The rest of the design audit — `open`, recorded so it is not re-found
+
+Tier 2, visible and costing trust:
+
+- **The wide-screen mode has never had a design pass.** At 2560 content is ~9% of the frame:
+  `.section-title`'s clamp tops out at 4.4rem around 1467px, so above that only the emptiness
+  grows. The dock is `max-w-5xl` centred and agrees with neither the editorial column nor the
+  media one — a disagreement that grows from 176px at 1440 to 307px at 2560. **The page has
+  two independent horizontal systems.**
+- **Hairlines disappear over the scene.** Measured per-pixel along each rule: the carousel
+  frame's border is under 1.2:1 for **24% of its length**, median 1.43. The project already
+  has a casing convention — `#08080c` under-strokes — applied to every SVG stroke and to no
+  CSS border.
+- **Two rule lengths in the same column** in §08: the links are capped at 30rem and the cards
+  are not, so the right edges differ by 101px at 1440 and 522px at 2560.
+- **Three controls are typographically identical to the captions beside them** — `▶ PLAY`,
+  `SHOW ORIGINAL`, `↻ REPLAY`. All pass contrast; none reads as a control.
+- **Tap targets under 44px** at 390x664: `.pair-nav button` 26.5x29.5 is the worst,
+  `.fig-ga-replay` 27, `.answer-toggle` 33, `.carousel-toggle` 36.5, `.dock-send` 37.5.
+- **"Hide the section"** reads as an offer to remove §04. The reverse of "show original" is
+  "hide original".
+
+Tier 3, cheap and untidy: seven tracking values on one 10–11px mono treatment; `#08080c` used
+eleven times with no token; the 11px floor broken in three places, one of them `.fig-ga-replay`;
+six figure-to-caption gaps and three caption sizes; §06's card kickers mixing subject labels
+with years; ~360px of empty clickable space in a timeline row between 900 and 1600px.
+
+**What the audit says to protect**, measured rather than asserted: the halo (body text holds
+10.79:1 at p95 on the pixels it actually sits on, at the worst of six animated frames, on
+every stop — nothing on the site fails a text-contrast rule); the mobile halo trim; the dock
+veil; all 25 focus rings; the timeline on a phone, "the single best-executed component on the
+site at any viewport"; the §02 figure sequence; the two-rule 2px radius system; and the
+per-frame carousel crops.
 
 ---
 
