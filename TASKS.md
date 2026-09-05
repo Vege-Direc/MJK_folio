@@ -2356,6 +2356,116 @@ one format NN/g says trains reflexive dismissal.
 
 ---
 
+# The devil's advocate. `done`, and it earned its place
+
+Run deliberately on a different model, given a different reading order — the repository and
+primary sources first, the swarm's reports last — so its view formed before it met anyone
+else's framing. Verdicts on the nine assumptions the whole swarm shared.
+
+## FALSIFIED — "elapsed time is not the operative risk"
+
+**It is the operative risk.** `app/privacy/page.tsx` says, verbatim, *"No account. No cookies.
+No analytics."* The commit histogram: 1, 1 and 2 commits between 25 July and 27 August, then
+**30, 69, 18, 15 and 2 across 2–6 September — 134 of 138 commits, 97%, in five days after a
+month dormant.** Every claim in `PLAN.md` was checked against panel judgement and synthetic
+measurement. **None was ever checked against a real visitor.**
+
+And the instrument already exists: **`lib/security/limits.ts` runs a Redis daily counter on
+`/api/ask` for rate limiting.** Nobody has ever surfaced the number it holds.
+
+## DENTED, and this is the strongest finding — "the story is an asset"
+
+Of the eight answerable stops, **five — 62.5% — are pre-AI-career material that a scrolling
+visitor crosses before reaching either AI-systems stop.** `PLAN.md`'s own table confirms these
+are full-height screens, not asides.
+
+The hero's `lede` does lead with Krunch Labs, so the worst possible reading is not the first
+screen. But **the diffuseness pattern is present in the shipped information architecture,
+independently of how the copy is framed.** This converges with the audiences agent's finding
+by a completely different route — that one measured pixels, this one counted stops.
+
+## DENTED — "describing before judging makes judgement objective"
+
+**`PLAN.md` §6.2 claimed LinkedIn was absent from the site. It has shipped since 2 September —
+a day before that file's own last edit — and renders three times on the live deployment.**
+Two agents found this independently, one by `curl`ing the deployment.
+
+> A document whose header states that every number in it was measured on a running build
+> carried an unverified, false claim **about that build**.
+
+**Corrected in `PLAN.md`, with the lesson kept rather than the line deleted:** describing
+before judging makes a judgement *auditable*, not *true*. The describer still chooses what to
+describe, and re-checking the instrument is not the same as re-checking the claim.
+
+## DENTED — "the chat is a differentiator rather than a tax"
+
+**Live-tested through CDP**: a real question typed into the real dock and submitted through the
+real form. It works exactly as documented — fast, well grounded, well written.
+
+**But mechanically it is a grounded-RAG widget with a serif skin.** Question in, card flies in,
+cited source chips, streamed prose. **Nothing in the pattern itself produces "his mind" rather
+than "a chatbot" — that reading is hoped for, and per the falsified assumption above, it has
+never been checked with anyone.**
+
+## DENTED — "more work on the scroll is better", and "this site is the right instrument"
+
+MruNN-ERP carries **zero client, user or measured outcome**, unlike its §07 neighbours —
+JewelAI has the ring test, and the photoshoot pipeline has its own ledger of 107 runs, 125
+accepted images and $27. Meanwhile **138 commits and 19,098 lines, with 35.5% of commits (49)
+touching only the scene and CSS layer.** Real investment, concentrated on the instrument rather
+than on closing that gap.
+
+## DENTED with nuance — "the panel and the loop improve the answer"
+
+It found a real oscillation in the history: a timeline fade added, then reverted with a
+confident message saying it left half the page's text at opacity zero, then **restored seven
+minutes later because the revert's own premise was checked and found wrong.**
+
+**But the correction that ended it was a fresh measurement, not more argument** — so this is
+not a clean instance of iteration degrading without external feedback. It is clean evidence
+that a confident commit message can be wrong, and that only a second self-administered
+measurement caught it.
+
+## SURVIVES — "the corpus is the ceiling of truth"
+
+**No evidence found of a true, relevant fact withheld as an excuse.** The corpus cites named,
+dated sources — three résumé versions, a 2012 statement of purpose, the Brunel dissertation,
+the Airbus report, the Krunch deck — and `PLAN.md` §6.5 shows the rule working as stated:
+facts gated *pending* corpus entry, never silently dropped. **The suspicion I recorded against
+this assumption was wrong.**
+
+## No verdict earned — "the two audiences conflict"
+
+`DESIGN.md` frames the tension as three visitor *modes*, not two audiences, and `stops.ts` has
+one undifferentiated voice throughout. **Flagged as inconclusive rather than guessed**, which
+is the correct answer and worth more than a confident one.
+
+## Its own tooling correction, offered unprompted
+
+Its first mobile screenshot showed apparent severe hero-title overflow at 390px. It verified
+through CDP device emulation that this was **a tooling artefact** — the CLI screenshot mode
+does not emulate the mobile viewport meta — with real `innerWidth`/`scrollWidth` matching and
+the font size matching the CSS clamp exactly. **It caught its own false positive before
+reporting it**, which is the behaviour the whole method exists to produce.
+
+## The change nobody proposed, and it should be built
+
+> **Expose the existing Redis ask-counter as a private, cookie-free aggregate** — asks per day,
+> and stops reached via `data-route`. The site has zero analytics by design, **but a
+> rate-limiter counter is not analytics and it already exists.**
+
+That single change would let assumptions 2, 6 and 7 be checked against **something other than
+another round of panel judgement**. It converges exactly with the thesis agent's independent
+recommendation to "ship the instrument", and it is cheaper than that agent knew, because the
+counter is already running.
+
+**No evidence found**, stated as nulls rather than inferred: any client, user or usage number
+for MruNN-ERP anywhere in the corpus; any A/B or real-visitor data cited by the swarm for any
+decision; and any case where "the corpus does not license it" permanently blocked a true fact
+rather than gating it pending entry.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame

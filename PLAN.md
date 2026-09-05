@@ -217,8 +217,14 @@ it. That is the one call worth overruling on sight.
 
 1. **The contact address.** The site's only human contact is a hotmail address and a
    pseudonymous GitHub handle, for a Singapore AI consultancy. It is also in the JSON-LD.
-2. **LinkedIn.** Absent from the site. For a decade of agency work it is the first thing
-   a recruiter checks.
+2. ~~**LinkedIn.** Absent from the site.~~ **This was false when it was written, and the
+   error is instructive.** `content/site.ts` has carried the LinkedIn URL since `d0b105b`
+   (2 Sep), which is *a day before this file's own last edit* — and it renders three times
+   on the live site. Two agents found it independently, one of them by `curl`ing the
+   deployment. So a document whose header says every number in it was measured on a running
+   build carried an unverified, false claim **about that build**. Describing before judging
+   makes a judgement auditable; it does not make it true. Re-check the claim, not only the
+   instrument.
 3. **Links to the work.** JewelAI, MruNN-ERP and TallyBridge have no link, screenshot,
    repo or demo. TallyBridge is MIT open source and therefore trivially linkable.
 4. **The Paxel report.** It borrows Y Combinator's name for authority, and occupies half
