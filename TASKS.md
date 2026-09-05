@@ -1469,6 +1469,97 @@ preview). The apparel side already has three corpus memories and four image pair
 
 ---
 
+# Clarifications, 2026-09-05 (third round)
+
+## 44c. The intro is a timed animation, not a scroll-driven hero — `clarified`, and it changes the answer
+
+"I didn't imagine the portriat... to be scroll driven, but more of a 3 - 5s animation showing
+the text, the face, the particle combination and dispersion with affects (similar to engine to
+plane) and zoom into head before then showing the neural animation and step 1. At this point
+scroll is enabled and user interaction kicks in. Thats why I said it can load behind this
+animation - effetively this a load screen right?"
+
+**This closes the reconciliation I was pushing.** The proposal was that the portrait be the
+hero's scene state, dissolving under the visitor's own scroll — which costs nothing and blocks
+nothing. That is **not** what he is describing and it does not deliver what he wants: a held
+beat, a zoom into the head, a dispersal, and only then the site. He wants a **gate**, and he
+has now said so unambiguously twice. It is his site and his call, so the question stops being
+*whether* and becomes *what the best possible version is*.
+
+**The engineering consequence, and it is the one thing that must not be got wrong: a fixed
+duration is not a load screen, it is a timer.** The two only coincide by luck.
+
+- The scene chunk was measured arriving at **5.8s on Fast 3G at 375 wide**. A 3–5s animation
+  ends and the visitor waits anyway.
+- On a fast connection the chunk may be ready in well under a second. A 3–5s animation then
+  adds **2–4 seconds of pure, invented wait** to the one metric that matters most.
+
+So the honest version **couples the animation to the actual load state** — a floor so it never
+flashes, a ceiling so it never becomes the wait, and a real completion signal from
+`onMindReady` rather than a `setTimeout`. `lib/mind/controller.ts` already exposes exactly that
+signal; `MotionToggle` uses it. Design it as *"play until the scene is ready, but never less
+than X and never more than Y"*, not as *"play for 4 seconds"*.
+
+**What must be specified, and none of it is optional:**
+
+- **Scroll is disabled during it**, by his description. That is blocking, and it puts WCAG
+  2.2.1 Timing Adjustable squarely in scope along with 2.2.2. A skip control is mandatory, not
+  a nicety, and it must be reachable by keyboard on the first tab.
+- **`prefers-reduced-motion` and the site's own motion control must shorten or remove it.** The
+  scene's reduced-motion promise is measured — pixel change 7.88% to 0.01% on desktop — and an
+  intro that ignores it breaks a promise the site currently keeps.
+- **LCP becomes the gate's own content**, because it covers the viewport. That is the metric
+  cost and it should be stated in numbers before it ships.
+- **Once per visitor, or every visit?** A gate a returning visitor cannot escape is the version
+  everyone regrets.
+- **The one worry that does NOT apply:** the nine sections are server-rendered underneath an
+  overlay, so a crawler and a JS-off visitor are unaffected. Worth stating so nobody spends
+  time on it.
+
+The face itself is unchanged by this: **tone, never edges** — a wireframe of a face fails at
+any resolution, and the dispersal reuses `dust.ts`, which is 1,017 gzipped bytes with no
+dependencies and already does a measured particle dissolve.
+
+## 51b. "I'll get back to you" — a voice question, not a capture one — `unblocked`
+
+"'Let me get back to you' doesn't have to be a blocked. We can change the message shown -
+understand that my intent is to give users the impression that they're chatting with a virtual
+version of me and if that version doesn't have the answer it shouldn't make up stuff and it
+shouldn't act like a machine to the user."
+
+That resolves it, and it separates two things I had wrongly fused. The **requirement** is: do
+not fabricate, and do not sound like a machine. The **promise to follow up** was my reading of
+his example sentence, not his requirement. So **blocked item 13 is withdrawn** and lead capture
+goes back to being optional.
+
+What is actually needed is a rewrite of the refusal and fallback voice in `lib/fallback.ts` and
+`content/system-prompt.md`. The first half — not fabricating — is already enforced structurally
+by the grounding guard and is the site's strongest property. The second half is copy.
+
+**The constraint that survives: do not promise what cannot be kept.** "I'll check and get back
+to you" implies a reply, and with no capture there is no reply. A sentence that admits the gap
+without inventing an obligation is the target — that is a writing problem, and a solvable one.
+
+## 54b. The client is Asanjo, and may be named — `unblocked`
+
+"The client for apparel and website is Asanjo, we can name them no issues."
+
+**Blocked item 12 is resolved**, and it is the most valuable unblock so far. The apparel
+pipeline and `asanjokutch.org` become one engagement: a storefront, and the catalogue imagery
+that fills it. That is the only end-to-end client story the site has, and it can now be told
+with the client's name on it.
+
+It also changes what §09 and `/work/apparel` are. They stop being "an apparel client" and
+become a named piece of work a visitor can go and look at — the difference between a claim and
+a checkable fact, which is the gap `PLAN.md` §6 has complained about since the beginning.
+
+**Still needed before anything is written** — these are facts, not decisions, and the corpus
+licenses none of them yet: his role on the website (built it, designed it, themed it, ran the
+media, or all of it); the dates; the stack; any outcome he will stand behind; and **which theme
+is his**, since the link he sent previews an unpublished one.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
@@ -1508,20 +1599,20 @@ Raised 2026-09-05, and each of these blocks a build rather than a decision:
 
 Raised 2026-09-05, second round:
 
-12. **May the apparel client be named?** He has told me the apparel imagery and
-    `asanjokutch.org` are the same client (task 54). That is the closest thing on the site to
-    an end-to-end engagement — a storefront and the catalogue imagery that fills it — and
-    showing them together **names the client by construction**, because the storefront's name
-    is its URL. Every other client on this site is anonymous and the apparel memories
-    deliberately name nobody. Three options, and it is entirely his call: name them and gain a
-    real case study; keep them anonymous and lose the connection; or show the storefront named
-    and the imagery unattributed, which is the weakest of the three because a visitor can
-    join them anyway.
-13. **Does the lead-capture decision change now?** Task 51 proposes that an unanswerable
-    question should say "I'm not sure about this but I'll check and get back to you" rather
-    than refuse. That is a promise, and keeping it requires somewhere to put the question and
-    an address to answer it to. **The sentence cannot ship without the mechanism**, so blocked
-    item 5 is no longer optional if he wants that behaviour.
+12. ~~May the apparel client be named?~~ **ANSWERED 2026-09-05: "The client for apparel
+    and website is Asanjo, we can name them no issues."** The apparel pipeline and
+    `asanjokutch.org` are one engagement and may be shown as one, with the name on it. See
+    task 54b.
+13. ~~Does the lead-capture decision change?~~ **WITHDRAWN 2026-09-05.** MJK: "'Let me get
+    back to you' doesn't have to be a blocked. We can change the message shown." The
+    requirement is that the site must not fabricate and must not sound like a machine; the
+    promise to follow up was my reading of his example, not his requirement. Lead capture
+    returns to blocked item 5, where it was, and stays optional.
+14. **The remaining Asanjo facts**, now that the name is cleared. Per site — the storefront and
+    the apparel imagery — his role (built it, designed it, themed it, ran the media, or all of
+    it), the dates, the stack, any outcome he will stand behind, and **which theme is his**,
+    since the link he sent previews an unpublished one. The corpus licenses none of these yet,
+    so they are what stands between a named case study and a picture with nothing under it.
 
 ---
 
