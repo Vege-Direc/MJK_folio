@@ -1035,6 +1035,126 @@ defect on the way past.
 
 ---
 
+# 47 and 48 — measured. `spec'd`
+
+Measured in **real headed Chrome on a discrete GPU**, phone-emulated at 390x844 with touch,
+scrolled with a real touch gesture rather than a scripted scroll, with `pointer: coarse`
+verified true and `far-network.json` confirmed fetched **zero times** — the site's own mobile
+tier. Nothing headless. Draw-call and framebuffer counts come from wrapping the live
+`WebGL2RenderingContext` and are device-independent; the GPU timings come from
+`EXT_disjoint_timer_query_webgl2`.
+
+**Two caveats the report makes itself, and both are load-bearing.** The DevTools "GPU" track
+is GPU-*process CPU time*, not GPU execution — only the timer query measures the latter. And
+that extension is **blocklisted on Android**, so none of this can be reproduced on MJK's own
+handset by any JavaScript. **Nothing here was measured on a phone.**
+
+## Two of my own hypotheses were wrong, and one of them wasted the agent's time
+
+- **`backdrop-filter` does not exist on this site.** It was removed; only the comments at
+  `globals.css:3261` and `StopSection.tsx:283` still describe it. I named it as the prime
+  suspect for scroll-correlated jank and sent the agent hunting a frame-killer that was
+  already dead. **Delete those comments** — they are a trap for the next reader.
+- **The halo trim is not the problem, because it worked completely.** I suggested
+  `data-flying` might cover only programmatic flights, leaving manual scrolling to pay full
+  price. Measured over a 6.5s touch scroll at 4x throttle: `RasterTask` **0.7ms across 2
+  events**, `Layout` **1.0ms across 2**. The 7.3s of raster the halo used to cost is gone.
+  `ScrollProgress` is clean.
+
+## 47 — where the time actually goes
+
+**It is main-thread work, and it is the scene's own render loop**: 1,835ms over 957 frames,
+**46% of main-thread time**. Not raster, not layout, not the DOM.
+
+**On the GPU it is six draw calls — but the shape is wrong for a phone:**
+
+- **The EffectComposer's output pass costs 0.0444ms against 0.0344ms for the entire rest of
+  the scene — 56% of GL time**, to run six lines of reading-light GLSL.
+- Framebuffer traffic is **17.8 MB/frame, about 1.06 GB/s**, before any overdraw is counted.
+- The five scene draws are **additive-blended into an RGBA16F target**. Arm's own Best
+  Practices say verbatim: *"Do not use blending on floating-point framebuffers."*
+- **`preserveDrawingBuffer: true` costs 22% of GPU time** across two independent run-pairs,
+  and the repo contains no `toDataURL`, `toBlob` or `readPixels`. It buys nothing.
+
+## 48 — how empty, exactly
+
+- Mobile draws **74 somas and 8,340 filament triangles** against desktop's 5,056 and 825,322.
+  That is **4.8% of the near-field filaments**, before the far network is even considered.
+- **The hero frame is 96.5% pure black.**
+- **`subMaxNodes` 720→200 — the headline mobile cut — buys nothing at all.** The scene only
+  ever grows 49 sub-nodes, so neither cap is reached on either tier. It has been described as
+  a saving in three documents and it is not one.
+
+## Why they are one budget, and why it inverts the obvious fix
+
+> **The budget is blended pixels, and fill is area.** A spine soma at 3 units covers 517,000
+> device pixels; 2,500 sub-nodes at 30 units cover the same.
+
+So the instinct — "fewer, larger, better-placed elements" — is the **expensive** answer here.
+**"More, smaller, further out" is the cheap one.** That is the finding that lets 47 and 48 be
+answered together instead of traded against each other, and it was not guessable.
+
+## The ordered spec
+
+All items are independent of the stop count except S8 — none of them consume `rng`, and the
+spine and camera path come from `buildWaypoints`. So this work does **not** have to wait for
+the twelve-stop migration, and does not add a second re-measurement pass.
+
+| # | change | what it buys | risk |
+|---|---|---|---|
+| **S1** | `preserveDrawingBuffer: false` | **22% of GPU time** | none |
+| **S7** | mobile `fog` 0.030→0.022 | A/B'd live: **hero coverage +26.5% above lum 20, +38.7% above 60, at zero GPU cost** | contrast-gated |
+| **S4** | swap `PlaneGeometry(1,1)` for a 12-gon on the node and pulse billboards; drop the three `discard`s; `frustumCulled = false` on the three per-frame InstancedMeshes | ~19% fill at **bit-identical output** — Imagination measures a disk in a quad wasting 22% of fragments against 3% for a dodecagon | low |
+| **S9** | `tubeRad` 5→8 | the pentagonal faceting is **visible** on the near axon; vertex-only cost | none |
+| **S5** | `depth: false`, `depthTest: false` | nothing writes depth, so the test always passes | low |
+| **S3** | wire `onFps` — already computed at `scene.ts:2120` and **thrown away** — to adaptive DPR | 1.5→1.25 is **−31% fill** | medium |
+| **S6** | `sizeClampD` 0→2.5 | removes a pale wash for <2% coverage at four of five stops | MJK's eye |
+| **S2** | delete the composer on mobile | **56% of GL time, 6x less framebuffer traffic**, and it stops doing the thing Arm prohibits | **highest** |
+| **S10** | `precision: 'mediump'` with `highp` on distances | Arm measures ~10–25% | see below |
+| **S8** | `subBranchDepth` 2→3, `t2Seeds` 10→20, shell pushed to 12–26 units | the density restore | **M-coupled** |
+
+**Three traps inside that list, each of which would have been shipped as an improvement:**
+
+1. **Do not remove the probe `getContext` at `scene.ts:252`.** three.js r169 *hardcodes*
+   `alpha: true` in `WebGLRenderer`, so that probe is the only reason this canvas is opaque —
+   measured, `getContextAttributes().alpha === false`. It reads exactly like a leftover.
+2. **S3 before S2 desyncs the render targets**: `resize()` never calls
+   `composer.setPixelRatio()`. Order matters. And copy `<model-viewer>`'s algorithm rather
+   than inventing one.
+3. **S10 cannot be validated on a desktop GPU.** `d*d` reaches 360,000 against fp16's ceiling
+   of 65,504, and Arm's guidance says validating `mediump` on a desktop GPU is "worthless".
+
+**S8 is the only item coupled to `M`** — ship it with the stop count going 9→12, not before.
+
+## Two more, unprompted and worth having
+
+- **`.mind-canvas` is `height: 100vh` and must stay that way.** `100vh` is the *large*
+  viewport, so the URL bar cannot fire the `ResizeObserver`. `100dvh` — which any modern audit
+  would propose as the fix — would reallocate two RGBA16F targets mid-gesture on iOS Safari,
+  which fires `resize` while the finger is still down.
+- **`globals.css:185-190` still asserts the retracted 86ms figure.** Fix the comment.
+
+## The collisions, stated rather than smoothed over
+
+- **Every density restore is a text-contrast risk, and the halo is protected** (body text holds
+  10.79:1 at p95 on the pixels it actually sits on). The contrast measurement is the **gate**
+  on the richness work, not a check afterwards.
+- **S2 must RELOCATE the reading light, never delete it.** Measured: the light removes 81–96%
+  of pixels above luminance 160. If a per-material version cannot hold it, **S2 dies** — the
+  alternatives are a scrim, which `DESIGN.md` forbids twice and MJK rejected on sight twice,
+  or three unreadable stops.
+- **S3 must not run under reduced motion**, or adaptive DPR produces the one pixel-change event
+  that promise forbids.
+
+## What to do when this is shipped and the phone still stutters
+
+**Long Animation Frames** (`long-animation-frame`, Chrome 123+) reports `blockingDuration`,
+`forcedStyleAndLayoutDuration` and per-script attribution **in the field, on his actual
+handset**, in about fifteen lines. If report (1) survives S1–S7, that is how to find out why
+instead of guessing a third time.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
