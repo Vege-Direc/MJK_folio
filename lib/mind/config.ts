@@ -203,7 +203,24 @@ export const CFG: Record<Tier, MindConfig> = {
      * kind that is already there.
      */
     secondaryPerNode: 5.5, bloom: false, pulseCoverage: 0.8, pixelRatioCap: 1.5,
-    tubeSeg: 26, tubeRad: 5, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.030,
+    /**
+     * `fog` 0.030 -> 0.022, and it is the only change on this tier that costs nothing at
+     * all — it is a uniform, so every draw's GPU time is bit-for-bit what it was.
+     *
+     * It was raised to 0.030 as part of the argument for dropping the far network: a
+     * squared exponent means a node 50 units out survives at 10% here against 37% on
+     * desktop, so most of what the far field would have contributed was already being
+     * eaten. That argument was sound and the far field is still gone. What it did not
+     * account for is that the same fog is levied on the midground, which is not gone and
+     * which this round has just doubled. At 30 world units 0.030 eats 56% of a filament's
+     * brightness and 0.022 eats 33%.
+     *
+     * It stops short of the desktop's 0.020 deliberately. The phone is a 31-degree
+     * horizontal cone against a desktop window's 88, so depth cueing has to do more work
+     * here with less lateral spread to do it with, and some of the falloff is what keeps
+     * the field reading as a corridor rather than a wall.
+     */
+    tubeSeg: 26, tubeRad: 5, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.022,
     bloomStrength: 0.0, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
     // No bloom on mobile => the shader carries all the glow, so keep the white-peak a
     // touch higher than desktop so nodes still read as light. Turning bloom on here is
