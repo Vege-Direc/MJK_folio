@@ -1,29 +1,3585 @@
 @import "tailwindcss";
 
+/**
+ * The editorial layer, ported from `<style id="mjk-overrides">` in
+ * reference/preview.html:89-308.
+ *
+ * Three things changed on the way across:
+ *
+ * 1. No `!important`. Every rule in the prototype carried one, because it was fighting
+ *    the base <style> block above it. That block did not come with; there is nothing
+ *    left to fight, so the flag is noise that would only make the next override harder.
+ * 2. No WebGL colour in the DOM. `--mjk-pulse` (#ff8a3d) was used for the answer cursor
+ *    (:178) and the dock's answering status (:297). Cyan and orange belong to the scene;
+ *    warm oat and amber belong to the page. The two palettes never meet, so the four
+ *    WebGL constants are not tokens here at all — they live in lib/mind/config.ts, in
+ *    the only file that may use them.
+ * 3. A mobile layout. The prototype has exactly three media queries in 2,509 lines and
+ *    none of them touches `.section-inner`, so at 375px its two-column grid stayed two
+ *    columns: a 4.4rem-clamped title in a 187px column beside a 42vw carousel. The
+ *    restack below is designed, not extracted.
+ *
+ * Fonts are loaded by next/font in app/layout.tsx. The prototype's @import at :99 sits
+ * after a rule block, which is invalid CSS and is ignored by every browser — it has been
+ * rendering in system fallbacks the whole time.
+ */
+
 @theme {
-  /* Warm-outside DOM palette */
-  --color-bg: #0a0a0a;
+  /**
+   * Warm-outside DOM palette. The whole of it.
+   *
+   * `--color-type-muted` and `--color-type-dim` were raised (from #a8a49a and #7a776d) in
+   * the same pass that added the reading scrim below. Measured against the brightest
+   * pixel actually rendered behind them — not against the flat page colour — the old
+   * pair came in at 2.49:1 and 2:1 over a lit filament. The scrim does most of the work;
+   * these two carry the rest, and they are the numbers that decide whether the small
+   * mono labels and the citation chips are readable at all.
+   */
+  --color-bg: #0a0a0e;
   --color-type: #f5f3ee;
-  --color-type-muted: #a8a49a;
-  --color-type-dim: #7a776d;
+  --color-type-muted: #c2bfb3;
+  --color-type-dim: #9d998e;
   --color-accent: #d4c19c;
-  --color-rule: #2a2825;
+  --color-rule: #2e2d36;
 
-  /* Cool-inside WebGL palette (used only in shaders / R3F) */
-  --color-filament: #4dd4e8;
-  --color-pulse: #ff7a3d;
+  /**
+   * The reading halo. Every letter carries its own legibility, and nothing covers the
+   * scene.
+   *
+   * Two earlier attempts covered it instead and both were rejected on sight. A
+   * near-opaque wash of `--color-bg` made the numbers and deleted the filaments the
+   * visitor came for. Feathered glass — `backdrop-filter: blur() brightness()` — was
+   * worse in a more interesting way: `brightness()` scales what is there, and this scene
+   * is mostly near-black, so over the sparse left-hand side where the text lives there
+   * was nothing to dim and the plate read as a black hole. Blur was the wrong operation
+   * too. It frosts dense texture; this scene is thin bright lines on black, and blurring
+   * a bright line does not frost it, it smears it into a grey streak. A dirty lens.
+   *
+   * So: stacked shadows in the page's own background colour, painted from each glyph's
+   * own outline. Within a few pixels of a letter the background is displaced; everywhere
+   * else the scene is pixel-for-pixel untouched. There is no plate, no edge and no
+   * object — which is also why nothing looks wrong while scrolling, because there is
+   * nothing there to notice.
+   *
+   * The radii do different jobs and all four are load-bearing. The two tight ones give
+   * the hard edge that wins where a filament crosses a stroke; the wide ones pool softly
+   * so a bright cluster behind a whole paragraph does not shimmer between the lines.
+   *
+   * `text-shadow` inherits, so this is set once on the two columns and every descendant
+   * gets it — including a streamed answer portalled in later.
+   */
+  --halo:
+    0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
+    0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86), 0 0 44px rgba(8, 8, 12, 0.62),
+    0 0 76px rgba(8, 8, 12, 0.34);
 
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Fraunces', Georgia, serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /*
+   * Display type has more ink and more space between strokes, so it needs less edge and
+   * a wider pool — a bright filament passing between two 70px letterforms is inside the
+   * word rather than on it.
+   */
+  --halo-display:
+    0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
+    0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62),
+    0 0 100px rgba(8, 8, 12, 0.4), 0 0 170px rgba(8, 8, 12, 0.22);
+
+  /*
+   * The small mono labels have the least ink to defend themselves with: 10px letterforms
+   * at 0.15em tracking are thin strokes with gaps between them, and they measured worst
+   * of anything on the page. Weighted hard toward the tight radii.
+   */
+  --halo-mono:
+    0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
+    0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76), 0 0 50px rgba(8, 8, 12, 0.45);
+
+
+  /**
+   * The dock's measured height, published by a ResizeObserver in ChatDock so every
+   * stop can clear it. Two hard-coded numbers used to guess at this and both were
+   * wrong: the verdict line under an answer rendered at y=810 against a dock top of
+   * 727, i.e. inside the dock's own black gradient, which is the single reason the
+   * citations looked broken. This value is the fallback before the observer fires.
+   */
+  --dock-h: 173px;
+
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
+
+  /* The stop grid. One number, so the panel and the scroll mapping cannot disagree. */
+  --stop-height: 100svh;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { background: var(--color-bg); color: var(--color-type); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
-::selection { background: var(--color-accent); color: var(--color-bg); }
+/**
+ * The same halo on a phone, with its two widest layers taken off. This is the fix for
+ * "the whole background neural layer animations seems to lag really badly on mobile
+ * when scrolling", and the layers above are not where it looked like it would be.
+ *
+ * Measured four ways at 375x812, CPU throttled 4x and 6x, scrolling the whole page at
+ * 1000px/s — not at rest, because at rest is not the complaint. 95th-percentile frame,
+ * 4x: as deployed 100.0ms; with the reading-light pass removed 98.4ms; with bloom forced
+ * on 98.9ms (it is already off on mobile, verified on the running build, so "bloom
+ * disabled" IS the shipped state); with the 4,664-node far network never loaded 90.4ms;
+ * with the entire three.js scene never created 83.8ms. The scene is not the cause. With
+ * the scene running and only THIS token neutralised: 16.9ms.
+ *
+ * A `text-shadow` is a Gaussian blur of the glyph, rasterised on the CPU, once per
+ * layer, and it expands the paint bounds of that text by the blur radius in every
+ * direction. Ten layers reaching 76px on body text and eight reaching 170px on a title
+ * means every line of prose repaints a band far taller than itself, and every tile the
+ * scroll uncovers is re-rastered through all of them. In the trace that was 7.3 seconds
+ * of RasterTask inside a 10-second scroll, in chunks of 120-166ms — which is the stutter
+ * he is describing, arriving on the raster threads where no amount of shader work would
+ * have touched it.
+ *
+ * Blur cost goes with the SQUARE of the radius, so the outermost layer of each token is
+ * most of its price: 76px is 69% of the body halo's total r², and 170px is 69% of the
+ * display halo's. Dropping the widest two per token and changing nothing else measured
+ * p95 17.3ms — inside the noise of deleting the halo outright (16.9ms). Trimming harder,
+ * back to a 16px maximum, measured 16.9ms and bought nothing, so it is not done: what
+ * survives here is eight of the ten body layers out to 22px, six of the eight display
+ * layers out to 48px, and eight of the nine mono layers out to 24px. The pool that keeps
+ * a bright cluster behind a paragraph from shimmering between the lines is still a pool.
+ *
+ * Keyed on `pointer: coarse`, not a width, to match `detectTier` in lib/mind/config.ts:
+ * this and the scene's own tier are the same decision about the same machine, and a
+ * decision made from a resizable number is a decision that goes stale.
+ */
+:root {
+  /*
+   * The trimmed set, named rather than inlined, because two different conditions want
+   * exactly these values and a second copy would drift from the first.
+   */
+  --halo-lite:
+    0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
+    0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86);
 
-a { color: var(--color-accent); text-decoration: none; border-bottom: 1px solid rgba(212,193,156,0.3); transition: border-color .15s; }
-a:hover { border-bottom-color: var(--color-accent); }
+  --halo-display-lite:
+    0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
+    0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62);
 
-/* Sacred 8px baseline */
-:root { --baseline: 8px; }
+  --halo-mono-lite:
+    0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
+    0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
+    0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76);
+}
+
+@media (pointer: coarse) {
+  :root {
+    --halo: var(--halo-lite);
+    --halo-display: var(--halo-display-lite);
+    --halo-mono: var(--halo-mono-lite);
+  }
+}
+
+/*
+ * The same trim, for the length of a programmatic flight, on every pointer.
+ *
+ * The measurement above was taken on a phone and the fix was keyed to phones, and that
+ * left the fuller halo running on exactly the machine that flies furthest. The reasoning
+ * is the same one the phone had: a `text-shadow` is a CPU-rastered Gaussian blur of every
+ * glyph, and a page in motion re-rasters every tile the scroll uncovers through all ten
+ * layers of it.
+ *
+ * NO FRAME NUMBER IS CLAIMED HERE, deliberately. This block used to cite a desktop
+ * flight at a 95th-percentile frame gap of 86ms against 12ms with the trim. PLAN.md §2
+ * retracts that figure — it could not be reproduced on a warm localhost production build,
+ * where both the native scroll and the tween hold a clean 60fps — and this stylesheet was
+ * the last place in the repository still asserting it. The trim ships anyway because its
+ * cost at rest is zero and its reasoning is sound, which is the whole of the case for it.
+ *
+ * `lib/flight.ts` sets the attribute and unconditionally clears it, including on the
+ * interrupt path, so the resting page keeps the halo it was designed with. There is no
+ * transition on these: a halo that animates its radius is a halo that re-rasters every
+ * frame on purpose.
+ */
+html[data-flying] {
+  --halo: var(--halo-lite);
+  --halo-display: var(--halo-display-lite);
+  --halo-mono: var(--halo-mono-lite);
+}
+
+/**
+ * The reset lives in `@layer base` and this is not cosmetic.
+ *
+ * Unlayered CSS beats every layered rule in the cascade, whatever the specificity — so
+ * an unlayered `* { margin: 0; padding: 0 }` silently defeats every Tailwind spacing
+ * utility in the app, because Tailwind emits its utilities into `@layer utilities`. It
+ * had already done exactly that: the chat dock's `mx-auto px-6 md:px-10` computed to
+ * `margin-left: 0; padding: 0`, so the dock ran edge to edge at 1440 with its label
+ * clipped, while `max-w-5xl` (a property the reset does not name) applied normally and
+ * made the breakage look deliberate. Inside `base`, the reset loses to utilities and
+ * wins over the browser, which is what a reset is for.
+ *
+ * The component classes below stay unlayered on purpose: they are the ported design
+ * layer, and they should win. That is what replaced the prototype's `!important` on
+ * every single rule.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-type);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Nine stops of 100svh: the page is tall on purpose, and never wide. */
+  body {
+    overflow-x: hidden;
+  }
+
+  /*
+   * The surfaces nobody draws still carry the design. Selection, the caret, the
+   * scrollbar and the focus ring all ship with browser defaults that belong to no design
+   * system, and on a page this dark a stock light scrollbar is the one element that
+   * announces the page was assembled rather than built.
+   */
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  html {
+    color-scheme: dark;
+    scrollbar-color: var(--color-rule) transparent;
+    scrollbar-width: thin;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-accent);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  /*
+   * Tabbing to a control that is off screen has to bring it on screen, and on this page
+   * it did not: measured, the first meaningful Tab stop sat at document top 5114px and
+   * `scrollY` stayed 0 both immediately and 250ms later. A sighted keyboard visitor
+   * landed on a control they could not see.
+   *
+   * `scroll-margin-block` gives the browser's scroll-into-view somewhere to put the
+   * element other than hard against a viewport edge — which on this layout means behind
+   * the fixed dock at the bottom, the one place a focused control must never land.
+   */
+  a,
+  button,
+  input,
+  [tabindex]:not([tabindex='-1']) {
+    scroll-margin-block: 96px calc(var(--dock-h) + 32px);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212, 193, 156, 0.28);
+    transition: border-color 0.15s;
+  }
+
+  a:hover {
+    border-bottom-color: var(--color-accent);
+  }
+}
+
+/* ── the scene ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Fixed, full-viewport, behind everything, and it keeps pointer events: the nebula
+ * follows the cursor. The stop content sits above it on z-index and takes its own
+ * clicks first.
+ */
+.mind-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  z-index: 0;
+  background: var(--color-bg);
+}
+
+.scroll-root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── one stop ──────────────────────────────────────────────────────────────── */
+
+.panel {
+  display: block;
+  position: relative;
+  height: var(--stop-height);
+  min-height: var(--stop-height);
+  overflow: hidden;
+}
+
+/*
+ * A stop holding an answer is allowed to grow, on every viewport.
+ *
+ * `overflow: hidden` on a fixed-height panel does not hide the end of a long answer, it
+ * DESTROYS it. Measured at 1440x900 on a 1,424-character answer: the last line sits 87px
+ * below the panel's bottom edge at every scroll position — 6300, 6500, 6700, 6900, the
+ * same 87px each time — and a screenshot clipped to that line's own rectangle renders
+ * pure background. The budget was about 1,100 characters, and past it the excess was
+ * unreachable rather than merely off-screen. A phone never had this, because below 900px
+ * the panel has been `height: auto` for weeks; the desktop was the outlier.
+ *
+ * MJK's call, and he made it: let it grow. The cost is that one stop no longer occupies
+ * exactly one viewport on a desktop, so the camera's mapping stops being a clean
+ * stop-per-screen. That mapping already tolerates it — `ScrollProgress` derives each mark
+ * from the section's own `offsetTop` rather than assuming uniform heights, and it now
+ * re-measures when a section changes size, which is the half that makes this safe.
+ */
+.panel:has(.answer) {
+  height: auto;
+  overflow: visible;
+}
+
+/**
+ * The only "you are here" affordance the design has (preview.html:30-46): every stop
+ * sits back until the camera reaches it. `data-active` is written onto each section by
+ * components/mind/ScrollProgress.tsx from document scroll, not from the scene — so a
+ * machine with no WebGL still gets it.
+ */
+/**
+ * The stop's composition, and it has a maximum width.
+ *
+ * Without one the two columns are fractions of the viewport, so the wider the monitor
+ * the further apart they fly: measured at 2000px the text column ended around x=440 and
+ * the cards began around x=1010, nearly 600px of nothing between two halves of one
+ * thought. They stopped reading as a composition and became two things pinned to
+ * opposite edges. A capped, centred container with a fluid gutter holds the relationship
+ * from 1280 to 2560 — the columns stay a pair, and the extra width becomes margin, which
+ * is what extra width is for.
+ *
+ * The type column is a little wider than the media column because it carries the
+ * argument; the media column carries the evidence.
+ */
+.section-inner {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-rows: 100%;
+  align-items: center;
+  gap: clamp(3rem, 5vw, 4.5rem);
+  width: 100%;
+  max-width: 1460px;
+  margin-inline: auto;
+  height: 100%;
+  /*
+   * The bottom pad is derived, never guessed. `--dock-h` is written from a
+   * ResizeObserver on the dock itself, so a stop's last line clears the dock's black
+   * gradient whatever the dock happens to be that viewport — which is what stops the
+   * verdict line and the citation chips rendering inside it.
+   */
+  padding: 8vh min(5vw, 73px) calc(var(--dock-h) + 32px);
+  position: relative;
+  text-align: left;
+  transition: opacity 0.5s cubic-bezier(0.2, 0, 0, 1), transform 0.5s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/*
+ * The "you are here" affordance, and it is no longer a blanket opacity.
+ *
+ * It used to dim the whole inactive stop to 0.32. That reads well in isolation and is
+ * indefensible once measured: at any moment eight of the nine stops multiplied every
+ * glyph *and its halo* by a third, which put their body copy at 1.1:1 against the scene
+ * and dimmed the RD 350 photographs — the only real photographs on the site — along
+ * with them. The detector counted twelve findings and every one of them was this rule.
+ * Nor is it recoverable by softening: at 0.86 the medians are comfortable and the worst
+ * pixel still fails, because opacity scales the defence and the threat together.
+ *
+ * So the cue moves to the one element whose whole job is to say where you are. The
+ * § label is an address; the address of the room you are in is lit and the others are
+ * not. One small colour change, no contrast cost anywhere, and a stop with no
+ * `data-active` at all — no JavaScript, a hydration that never came — still renders
+ * exactly as it should rather than sitting back forever.
+ */
+.panel[data-active='false'] .section-inner {
+  transform: translateY(8px);
+}
+
+.panel[data-active='false'] .section-kicker {
+  color: var(--color-type-dim);
+}
+
+.section-kicker {
+  transition: color 0.45s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Hero and plain: one column, no media half. */
+.section-inner.center-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  grid-template-columns: none;
+  /*
+   * `padding-block` and `padding-inline`, not the `padding` shorthand.
+   *
+   * The shorthand is one declaration at specificity (0,2,0) and it silently beat the
+   * wide-screen block's `padding-inline: 73px` at (0,1,0) — so six stops used a fixed
+   * 73px gutter and these three kept a proportional 6vw one, and the disagreement grew
+   * without limit: 14px at 1440, 42px at 1920, 81px at 2560. Longhand loses to the media
+   * query the way it was always meant to.
+   */
+  padding-block: 8vh;
+  padding-inline: min(6vw, 73px);
+}
+
+/*
+ * `align-self: center` on a shrink-wrapping flex child made the authored
+ * `align: left | right` alternation completely inert on the four one-column stops:
+ * the title's left edge was a function of how long the copy happened to be, and the
+ * first five stops measured 272, 488, 457, 488 and 82px — five different margins,
+ * none of them chosen. Stretching the column and pushing it with `margin-inline`
+ * gives the page a spine: a left rail, or a right one, and nothing in between.
+ */
+.center-stage .content-zone {
+  align-self: stretch;
+  max-width: 46rem;
+  margin-inline: 0;
+  padding: 0;
+}
+
+/*
+ * The fix above was moved rather than made, and this is the half that moved.
+ *
+ * `align-self: stretch` gives the column the full width; an auto margin on the cross axis
+ * CANCELS that stretch in flexbox, so these two stops went back to shrink-to-fit and their
+ * left edge landed wherever the longest line happened to end — 880px against §02's 72px at
+ * 1440, and 1582 against 1465 at 2560. Four consecutive screens, four unchosen margins,
+ * which is the exact defect the comment above says was fixed.
+ *
+ * Pushing the TEXT inside a stretched column does the same job without unstretching it.
+ */
+.center-stage[data-align='right'] .content-zone {
+  /*
+   * `width: 100%` is the whole fix, and the auto margin was never the problem on its own.
+   *
+   * An auto cross-axis margin does cancel `align-self: stretch`, so the box fell back to
+   * shrink-to-fit and its left edge landed wherever the longest line ended — 880px against
+   * §02's 72px at 1440. Right-aligning the TEXT inside a stretched box fixes the left edge
+   * and breaks the right one instead, which is a ragged left margin and worse.
+   *
+   * A stated width restores what stretch was giving: the box is the container's width,
+   * `max-width: 46rem` caps it at 736px, and the auto margin then pushes those 736px to the
+   * right without any shrink-wrapping to cancel. Two rails, a left and a right, and nothing
+   * in between — which is what the comment above always claimed.
+   */
+  width: 100%;
+  margin-inline-start: auto;
+}
+
+.content-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /*
+   * Was a single 24px gap doing three different jobs — kicker to title, title to body,
+   * body to answer all got the same interval, so nothing in the column had more weight
+   * than anything else. The intervals are authored individually below instead.
+   */
+  gap: 0;
+  align-self: center;
+  max-width: 46rem;
+  z-index: 3;
+}
+
+.content-zone.right {
+  order: 2;
+}
+
+.media-zone {
+  position: relative;
+  align-self: center;
+  z-index: 2;
+  min-width: 0;
+}
+
+.media-zone.left {
+  order: 1;
+}
+
+.media-zone.right {
+  order: 2;
+}
+
+/*
+ * The halo, applied once. `text-shadow` inherits, so both columns and everything that
+ * ever lands in them — cards, the timeline, contact links, a streamed answer portalled
+ * in long after this rule was written — carry it without being named here.
+ */
+.content-zone,
+.media-zone {
+  text-shadow: var(--halo);
+}
+
+.section-title {
+  text-shadow: var(--halo-display);
+}
+
+.section-kicker,
+.mini-card .mk,
+.carousel-meta,
+.carousel-toggle,
+.contact-links .kk,
+.tl-year,
+.answer-kicker,
+.answer-asked-label,
+.answer-toggle,
+.answer-card-kicker {
+  text-shadow: var(--halo-mono);
+}
+
+/* ── type ──────────────────────────────────────────────────────────────────── */
+
+/*
+ * 11px at 0.22em in a mono face fragments a short label into loose glyphs —
+ * "§ 0 4 — A P A C" reads as a serial number rather than a section marker. Slightly
+ * larger, tracked less, weighted more.
+ */
+.section-kicker {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/*
+ * Light type on a dark, *moving* ground needs compensating on all three axes: a touch
+ * more leading, a touch of tracking, and a touch more weight than the same face would
+ * need on paper. Inter is variable here, so 420 costs nothing.
+ */
+.section-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 4.8vw, 4.4rem);
+  /* 1.02 put the descenders of "imagine", "parallel" and "region" into the next cap-line. */
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  color: var(--color-type);
+  text-wrap: balance;
+  padding-bottom: 0.06em;
+  margin-bottom: 30px;
+}
+
+.section-title .muted {
+  color: var(--color-type-muted);
+}
+
+/**
+ * The hero's introduction, and the only place on the page besides an answer where body
+ * text runs at full `--color-type`.
+ *
+ * That is not a conflict with the answer's foreground rule: `hero` is the one stop a
+ * generated answer may never target, so these two never appear in the same column.
+ * It sits between the tagline and the detail — the reader gets the role at full
+ * strength before the paragraph that qualifies it.
+ */
+.section-lede {
+  color: var(--color-type);
+  font-family: var(--font-sans);
+  font-size: 1.1875rem;
+  line-height: 1.5;
+  font-weight: 450;
+  text-wrap: pretty;
+  max-width: 52ch;
+  margin-bottom: 16px;
+}
+
+.section-body {
+  color: var(--color-type-muted);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.66;
+  font-weight: 420;
+  text-wrap: pretty;
+  max-width: 44ch;
+}
+
+/* ── §02's general arrangement ────────────────────────────────────── */
+
+.fig-ga {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 620px;
+}
+
+/*
+ * The stage: the drawing, and the canvas that sits exactly on top of it.
+ *
+ * `aspect-ratio` rather than letting the SVG size the box, because the canvas is absolutely
+ * positioned and would otherwise have no height to inherit until the SVG had laid out. The
+ * ratio is the viewBox's, so the two are registered by construction and nothing has to
+ * measure anything at runtime.
+ */
+.fig-ga-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 300 / 232;
+}
+
+.fig-ga-stage > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/*
+ * The particle cloud, and the reason it is a canvas.
+ *
+ * Measured at 390x844 under 4x CPU throttle, one-shot 1.7s: 150 SVG circles on CSS
+ * transitions run at 60fps, 800 at 21fps, 2,400 at 6fps, and 4,000 completed no frames at
+ * all. So "denser and smaller", which is what MJK asked for, is not reachable in the DOM —
+ * the old technique was already at its ceiling. Canvas 2D holds 58fps at 2,400. WebGL was
+ * measured too and is SLOWER at this count (18.6ms against 17.4ms), so the third GL context
+ * is not bought. Mounted only for the ~3.0s of the transition and unmounted afterwards.
+ */
+.fig-ga-dust {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/*
+ * The casing, and the only reason this drawing survives the scene behind it.
+ *
+ * The network is bright thin lines on black and so is a general arrangement; at low
+ * alpha the two read as the same material and the aircraft dissolves into the filaments.
+ * So every stroke is painted twice — once fat in the background colour underneath, once
+ * in the accent on top. It is the page's halo rule moved out of blur and into geometry,
+ * which is the whole trick: a halo is a Gaussian and costs raster, a casing is a second
+ * path and costs nothing.
+ *
+ * There is deliberately no `vector-effect: non-scaling-stroke` here, and that is not an
+ * omission. With it set, dash lengths resolve in SCREEN space rather than user space,
+ * which defeats the `pathLength` normalisation the draw-on depends on: the pattern became
+ * one screen pixel on and one off, and the port wing and the whole left side of the
+ * fuselage rendered as bare black casing with no ink in it. Measured by removing the
+ * declaration in the live page and screenshotting both. The widths below are therefore in
+ * user units and scale with the figure, which is also what you want — a drawing at 581px
+ * can carry a heavier line than the same drawing at 351px.
+ */
+/*
+ * The engine. Faces are filled with the page's own background, which is what removes the
+ * hidden lines: there is no depth buffer here, the draw order IS the depth sort, chosen
+ * once for a fixed viewpoint. It also means the drawing punches a solid hole through the
+ * network behind it and reads as a solid object rather than as a wireframe laid over one.
+ */
+.ga-eface {
+  fill: var(--color-bg);
+  stroke: var(--color-accent);
+  stroke-width: 1.15;
+  stroke-linejoin: round;
+}
+
+.ga-eline {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 0.82;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/*
+ * The engine holds, then gives way. It does not move while it is doing so — only its
+ * opacity changes — because a drawing this dense is expensive to re-raster and cheap to
+ * fade.
+ */
+.fig-ga[data-phase='scatter'] .ga-engine {
+  transition: opacity 420ms ease-in;
+  opacity: 0;
+}
+
+.ga-case {
+  fill: none;
+  stroke: #08080c;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+
+.ga-ink {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+/*
+ * The outline draws itself on once, when the section first comes into view, and then
+ * never moves again. Measured on this site at 375x812 under 4x CPU throttle: a static
+ * SVG costs 24.9ms at p95 against a 24.6ms baseline — inside run-to-run noise — while a
+ * perpetual animation cost 11% of the framerate and took the worst frame from 66ms to
+ * 92ms. One-shot is the difference between those two numbers.
+ *
+ * The dash length is 1 because the element carries `pathLength="1"`, which renormalises
+ * the path's own arc length to that number. The first attempt guessed 1400 instead, and
+ * the real outline is longer than that: the dash pattern repeated, so the last stretch of
+ * the aircraft — the port wing and tailplane — sat in a permanent gap and rendered as
+ * bare casing, a black outline with no ink in it. `pathLength` makes the animation exact
+ * without measuring anything at runtime, and it stays exact if the trace is regenerated.
+ */
+.ga-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.fig-ga[data-phase='plane'] .ga-ink {
+  transition: stroke-dashoffset 1100ms cubic-bezier(0.33, 0.9, 0.35, 1);
+  stroke-dashoffset: 0;
+}
+
+.ga-case {
+  opacity: 0;
+}
+
+.fig-ga[data-phase='plane'] .ga-case {
+  transition: opacity 500ms ease-out 260ms;
+  opacity: 1;
+}
+
+/*
+ * The interior lines, and the title block.
+ *
+ * The aircraft used to be a plan view with span and length arrows across it. It is a
+ * three-quarter view now, because an isometric engine turning into a top-down aeroplane
+ * changes projection halfway through the transformation. On a three-quarter view a
+ * dimension arrow would measure a foreshortened projection and quietly lie about it, so
+ * the numbers moved into a title block — which is what a general arrangement does anyway.
+ */
+.ga-inner {
+  opacity: 0;
+}
+
+.fig-ga[data-phase='plane'] .ga-inner {
+  transition: opacity 520ms ease-out 640ms;
+  opacity: 1;
+}
+
+.ga-iline {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.ga-case-thin {
+  stroke-width: 2.2;
+}
+
+.ga-block line {
+  stroke: var(--color-type-dim);
+  stroke-width: 0.6;
+}
+
+.ga-block text {
+  font-family: var(--font-mono);
+  font-size: 7.6px;
+  letter-spacing: 0.14em;
+  fill: var(--color-type-muted);
+  stroke: #08080c;
+  stroke-width: 2.2;
+  paint-order: stroke;
+}
+
+
+.ga-block {
+  opacity: 0;
+}
+
+.fig-ga[data-phase='plane'] .ga-block {
+  transition: opacity 620ms ease-out 900ms;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-ga .ga-ink,
+  .fig-ga .ga-case,
+  .fig-ga .ga-inner,
+  .fig-ga .ga-block {
+    transition: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+.fig-ga-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
+.fig-ga-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/*
+ * Offered rather than advertised: quiet until it is wanted, and a real button so it is
+ * one tab stop with a focus ring and a press state like every other control here.
+ *
+ * MJK asked "where is loop btw?", which is the honest verdict on the first version — 10px
+ * of `--color-type-dim` at 0.18em tracking, sitting at the end of a caption line, reads as
+ * part of the caption. Three changes, none of which make it louder:
+ *
+ *   1. A glyph. A word set in caption type is a label; a word with a circular arrow beside
+ *      it is a control. This is the change that does the work.
+ *   2. `--color-type-muted` instead of `--color-type-dim` — #c2bfb3 against #9d998e on
+ *      #0a0a0e, which is 8.8:1 against 5.4:1. Still quieter than the `MJK-101` opposite it,
+ *      and now above the 4.5:1 the rest of this page holds its small type to.
+ *   3. It arrives instead of appearing. One 8px slide and one single turn of the glyph, at
+ *      the moment there is finally something to replay, and then it never moves again.
+ *
+ * The one thing it is not is a loop. A perpetually running animation on this site measured
+ * -11% framerate and took the worst frame from 66ms to 92ms, and it would sit in the corner
+ * of the eye of someone reading the paragraph beside it.
+ */
+.fig-ga-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+  margin: -6px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo-mono);
+  transition: color 0.15s;
+  animation: ga-replay-in 520ms cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+.fig-ga-replay-mark {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The single turn. `both` so it holds its end state and never runs again. */
+  animation: ga-replay-turn 760ms cubic-bezier(0.5, 0, 0.2, 1) 160ms both;
+}
+
+.fig-ga-replay:hover,
+.fig-ga-replay:focus-visible {
+  color: var(--color-accent);
+}
+
+/* A press state on the glyph alone: the control answers without the label flickering. */
+.fig-ga-replay:active .fig-ga-replay-mark {
+  transform: rotate(-40deg);
+  transition: transform 0.12s;
+}
+
+@keyframes ga-replay-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes ga-replay-turn {
+  from {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-ga-replay,
+  .fig-ga-replay-mark {
+    animation: none;
+  }
+}
+
+.fig-ga-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+  text-shadow: var(--halo-mono);
+}
+
+/**
+ * Where a streamed answer docks. Empty until the chat step fills it, and deliberately
+ * inside the stop's own type scale: an answer about Taboola belongs in the Taboola stop,
+ * not in a panel bolted to the bottom of the screen.
+ */
+.section-body-wrap {
+  display: flex;
+  flex-direction: column;
+  /* The answer is a new movement, not the next paragraph. */
+  gap: 34px;
+}
+
+/**
+ * The authored paragraph, collapsing to make way for an answer.
+ *
+ * `grid-template-rows: 1fr -> 0fr` animates a height nobody had to measure, which is
+ * the only way to do this without a ResizeObserver and a layout read per frame. The
+ * inner element carries the `overflow: hidden` the idiom needs.
+ *
+ * The height transition survives `prefers-reduced-motion` on purpose — see the
+ * reduced-motion block at the foot of this file for why a silent jump is the worse
+ * option — so only opacity is dropped there.
+ */
+.authored-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 160ms ease-out;
+  opacity: 1;
+}
+
+.authored-body-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.authored-body[data-collapsed] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  /* Exit faster than entry, and do not hold the gap open once it is gone. */
+  transition: grid-template-rows 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 120ms ease-out;
+  margin-bottom: -34px;
+}
+
+/* ── the answer ────────────────────────────────────────────────────────────── */
+
+/**
+ * The answer, as the foreground of the stop it lands in.
+ *
+ * The whole move is `--color-type` on `.answer-prose` and `--color-type-muted` on
+ * everything else in the column. That is the hierarchy; the type sizes only support it.
+ * There is no panel, no border and no background here on purpose — a box would make the
+ * answer a widget sitting on the page instead of the page's own voice answering.
+ */
+/**
+ * Once a stop is answering, its column stops centring itself.
+ *
+ * `align-self: center` means the column's height decides where its title sits, so every
+ * answer of a different length moved the stop's title — measured at 90px before this
+ * change and 123px after the answer grew, in both cases with no transition, at the
+ * moment the reader's eye was on that title. Anchoring the column to the top of the
+ * stop makes the title a fixed point and lets answers differ in length underneath it,
+ * which is the only arrangement where a second answer can replace a first without
+ * moving anything the reader is looking at.
+ *
+ * The first answer still shifts the column up once, and that is deliberate: it happens
+ * while the page is already smooth-scrolling to the stop, so it reads as part of the
+ * arrival rather than as a jump.
+ *
+ * It has to target `.content-zone` rather than `.section-inner`. An earlier attempt set
+ * `align-items` on the container and measured no improvement whatsoever, because the zone
+ * carries `align-self: center` — an item property, which beats the container's. That is
+ * the same declaration that shrank the media column to 132px on phones: this stylesheet
+ * centres from the item in two places, and both have now cost a day.
+ */
+.section-inner:has(.answer) .content-zone {
+  align-self: start;
+}
+
+.answer-swap {
+  display: grid;
+  grid-template-areas: 'layer';
+}
+
+/*
+ * The answer is not allowed to be the browser's scroll anchor.
+ *
+ * MJK asked whether a visitor can read a long answer "without triggering the background
+ * animation scroll". Measured on a phone at 390x664, the honest answer was worse than the
+ * question: the camera moved WITHOUT the visitor scrolling at all.
+ *
+ * A streaming answer grows the section it is docked in. On a phone `.panel` is
+ * `height: auto`, so that growth is real layout, and CSS scroll anchoring picks a node
+ * inside the growing prose and scrolls the document to keep it visually still. Every one
+ * of those adjustments is document scroll, `ScrollProgress` derives camera progress from
+ * document scroll, and `data-stop` flips at the halfway mark between two section tops —
+ * so the camera flew to the next section while the reader sat still.
+ *
+ * Measured, baseline: 5 of 7 runs drifted 431-554px after the flight had already landed,
+ * and in every one of those `data-stop` went 7 -> 8 with no input. It is invisible as a
+ * jump because it arrives one pixel per frame (worst single-frame move: 1px), which is
+ * exactly why nobody caught it by looking.
+ *
+ * With this rule, 4 of 4 runs held 0px, on answers of 1,482-2,445 characters — longer
+ * than the ones that drifted. The page ends where the flight aimed it (scrollY 6362
+ * against 6854) and the reader starts 484px further up their own answer. Worst
+ * single-frame move afterwards: 2px, so nothing jumps in exchange.
+ *
+ * The whole subtree is named rather than just `.answer-swap`, because any box inside it
+ * can be the anchor candidate and this is the set that was actually measured.
+ *
+ * This does NOT fix scrolling BY HAND to finish reading, which still drives the camera.
+ * That one is a decision about the site's central conceit and it is MJK's — see the
+ * report. This only stops the page moving when he has not touched it.
+ */
+.answer-swap,
+.answer-layer,
+.answer,
+.answer-prose {
+  overflow-anchor: none;
+}
+
+.answer-layer {
+  grid-area: layer;
+  min-width: 0;
+}
+
+/*
+ * Exit faster than entry, and never let the outgoing copy take clicks on its way out.
+ */
+.answer-layer-out {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.answer-layer-in {
+  animation: answer-in 220ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+}
+
+/*
+ * Hold the entrance until the page has actually arrived.
+ *
+ * The envelope lands about 48ms after the question is sent and the answer's fade-and-rise
+ * starts there — while the page is still travelling, on a flight that runs 370ms for one
+ * stop and up to 820ms for eight. So the one cue that says "your answer is here" played
+ * out entirely during the journey, and what greeted the visitor on arrival was a
+ * paragraph that had finished announcing itself to an empty screen.
+ *
+ * `both` holds the first keyframe, so pausing here leaves the answer at opacity 0 and 6px
+ * low, and `lib/flight.ts` dropping the attribute on arrival is what starts it. It also
+ * starts on an interrupt, because `cancelFlight` clears the attribute on every path —
+ * which is right: if the visitor took the page back, they have arrived somewhere.
+ */
+html[data-flying] .answer-layer-in {
+  animation-play-state: paused;
+}
+
+@keyframes answer-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.answer-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-bottom: 12px;
+}
+
+/* ASKED, the question, and the way back to the stop's own paragraph, on one line. */
+.answer-asked {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+
+.answer-question {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--color-type-muted);
+  min-width: 0;
+}
+
+.answer-asked-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+.answer-toggle {
+  flex: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  /* padding-block takes this to a real target; the negative margin keeps the row put. */
+  padding: 8px 6px;
+  margin: -8px -6px;
+  transition: color 0.15s;
+}
+
+.answer-toggle:hover,
+.answer-toggle:focus-visible {
+  color: var(--color-accent);
+}
+
+.answer-toggle:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * `envelope.title`, demoted. It used to be a 30px serif heading sitting directly under
+ * the stop's own 70px serif title — two headings for one subject, and on a cards stop it
+ * was often the exact text of a card beside it. A dek says what the paragraph is about
+ * and then gets out of the way.
+ */
+.answer-dek {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.3;
+  color: var(--color-type-muted);
+  margin-bottom: 14px;
+  max-width: 40ch;
+}
+
+/* The one run of body text on the page at full strength. That is the whole hierarchy. */
+.answer-prose {
+  font-family: var(--font-sans);
+  font-size: 1.1875rem;
+  line-height: 1.62;
+  color: var(--color-type);
+  max-width: 58ch;
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}
+
+/*
+ * A caret blinks. It does not breathe.
+ *
+ * This carried Tailwind's `animate-pulse`, which is a 2-second ease-in-out ramp between
+ * full and half opacity. There is a measured 750ms gap between the question being sent
+ * and the first token arriving, and for the whole of it the ramp is somewhere in its
+ * slow middle, changing too little to read as motion — so the one element on screen whose
+ * entire job is to say "this is alive, text is coming" reads as a static orange tick.
+ *
+ * 1.06s, hard on and hard off, which is what a terminal caret does and what the eye
+ * recognises without being asked to. `steps(1)` also costs less than the ramp: two
+ * composited opacity changes a second instead of a value recomputed every frame.
+ */
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.answer-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  background: var(--color-accent);
+  animation: caret-blink 1.06s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-caret {
+    animation: none;
+  }
+}
+
+/*
+ * The answer's provenance, and the only place it appears: the memories the answer drew
+ * on, by title. Never their ids — `[project-taboola]` is developer output. Quietest type
+ * in the column, because provenance is a thing you look for, not a thing you are told.
+ */
+.answer-cards {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 16px;
+  margin-top: 26px;
+  max-width: 46ch;
+}
+
+.answer-cards li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-top: 1px solid var(--color-rule);
+  padding-top: 8px;
+}
+
+.answer-card-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+}
+
+.answer-card-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--color-type-muted);
+}
+
+/* In the dock, where there is no stop to be the foreground of. */
+.answer-compact .answer-prose {
+  font-size: 1rem;
+  color: var(--color-type-muted);
+}
+
+.answer-compact .answer-dek {
+  font-size: 1.05rem;
+}
+
+/* ── cards ─────────────────────────────────────────────────────────────────── */
+
+.card-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  max-width: 100%;
+}
+
+/*
+ * A card is a control now, and the button reset is what keeps it looking exactly as it did.
+ *
+ * `display: block` and `width: 100%` because a button is inline-block and shrink-wraps;
+ * `text-align: left` because it centres; `font: inherit` and `color: inherit` because a
+ * button takes the UA's font and colour. Measured at 0.0px delta against the div it
+ * replaces, at every viewport.
+ *
+ * THE SIGNIFIER IS THE RULE IT ALREADY HAD. The card owns exactly one piece of chrome — the
+ * hairline above it — so making that hairline the accent says "pressable" without adding a
+ * second thing to look at. DESIGN.md's standing objection to cards is that they accumulate
+ * chrome, and an `ASK` label repeated eight times down a column is the thing it names as
+ * "interface chrome wearing the costume". The alternative of putting a cue inside `.mb` was
+ * measured and is ruled out: `.mb` is clamped to two lines, and at 320px an inline cue took
+ * the cards that overflow from four of eight to six of eight — an affordance that disappears
+ * on the screen that needs it most.
+ */
+.mini-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--color-accent);
+  padding: 12px 0 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.mini-card .mk,
+.mini-card .mt,
+.mini-card .mb {
+  display: block;
+}
+
+/*
+ * Brighter still on hover and focus. Not a hover-only reveal: nobody hovers a card they do
+ * not already believe is interactive, and a touch screen has no hover at all, so the resting
+ * state has to carry the affordance and this only confirms it.
+ */
+.mini-card:hover,
+.mini-card:focus-visible {
+  border-top-color: var(--color-type);
+}
+
+.mini-card:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* Open. The same accent the dock's controls use for a pressed state. */
+.mini-card[aria-expanded='true'] {
+  border-top-color: var(--color-type);
+}
+
+.mini-card .mk {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-accent);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.mini-card .mt {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--color-type);
+  margin-bottom: 4px;
+}
+
+.mini-card .mb {
+  color: var(--color-type-muted);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 58ch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/*
+ * Three lines below 360px, where a third line costs nothing that can be destroyed.
+ *
+ * `CARD_CHARS` in StopSection.tsx is documented as two lines at the narrowest column a card
+ * gets, "351px on a 390px phone". It is not the narrowest: at a 320px viewport the column is
+ * 288px, where 88 characters is three lines — so the clamp fired and cut mid-word on four of
+ * eight cards, which is the exact defect that budget was written to remove.
+ *
+ * Raising the budget to ~72 characters would fix it by throwing a line of scent away on every
+ * screen. Raising the clamp fixes it where the problem is: below 900px the panel is
+ * `height: auto`, so the third line is scrolled rather than destroyed, and every wider screen
+ * keeps all 88 characters in two lines.
+ */
+@media (max-width: 360px) {
+  .mini-card .mb {
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* ── timeline ──────────────────────────────────────────────────────────────── */
+
+/**
+ * The dated rail on §04, drawn as one vertical spine rather than ten horizontal rules.
+ *
+ * The first version read as a table, and it read as a table because it was drawn as one:
+ * ten full-bleed hairlines across a 581px column is 5,810px of rule ink, which is
+ * exactly the chrome a table has and a timeline does not. The mechanics were never the
+ * problem — the accordion, the server-open/client-collapse and the keyboard handling are
+ * all unchanged — only the language they were dressed in.
+ *
+ * One line running *through* the gaps is what makes the eye read passage rather than
+ * enumeration, and it costs a single pseudo-element. Total rule ink drops to about
+ * 700px, so this masks the scene roughly eight times LESS than the version it replaces:
+ * the change is with DESIGN.md's "never mask the scene", not in tension with it.
+ *
+ * No beads on the spine, deliberately. The palette forbids matching the scene, so a warm
+ * dot beside cyan filaments could only ever be a pale mimicry of one; a scene node is an
+ * additive billboard with bloom, breathe and sway and a crisp DOM circle is a skeuomorph
+ * of it; and the scene grows branching trees, not chains, so the metaphor would be false
+ * as well as thin. The rhyme with the scene is behavioural instead — a signal that has
+ * travelled this far along a filament — which is what the warm run of spine says.
+ */
+.timeline {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 22px;
+}
+
+/* The spine: dim for its whole length, always present, JS or no JS. */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--color-rule);
+}
+
+/**
+ * The travelled run, and the one part of this that needs JavaScript.
+ *
+ * Masked from transparent to opaque so it is brightest where the reader is and fades out
+ * behind them. A flat warm bar from the top would read as a progress meter; a run that
+ * is strongest at its leading end reads as a signal that arrived — which is what the
+ * scene does when the camera reaches a node, and the only rhyme with it worth drawing.
+ *
+ * `--t` is unset without JavaScript, so the height is 0 and this is simply not there.
+ */
+.timeline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 1px;
+  height: var(--t, 0px);
+  background: var(--color-accent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 78%);
+  mask-image: linear-gradient(to bottom, transparent, #000 78%);
+  transition: height 0.45s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/**
+ * Each row attaches to the spine with a short tick rather than a rule across the
+ * content. This is the whole move: the active-row signal already existed and was
+ * invisible, because one lit rule among ten identical rules is not a signal. Hung off a
+ * spine, the same behaviour lands.
+ */
+.tl-row {
+  position: relative;
+}
+
+.tl-row::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 13px;
+  width: 10px;
+  height: 1px;
+  background: var(--color-rule);
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.22s;
+}
+
+.tl-row[data-active]::before,
+.tl-row[data-open]::before {
+  width: 16px;
+  background: var(--color-accent);
+}
+
+/*
+ * Two entries run *inside* another rather than after it, and they are indented to say
+ * so, with an elbow tick reaching back to the spine. Two indents in ten rows is a
+ * detail; a third would make it a system, and the honest way to show more overlap than
+ * that is a Gantt chart, which would evict the prose that is the actual content.
+ */
+.tl-row[data-nested] {
+  margin-left: 18px;
+}
+
+.tl-row[data-nested]::before {
+  left: -40px;
+  width: 28px;
+}
+
+.tl-row[data-nested][data-active]::before,
+.tl-row[data-nested][data-open]::before {
+  width: 34px;
+}
+
+/**
+ * The era captions: three runs of the rail, named from the stop each run belongs to.
+ *
+ * They are what make a sparse chronology readable rather than merely long — the same
+ * job "THE TWILIGHT ZONE" does on a deep-sea scroll — and they give a new memory
+ * somewhere to join instead of just making the list one row taller.
+ */
+.tl-era {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 14px 0 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tl-era:first-child {
+  margin-top: 0;
+}
+
+.tl-era::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 7px;
+  width: 10px;
+  height: 1px;
+  background: var(--color-rule);
+}
+
+.tl-era-label {
+  color: var(--color-type-muted);
+}
+
+.tl-era-span {
+  color: var(--color-type-dim);
+}
+
+.tl-row > button {
+  display: grid;
+  /*
+   * Three columns, not four. The closed-row summary is gone on desktop: all ten of them
+   * truncated to an ellipsis, which is decoration rather than information, and each
+   * row's `auto` title column made the summary start at a different x ten times over —
+   * a table with misaligned columns. Dropping it fixes the ragged edge and pays for the
+   * eras and the air.
+   */
+  grid-template-columns: 5.25rem minmax(0, 1fr) 1rem;
+  align-items: baseline;
+  column-gap: 14px;
+  width: 100%;
+  padding: 6px 8px 6px 0;
+  background: none;
+  border: none;
+  border-radius: 2px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background-color 0.16s;
+}
+
+/*
+ * The whole header is the target, so the whole header responds. Hovering the words and
+ * getting a colour change on the words alone reads as a link inside a row rather than as
+ * a row that opens.
+ */
+.tl-row > button:hover,
+.tl-row > button:focus-visible {
+  background: rgba(212, 193, 156, 0.06);
+}
+
+.tl-row > button:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tl-row > button:hover .tl-title {
+  color: var(--color-accent);
+}
+
+/*
+ * The affordance. A chevron drawn from a rotated square, turned by `aria-expanded` — so
+ * the mark reads the same state the assistive technology does and the two cannot drift.
+ */
+.tl-mark {
+  justify-self: end;
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid var(--color-type-dim);
+  border-bottom: 1px solid var(--color-type-dim);
+  transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.16s;
+}
+
+.tl-row > button[aria-expanded='true'] .tl-mark {
+  transform: rotate(225deg) translate(-1px, -1px);
+  border-color: var(--color-accent);
+}
+
+/*
+ * The year sits one step up from the dimmest token, not on it. At 11px mono over a lit
+ * scene the dim token measured 3.7:1 against the brightest pixel beside a stroke, and it
+ * can afford the step now that the active-row signal rides on the tick as well as on the
+ * colour -- the amber still reads as a change because it changes hue, not only value.
+ */
+.tl-year {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-type-muted);
+  white-space: nowrap;
+  transition: color 160ms;
+}
+
+.tl-row[data-active] .tl-year,
+.tl-row[data-open] .tl-year {
+  color: var(--color-accent);
+}
+
+.tl-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--color-type);
+}
+
+/*
+ * The first sentence is not drawn on a closed row. It is kept in the DOM because the
+ * panel is what carries it and because a very wide viewport can afford it again — see
+ * the 1600px rule at the foot of this block.
+ */
+.tl-summary {
+  display: none;
+}
+
+/*
+ * `grid-template-rows: 0fr -> 1fr` animates a height nobody had to measure. The inner
+ * element carries the `overflow: hidden` the idiom requires.
+ */
+.tl-row > div {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tl-row[data-open] > div {
+  grid-template-rows: 1fr;
+  transition-duration: 260ms;
+}
+
+/*
+ * The text fades in behind the opening row rather than arriving at full strength.
+ *
+ * The row animates its height from `0fr` to `1fr`, which is what lets it animate a height
+ * nobody had to measure — but the paragraph inside was already at full opacity while the
+ * clip was still moving, so the effect was a shutter passing over finished text rather
+ * than an entry opening. 180ms behind a 90ms delay puts the words a third of a beat
+ * behind the edge. Measured at 0.49 mid-open and 1.0 settled.
+ *
+ * This was built, reverted, and restored, and the round trip is worth recording. It was
+ * reverted on the belief that resting a closed row's paragraph at `opacity: 0` was what
+ * pushed `impeccable detect` from two anti-patterns to three by holding half the page's
+ * text invisible. That was wrong, and measuring both builds is what showed it: hidden
+ * text is byte-identical at 5,087 characters with the fade and without it, because the
+ * collapsed row is already clipped to zero height and counted. The detector's threshold
+ * was crossed by the ratio moving, not by this rule.
+ *
+ * The real finding underneath it is still true and belongs to the accordion rather than
+ * to this fade: 4,104 characters — the twelve collapsed entry bodies — are the bulk of
+ * the page's prose, and a crawler sees them the way the detector does. That is a
+ * discoverability decision about the timeline, not a reason to skip a transition.
+ *
+ * Opacity only. The row is one of a dozen in a column, and a transform here would move
+ * text inside a box that is itself resizing.
+ */
+.tl-panel-inner p {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.tl-row[data-open] .tl-panel-inner p {
+  opacity: 1;
+  transition-delay: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-panel-inner p,
+  .tl-row[data-open] .tl-panel-inner p {
+    transition: none;
+    opacity: 1;
+  }
+}
+
+
+.tl-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/*
+ * The panel runs the full width of the column rather than the 46ch a body paragraph
+ * would normally take. The longest entry is about 700 characters; at 46ch that is
+ * fifteen lines and the rail overflows its stop, and at the column's own width it is
+ * eleven and it fits.
+ */
+.tl-panel-inner p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-type-muted);
+  padding: 0 0 10px;
+}
+
+/*
+ * Above 1600px the column is wide enough to carry the first sentence again without the
+ * ragged edge that made it a fault at 1440 — the title column is fixed, so every summary
+ * starts at the same x. Decided from a screenshot at 1920, not in the abstract.
+ */
+@media (min-width: 1600px) {
+  .tl-row > button {
+    grid-template-columns: 5.25rem minmax(0, 15rem) minmax(0, 1fr) 1rem;
+  }
+
+  .tl-summary {
+    display: block;
+    grid-column: 3;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-type-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .tl-row[data-open] .tl-summary {
+    visibility: hidden;
+  }
+}
+
+/* ── carousel ──────────────────────────────────────────────────────────────── */
+
+/*
+ * `max-width: 42vw` was dead code and is gone.
+ *
+ * `0.42 vw` never beat the grid track's own `0.40375 vw`, so the rule never bound at any
+ * width and the hero has always been sized purely by its column. Removing it changes
+ * nothing; the cap that replaces it lives in the wide-screen block at the foot of this
+ * file, and only there.
+ *
+ * The reason it belongs there and not here: the sources cannot grow. The before/after pair
+ * is 780x585 and three carousel frames are 560x900, and the optimizer never upscales —
+ * asked for `w=1920` it returns the file's own size. Below 1500px the column never exceeds
+ * 589.5px, so nothing is stretched and a cap would only make the hero smaller than it
+ * needs to be. Above it the column reaches 902px and 1002px, where an uncapped hero would
+ * be a 780px file blown up by 1.3x.
+ */
+.carousel {
+  width: 100%;
+}
+
+.carousel-hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: rgba(20, 20, 26, 0.4);
+  overflow: hidden;
+  border: 1px solid var(--color-rule);
+}
+
+/*
+ * The crossfade fades the INCOMING frame in over the outgoing one, rather than parking
+ * four frames at `opacity: 0` behind the visible one.
+ *
+ * The old arrangement kept all five stacked and faded between them by opacity, which
+ * means that at rest four of the five photographs — the only real photographs on this
+ * site — sat in the DOM at zero opacity. A detector reads that as a raster buried under
+ * a wash and it is not wrong to: an image at opacity 0 is indistinguishable from one
+ * that never reaches the screen. Frames that are not participating are hidden with
+ * `visibility` instead, so they still preload and decode, and nothing is ever a
+ * photograph turned down to nothing.
+ */
+/*
+ * A frame is not always an `<img>` any more — the first one is the before-and-after
+ * wipe, which is two of them and a control. The selector moved onto a class so both
+ * kinds stack, hide and cross-fade by the same rule, and so that `.carousel-cap`, which
+ * is also a child of the hero, keeps its own positioning.
+ */
+.carousel-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  visibility: hidden;
+}
+
+/* The outgoing frame, held underneath at full strength while the new one arrives. */
+.carousel-frame.prev {
+  visibility: visible;
+  z-index: 0;
+}
+
+.carousel-frame.on {
+  visibility: visible;
+  z-index: 1;
+  /* 480ms, not the original 800ms: with the interval now gated to on-screen play, the
+     crossfade itself is a bigger share of what a viewer actually watches, and 800ms read
+     as a lag rather than a transition. */
+  animation: carousel-in 0.48s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes carousel-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.carousel-cap {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type);
+  text-transform: uppercase;
+  padding: 4px 8px;
+  background: rgba(10, 10, 14, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+/*
+ * `repeat(5, 1fr)` was a count of the frames that happened to exist. Adding the
+ * before-and-after tab and the engine photograph made it six and the sixth wrapped onto
+ * a second row. Columns are derived from the children now, so the strip cannot disagree
+ * with the array again.
+ */
+.carousel-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.carousel-strip button {
+  position: relative;
+  background: none;
+  border: 1px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s, border-color 0.2s;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  display: block;
+}
+
+.carousel-strip button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/*
+ * The before-and-after tab's thumbnail. Two halves of the same field, each showing its
+ * own outer edge, so the tab reads as a comparison at 50px rather than as a sixth
+ * photograph of the finished bike.
+ */
+.carousel-thumb-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-thumb-split img:first-child {
+  object-position: 22% center;
+}
+
+.carousel-thumb-split img:last-child {
+  object-position: 78% center;
+}
+
+.carousel-strip button:hover {
+  opacity: 0.85;
+}
+
+.carousel-strip button[aria-selected='true'] {
+  opacity: 1;
+  border-color: var(--color-accent);
+}
+
+.carousel-strip button:focus-visible,
+.carousel-toggle:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.carousel-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+}
+
+.carousel-meta .cur {
+  color: var(--color-accent);
+}
+
+/**
+ * WCAG 2.2 SC 2.2.2. The prototype autoplayed on a 5.2s interval and paused on
+ * `mouseenter` and nothing else — no keyboard stop, no touch stop, no reduced-motion
+ * gate, and the interval outlived the element. A visible control is the part that
+ * cannot be got wrong by accident.
+ */
+/*
+ * It measured 60x19px, seven pixels inside the dock's gradient — the least visible
+ * element on the stop, and it is the control that exists specifically to satisfy SC
+ * 2.2.2. Negative margins keep the enlarged hit area from moving the row it sits in.
+ */
+.carousel-toggle {
+  background: none;
+  border: none;
+  padding: 10px 8px;
+  margin: -10px -8px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+  transition: color 0.15s;
+}
+
+.carousel-toggle:hover {
+  color: var(--color-accent);
+}
+
+/* ── before / after ────────────────────────────────────────────────────────── */
+
+.ba {
+  position: absolute;
+  inset: 0;
+}
+
+.ba-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /*
+   * Both files are cut to 780x585 — the hero's own 4:3 — so on desktop `cover` is an
+   * identity and neither photograph is touched. Below 900px the hero is 16:10 and 16.7%
+   * of the height goes, and there is almost no slack to choose from: in the tighter of
+   * the two frames the handlebars sit at 3.4% of the file and the tyres' ground line at
+   * 82.2%, so the machine alone is 94.6% of the 16:10 window. 20% is where both survive
+   * — the window runs 3.3%–86.6%, which leaves the bars just inside the top and 12px of
+   * floor under the tyres at 390px wide. Losing either end is what would stop the two
+   * frames reading as one machine.
+   */
+  object-position: center 20%;
+}
+
+/*
+ * The stock bike is drawn over the finished one and clipped away rather than faded, so
+ * neither is ever an image at zero opacity — a raster under a wash is a raster that never
+ * reached the screen. `visibility` cannot do this job here: a carousel frame that is not
+ * showing hides the whole `.ba` with it, and a child set back to `visible` would punch
+ * straight through that.
+ *
+ * It does NOT keep the raster decoding, and this comment used to claim it did. Measured in
+ * a bare page: a clipped `loading="lazy"` image sits at naturalWidth 0 indefinitely while
+ * a plain one and a `visibility: hidden` one both reach 780, because Chrome reads a
+ * zero-area visual rect as "not visible" and never releases the lazy load. BeforeAfter.tsx
+ * takes the frame off lazy as the carousel comes within reach; see the note there.
+ */
+.ba-stock {
+  clip-path: inset(0 100% 0 0);
+}
+
+.ba-stock[data-show] {
+  clip-path: inset(0);
+}
+
+/*
+ * The whole photograph is the control. The two photographs are not registered — they
+ * cannot be, see BeforeAfter.tsx — so this is a cut with no transition on it: any moment
+ * with both on screen is a moment of two mismatched bikes ghosting through each other.
+ * One `<button>` rather than a slider, because there is nothing between the two states to
+ * scrub through, and because a button carries keyboard, touch and a pressed state without
+ * any of them being rebuilt.
+ */
+.ba-swap {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  /*
+   * Top right, not bottom right. At 390px the hero is 219px tall and the machine fills
+   * nearly all of it: chips at the bottom sat over the tyres' contact with the floor —
+   * the one part of a photograph of a motorcycle that cannot be covered — and ran into
+   * `.carousel-cap` in the opposite corner of the same 351px row. The top of both frames
+   * is background in both: a wall and a parked car in one, trees and daylight in the
+   * other.
+   */
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 12px;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Same chip as `.carousel-cap`, which sits in the opposite corner of the same frame. */
+/*
+ * A real button now, in both places, because the thing it sits in stopped being one.
+ *
+ * The plate, the tracking and the accent border on the selected one are unchanged — that
+ * treatment is the good part and the audit said so. What changes is the target: 4px of
+ * block padding made it 26.5px tall on a phone, well under the 44px guideline, and it was
+ * a span so nobody could reach it. 11px of padding plus the 17px line box clears 44
+ * without moving the plate's visual weight, and the negative margin keeps the row of two
+ * exactly where it was over the photograph.
+ */
+.ba-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-type);
+  padding: 13px 12px;
+  margin: -9px -4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: rgba(10, 10, 14, 0.55);
+  backdrop-filter: blur(4px);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ba-tag:hover {
+  opacity: 1;
+}
+
+.ba-tag:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.ba-tag[data-on] {
+  opacity: 1;
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/*
+ * The button covers the frame, so its focus ring is the frame's — which is the right
+ * answer anyway: the thing that has focus is the comparison, not a dot on it. Same
+ * accent, same offset as the thumbnails beneath it.
+ */
+.ba-swap:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * The prompts wrap rather than scroll. See SuggestedPrompts.tsx for why the scroller had
+ * to go; the short version is that at 375px it showed one prompt, clipped mid-word, and
+ * hid the other three behind a gesture nothing invited.
+ */
+.prompt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 20px;
+  padding-bottom: 14px;
+}
+
+/*
+ * One suggestion at a time below 768px, cross-fading in a single grid cell.
+ *
+ * Four wrapped suggestions made the dock 214px of a 390x664 viewport — 32% of the screen,
+ * and 41% at 320 — which is what MJK meant by "take up too much space at the bottom …
+ * and cover a lot of other information". One at a time takes it to 137px.
+ *
+ * The fixed height is a guard, not the fix. The fix is the copy rule: at 320px this row
+ * has 272px of usable width, and a suggestion that wraps republishes `--dock-h` and
+ * relays out all nine sections mid-rotation. `evals/tier-a/voice.test.ts` asserts the
+ * length so a future edit cannot reintroduce one; `overflow: hidden` means that if it
+ * ever does, the row clips instead of resizing the dock.
+ */
+.prompt-row[data-rotating] {
+  display: grid;
+  grid-template-areas: 'chip';
+  height: 41px;
+  align-items: center;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.prompt-row[data-rotating] .prompt-chip {
+  grid-area: chip;
+  padding: 11px 0;
+  margin: -11px 0;
+  animation: prompt-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes prompt-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Swapping text under a reader is worse than not swapping it, so reduced motion gets the
+ * first suggestion and no fade at all. The component stops the timer as well; this is
+ * only the half that would still animate if it did not.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .prompt-row[data-rotating] .prompt-chip {
+    animation: none;
+  }
+}
+
+.prompt-chip {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--color-type-muted);
+  /* padding-block is what makes these a real target; they were ~20px tall. */
+  padding: 7px 0;
+  margin: -7px 0;
+  transition: color 0.15s;
+}
+
+.prompt-chip:hover,
+.prompt-chip:focus-visible {
+  color: var(--color-accent);
+}
+
+/* ── §07's before and after ─────────────────────────────────────── */
+
+/*
+ * Four pairs, one at a time, in a box whose height never changes.
+ *
+ * WHY A STEPPER AND NOT A STACK. §07's media column is a 623px band at 1440x900 —
+ * `100svh - 8vh - (--dock-h 173 + 32)` — and `.panel` is `overflow: hidden`, so anything
+ * past the band is destroyed rather than scrolled. One pair plus two cards already
+ * measured ~646px there, which is why a 1280x720 laptop loses 188px off this section on
+ * every visit. A second always-visible pair costs another ~310px and would silently
+ * delete a card and half a photograph. A stepper costs +0px for every pair after the
+ * first, so the fifteenth would be as free as the second; four is an editorial number
+ * rather than a budget one.
+ *
+ * THE BOX IS A CONTRACT. Other states are being built into this same column, so its
+ * height is stated rather than emergent: `--pair-h` + the 7px cell gap + one 11px meta
+ * line. That is 302.5px at 1440x900 and 365.5px at 390x664.
+ */
+.pair {
+  display: grid;
+  /*
+   * Caption left, the pager right, sharing ONE line. A pager on a row of its own is
+   * 24.5px and the band has about 5px of slack, so the row it shares has to be one that
+   * already exists. `figcaption` has to be the figure's first or last child, so the tabs
+   * come first in the DOM and the grid puts them second on the screen.
+   */
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 14px 16px;
+  width: 100%;
+  margin-bottom: 22px;
+  /*
+   * `cqw` reads the media column itself. Deriving it instead from `.section-inner`'s
+   * max-width, its 5vw padding and its clamp()ed gap disagrees with the real column
+   * wherever the max-width binds: at 1920 the column is 557px, which is NARROWER than
+   * the 581px it is at 1440.
+   */
+  container-type: inline-size;
+  /*
+   * The photograph's height, and the only free variable in the figure.
+   *
+   * 1.769 = 0.963 + 0.806. 0.963 is set 104, the widest of the four supplier frames;
+   * 0.806 is every generated frame, all eighteen of which are 1856x2304. Solving the
+   * column for the widest pair is what lets four pairs of different shapes share one
+   * height with none of them overflowing. 56px is two 18px gutters plus the 20px arrow.
+   *
+   * 31svh is the other half. 623px of band at 1440x900, less 339px of rows that are not
+   * the photograph, leaves 284px; 31svh is 279px there and is the largest round
+   * coefficient that clears the band. It is also what stops the figure growing on a tall
+   * monitor into a section that has no room for it.
+   */
+  /*
+   * `31svh` is a floor, not the value, above 1500px.
+   *
+   * The `min()` shape is right and stays: the frame may never outgrow its own column, and
+   * `100cqw` reads that column directly. What was wrong is the height coefficient. At 2560
+   * the band is 1149.8px and §07's column was using 605 of it — 545px of empty vertical
+   * space in the section with the smallest photographs. So the first term becomes the
+   * larger of 31svh and whatever the band actually has left after the rest of the column,
+   * and `100cqw` still stops it from outgrowing the width. Below ~1500px `31svh` wins and
+   * this is a no-op, which is verified.
+   *
+   * 379px is the rest of the column measured on the built page: the 7px cell gap, the 11px
+   * meta line, the caption, the two cards and their rules.
+   */
+  --pair-h: min(
+    max(31svh, calc(0.92 * 100svh - var(--dock-h) - 32px - 379px)),
+    calc((100cqw - 56px) / 1.769)
+  );
+}
+
+.pair-frames {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: grid;
+}
+
+/*
+ * All four pairs occupy one grid cell, so the box cannot resize when the pair changes.
+ *
+ * The ones not showing are `visibility: hidden`, not `display: none` — the reasoning
+ * `.carousel-frame` already records: a hidden frame still lays out, still lazy-loads and
+ * still decodes, so paging is a cut rather than a wait. It also drops them out of the
+ * accessibility tree and the tab order, which is what a tabpanel that is not selected
+ * should do.
+ */
+.pair-set {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: center;
+  align-items: end;
+  /*
+   * 18px, not `clamp(14px, 2.4vw, 26px)`. The `--pair-h` arithmetic above hard-codes
+   * 2x18 + 20 = 56px, and a viewport-dependent gutter would put the two out of agreement
+   * by several pixels at the bottom of the desktop range — where the section is already
+   * clipping and has nothing to give.
+   */
+  gap: 7px 18px;
+  visibility: hidden;
+}
+
+.pair-set[data-on] {
+  visibility: visible;
+}
+
+/*
+ * Equal height, unequal width, and no crop on either photograph.
+ *
+ * Within a pair the two frames are different shapes because the second is a different
+ * photograph rather than a retouch of the first. Across the four pairs the supplier
+ * frames are different shapes again — 0.926, 0.963, 0.857, 0.938 — because they are four
+ * separate phone photographs. Measured: masking the white PVC wall leaves between 0 and
+ * 3% of slack on every edge of all four, so there is no common crop that does not cut
+ * into a garment. Fixing the height and letting each width fall out of it is the only
+ * arrangement that squeezes nothing, and centring the row keeps the jog between pairs
+ * under 16px on either side.
+ */
+.pair-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/*
+ * The frame's edge, as a ring rather than a border, and brighter than the rule colour.
+ *
+ * Measured: the catalogue photograph's own outer pixels sit at 1.49:1 against the page,
+ * and `--color-rule` around it at 1.47:1 — so the frame had no boundary at all, and a
+ * generated interior simply dissolved into the scene. All eighteen generated frames fall
+ * between 1.30 and 2.06:1 — the four shipped here are 1.87, 1.53, 1.51 and 1.39 — so
+ * this is the set, not one unlucky file. The inner ring is 3.65:1 against the page,
+ * which clears WCAG 1.4.11's 3:1 for a non-text boundary while staying above 2.4:1
+ * against both photographs; the outer one is the page's own casing trick, keeping the
+ * ring off the scene.
+ */
+.pair-cell img {
+  display: block;
+  height: var(--pair-h);
+  width: auto;
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
+}
+
+.pair-meta {
+  font-family: var(--font-mono);
+  /* 11px, not 10. `DESIGN.md` sets that floor with no argument and no exception, and this
+     rule was quietly under it. */
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+}
+
+/*
+ * Drawn, not typed. A character would inherit the body face and sit on a baseline that
+ * has nothing to do with the two frames it points between.
+ */
+.pair-arrow {
+  width: 20px;
+  height: auto;
+  align-self: center;
+  /*
+   * 12px, not 18. The arrow centres in a row that is the photograph plus a 7px gap plus
+   * a 16.5px meta line, so the PHOTOGRAPH's centre sits (7 + 16.5) / 2 = 11.75px above
+   * the row's. 18px was tuned by eye against a 289px frame and drifts as soon as
+   * `--pair-h` tracks the viewport.
+   */
+  margin-bottom: 12px;
+  overflow: visible;
+}
+
+.pair-arrow path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pair-arrow-case {
+  stroke: #08080c;
+  stroke-width: 3.4;
+}
+
+.pair-arrow-ink {
+  stroke: var(--color-accent);
+  stroke-width: 1.3;
+}
+
+.pair-cap {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
+/*
+ * The pager: `.carousel-strip`'s grammar — a real tablist with a roving tabindex — set as
+ * numerals rather than thumbnails.
+ *
+ * Thumbnails would be better at saying WHICH four, and they cost a 64px row that this
+ * section does not have. Four numerals are 112px on a line that is already being drawn.
+ */
+.pair-nav {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  gap: 2px;
+}
+
+.pair-nav button {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  /* `.carousel-toggle`'s trick: padding makes a 28px target and the negative block
+     margin keeps the row it sits in at its 16.5px line height. */
+  padding: 6px 5px;
+  margin: -6px 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+  transition: color 0.15s, border-color 0.2s;
+}
+
+.pair-nav button:hover {
+  color: var(--color-type);
+}
+
+.pair-nav button[aria-selected='true'] {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.pair-nav button:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * The swap, phone only. Two chips in one button, `.ba-tag` verbatim — the same control
+ * §05 already ships for two photographs that cannot be registered, and for the same
+ * reason: there is nothing between the two states to scrub through.
+ *
+ * It sits UNDER the frame rather than over it, which is where §05 puts it. §05's chips
+ * can lie on the photograph because the top of both frames is background; here every
+ * pixel of both frames is either printed cloth or the invented room, and the whole point
+ * of the figure is that a visitor can check the cloth.
+ */
+.pair-swap {
+  display: none;
+  grid-row: 2;
+  justify-self: start;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pair-swap:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  /*
+   * One frame at a time, at 1.9x the size.
+   *
+   * There was no `.pair` rule below 900px at all, so the three-column desktop grid
+   * survived onto the phone and the pair rendered at its SMALLEST exactly where the
+   * column is widest relative to the viewport: 163x176 and 142x176 in a 351px column,
+   * with the garment inside the catalogue frame about 60px across. The claim the figure
+   * exists to support — that the print, the zari border and the tassels survive while
+   * the room is invented — cannot be checked at 60px, so at that size the evidence was
+   * not evidence.
+   *
+   * `research-aiwork` rejected a cut for this pair on the grounds that two frames this
+   * different are too different to remember across. That is true at 268px and false at
+   * 163px: there is no side-by-side comparison happening on a phone today for a cut to
+   * destroy. Side by side survives where the frames are big enough to compare, which is
+   * desktop.
+   */
+  .pair {
+    /*
+     * 0.963 is set 104 again, so the widest supplier frame still fits the column at
+     * 320px — the one viewport where width binds before height does. 50svh is 332px on a
+     * 390x664 phone, against 176px today.
+     */
+    --pair-h: min(50svh, calc(100cqw / 0.963));
+  }
+
+  .pair-set {
+    grid-template-columns: 1fr;
+    justify-content: start;
+    justify-items: start;
+  }
+
+  /*
+   * Both cells in one track, so the box's height is fixed by whichever is showing and the
+   * left edge never moves. The clip is on the CELL, so a frame and its label leave
+   * together. Clipped, never `display: none`, never `visibility`, never `opacity: 0` —
+   * the same device as `.ba-stock` and for the same reason: both rasters stay decoded and
+   * both alt strings stay in the document, so a screen-reader user gets the whole
+   * comparison without operating anything.
+   */
+  .pair-cell {
+    grid-area: 1 / 1;
+  }
+
+  .pair-cell[data-off] {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  /* Nothing to point between. */
+  .pair-arrow {
+    display: none;
+  }
+
+  /* The chips are the label now: at 307px there is not room for `SUPPLIER · AS SHOT` and
+     a control on the same line, and only one frame is showing to be labelled. */
+  .pair-meta {
+    display: none;
+  }
+
+  .pair-swap {
+    display: flex;
+  }
+}
+
+/* ── §07's JewelAI states ─────────────────────────────────────── */
+
+/*
+ * WHY THESE SHARE §07's BOX INSTEAD OF BEING ADDED TO IT.
+ *
+ * Measured on the built page, not estimated. `.section-inner` pads
+ * `8vh 5vw calc(var(--dock-h) + 32px)`, and at 1440x900 `--dock-h` resolves to 143px, so
+ * the media column has 900 - 72 - 175 = 653px of height. §07 already spends 647 of those
+ * 653 on the apparel pair (383px) plus two cards (242px) plus the pair's 22px margin.
+ * Above 900px `.panel` is `overflow: hidden`, so a figure ADDED to that column would not
+ * scroll out of sight, it would be destroyed. These are therefore STATES of the column,
+ * each sized to the 383px the pair occupies, and only one is ever in the DOM.
+ *
+ * Below 900px `.panel` is `height: auto; overflow: visible`, so the phone box is soft.
+ * The states are still held close to the pair's 289px there, because §07 is already
+ * 1,119px on a 390x664 phone and is on the "Open, not started" list for exactly that.
+ */
+
+.jp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  /*
+   * 436px is derived, not chosen: with the arrow's own track and a 20px gutter either side
+   * of it, it is the width at which the output tile lands at 276px, which is inside the
+   * 303px `.pair-frames` box the apparel stepper fixed for this column.
+   *
+   * It was 461px, which put the tile at 295px and the whole column at 637px of a 653px
+   * readable band — 19px taller than the pair state and 16px off the ceiling. Since
+   * `.panel` is `overflow: hidden` above 900px, 16px of headroom is not a margin, it is a
+   * fuse: the next change to a caption's line count blows it. 6% off the tile buys 19px
+   * back and makes this state exactly as tall as the pair it replaces, which is what
+   * "a question changes WHICH thing is showing, never HOW MUCH" asks for.
+   *
+   * The svh term is not decoration either — on a 720px-tall laptop it takes the figure to
+   * 235px rather than letting it clip.
+   *
+   * It caps the flow and the meta row and NOT the caption, because the caption has no
+   * column to align with and reads better on the full 581px: capped, it wrapped to three
+   * lines and took the whole column past its budget.
+   */
+  --jp-w: min(436px, 56svh);
+  margin-bottom: 22px;
+}
+
+/*
+ * The geometry is one relationship and everything else follows from it.
+ *
+ * Three abutting square references in a 1fr track beside a 1:1 output in a 3fr track make
+ * both columns exactly the same height by construction: three tiles of width w stack to
+ * 3w, and an output 3w wide is 3w tall. So nothing is measured at runtime, there is no
+ * second layout to keep in sync, and the two groups share a baseline and a cap height
+ * without either being cropped to fit the other. Same principle as `.pair-frames`, which
+ * makes its tracks the two photographs' own aspect ratios.
+ */
+.jp-flow {
+  /*
+   * 20px, not 36. The arrow sits in a track of its own, so the gutter is paid twice: at
+   * 36px the two groups were 100px apart on a 1440 desktop — more than the reference
+   * strip's own 98px width — and the strip read as orphaned on the far left rather than
+   * as the left end of one flow. At 20px the gap is 68px. The phone was right at 38px all
+   * along, which is what said the desktop value was wrong rather than the ratio.
+   */
+  --jp-g: clamp(10px, 1.4vw, 20px);
+  display: grid;
+  grid-template-columns: 1fr auto 3fr;
+  column-gap: var(--jp-g);
+  align-items: start;
+  width: 100%;
+  max-width: var(--jp-w);
+}
+
+/*
+ * ZERO GAP, and it is the load-bearing detail of the whole figure.
+ *
+ * MJK's own Krunch Labs deck draws this pipeline with the input as ONE dashed box holding
+ * three abutting photographs and a single arrow leaving it. Three arrows converging would
+ * say "three things were combined"; what actually happens is "one thing was photographed
+ * three times". Three tiles inside one casing ring with no gutter read as one rectangle
+ * because they are one rectangle. Put 3px between them and the claim inverts.
+ */
+.jp-refs {
+  display: grid;
+  gap: 0;
+  align-self: start;
+  min-width: 0;
+  /*
+   * The frame edge as a ring rather than a border, and brighter than `--color-rule`.
+   * Measured for `.pair-cell img` and true here for the same reason: `--color-rule` on
+   * the page ground is 1.47:1, which is not a line, it is a suggestion. The inner ring
+   * clears WCAG 1.4.11's 3:1 for a non-text boundary and the outer one is the casing that
+   * keeps it off the scene.
+   */
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
+}
+
+.jp-refs img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.jp-out {
+  position: relative;
+  align-self: start;
+  min-width: 0;
+  aspect-ratio: 1;
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
+}
+
+.jp-out img,
+.jp-out video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * Drawn, not typed, for `ApparelPair`'s reason: a character would inherit the body face
+ * and sit on a baseline that has nothing to do with the two things it points between.
+ */
+.jp-arrow {
+  width: clamp(18px, 2.6vw, 28px);
+  height: auto;
+  align-self: center;
+  overflow: visible;
+}
+
+.jp-arrow path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jp-arrow-case {
+  stroke: #08080c;
+  stroke-width: 3.4;
+}
+
+.jp-arrow-ink {
+  stroke: var(--color-accent);
+  stroke-width: 1.3;
+}
+
+/*
+ * An opaque chip, and that is not the wash `DESIGN.md` forbids twice.
+ *
+ * That rule is about covering the WebGL scene to protect words from it. This sits on the
+ * photograph it controls, and it has to: measured on `generated.jpg`, the accent over the
+ * darkest quarter of the frame averages 5.95:1, but the 95th-percentile pixels in that
+ * same quarter — the lit moss and the wet edge of the slate — take it to 2.84:1, under
+ * the 4.5:1 an 11px label needs. On `#08080c` it is 11.34:1 everywhere, which turns a
+ * measurement into a constant. The button covers the whole frame, so the target is 295px
+ * square rather than the 60x19px the carousel's toggle measured before it was enlarged.
+ */
+.jp-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 9px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.jp-play > span {
+  margin-right: 7px;
+}
+
+.jp-play::before {
+  content: '';
+  position: absolute;
+  inset: auto 9px 9px 9px;
+  height: 26px;
+  background: #08080c;
+  z-index: -1;
+}
+
+.jp-play:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Capped to the flow's width so `GENERATED` lands on the output tile's own right edge. */
+.jp-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--jp-w);
+  font-family: var(--font-mono);
+  /* 11px, not 10. `DESIGN.md` sets that floor with no argument and no exception. */
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-type-dim);
+  text-shadow: var(--halo-mono);
+}
+
+.jp-meta-out {
+  color: var(--color-accent);
+}
+
+.jp-cap {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
+/* ── §07's gates ──────────────────────────────────────────────── */
+
+.jg {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.jg-lane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* 10px, measured: at 12px the eight rows come to 366px against a 383px box, which
+     leaves nothing for the caption. At 10px they come to 312px. */
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 40rem;
+}
+
+/*
+ * The spine, cased.
+ *
+ * A 1px accent line with a 2px `#08080c` ring around it is the same move `.pair-cell img`
+ * makes for its frame edge, and it is what lets a hairline survive a lit filament passing
+ * behind it without anything being laid over the scene. `top`/`bottom` stop at the first
+ * and last marks, so the lane begins and ends on a shape rather than in mid-air.
+ */
+.jg-lane::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  /* 9px is the mark's own vertical centre in an 18px box, so the spine begins and ends on
+     the first and last marks rather than in mid-air above and below them. */
+  top: 9px;
+  bottom: 9px;
+  width: 1px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px #08080c;
+}
+
+.jg-step {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  column-gap: 9px;
+  align-items: start;
+}
+
+/*
+ * `position: relative` is the whole of this rule and it is not a tidy-up.
+ *
+ * The spine is an absolutely-positioned `::before` and the marks are in-flow content, so
+ * the spine painted OVER them: its 5px casing band ran straight down the diamonds' vertical
+ * axis and covered the top and bottom vertices, leaving a left chevron and a right chevron
+ * with a gap between. Every decision on the lane printed as `<|>` — punctuation, not a
+ * shape. Lifting the marks into the positioned layer puts the spine back underneath, where
+ * the `#08080c` plug can do the job it was written for and hide the line inside each mark.
+ */
+.jg-mark {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  width: 34px;
+  height: 18px;
+  overflow: visible;
+}
+
+.jg-mark path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The casing stays 3.6 device pixels at any rendered size. Stripe's diagrams omit this
+     and are effectively desktop-only as a result. */
+  vector-effect: non-scaling-stroke;
+}
+
+.jg-mark .jg-case {
+  stroke: #08080c;
+  stroke-width: 3.2;
+}
+
+/* Fills the mark so the spine behind it does not print through its middle. */
+.jg-mark .jg-plug {
+  fill: #08080c;
+  stroke: none;
+}
+
+.jg-mark .jg-ink {
+  stroke: var(--color-accent);
+  stroke-width: 1.3;
+}
+
+/*
+ * Dashed for what goes in, solid for what comes out. Lifted from MJK's own deck, where
+ * both pipeline pages use that convention and use it consistently. The casing underneath
+ * stays solid, so the dashes have a dark bed rather than gaps onto the scene.
+ */
+/* 2.2/1.8, not 3/2.4: the input rectangle's perimeter is 42 units, and the coarser dash
+   put six marks on it, which printed as registration crop-marks rather than a dashed box. */
+.jg-step[data-kind='in'] .jg-ink {
+  stroke-dasharray: 2.2 1.8;
+}
+
+.jg-q {
+  grid-column: 2;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-type);
+  text-wrap: pretty;
+}
+
+/*
+ * The consequence, and on the three rows that have an exit it is the entire point of the
+ * drawing. 11px is the floor, exactly, and it is not rounded down anywhere.
+ */
+.jg-a {
+  grid-column: 2;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-type-muted);
+  text-wrap: pretty;
+}
+
+/* The three rows that carry a way off the lane are the ones worth finding at a glance. */
+.jg-step[data-exit] .jg-a {
+  color: var(--color-accent);
+}
+
+.jg-cap {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+
+/* ── press ───────────────────────────────────────────────────── */
+
+/*
+ * Every control on this site had a hover state and a focus ring and nothing at all for
+ * the press itself. On a desktop that is a missing beat. On a phone there is no hover to
+ * miss it by: a visitor taps a timeline row or a prompt chip and the pixel under their
+ * thumb does not change, so the only confirmation the tap registered is whatever happens
+ * next, 200ms later, somewhere else on the screen.
+ *
+ * Transform and opacity only, so this is the compositor's work and not the raster
+ * threads' — the halo makes anything that repaints text expensive, and a press is the
+ * one moment a finger is already covering the evidence.
+ */
+.prompt-chip:active,
+.dock-send:active,
+.mini-card:active,
+.motion-toggle:active,
+.answer-toggle:active,
+.carousel-toggle:active,
+.pair-nav button:active,
+.ba-tag:active,
+.carousel-strip button:active,
+.ba-swap:active,
+.tl-row > button:active,
+.contact-links a:active {
+  transform: translateY(0.5px);
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt-chip:active,
+  .dock-send:active,
+  .mini-card:active,
+  .motion-toggle:active,
+  .answer-toggle:active,
+  .carousel-toggle:active,
+  .pair-nav button:active,
+  .ba-tag:active,
+  .carousel-strip button:active,
+  .ba-swap:active,
+  .tl-row > button:active,
+  .contact-links a:active {
+    transform: none;
+  }
+}
+
+/* ── the dock ──────────────────────────────────────────────────────────────── */
+
+/*
+ * Solid where the type is, feathered above it. The old gradient reached full
+ * transparency at its own top edge, so a stop's content scrolled up behind the dock in
+ * plain sight and printed over the prompt row.
+ */
+.dock-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /*
+   * In pixels from the top edge, not percentages of a height that changes.
+   *
+   * The percentage stops were read off a desktop dock, where the prompt row is one line
+   * and sits inside the solid 58%. On a phone that row wraps to four lines and the whole
+   * of it lands in the feather, so the fix that was written for this exact collision
+   * never applied where the collision happens: the timeline's "Omnicom Group" and the
+   * next stop's title both print through the prompts, legible, unreadable.
+   *
+   * Solid under everything the dock draws, feathered across the 44px above it. The stop
+   * padding derived from `--dock-h` keeps the *end* of a section clear of the dock; this
+   * is what keeps its middle clear on the way past.
+   */
+  background: linear-gradient(
+    to top,
+    var(--color-bg) 0,
+    var(--color-bg) calc(100% - 44px),
+    rgba(10, 10, 14, 0.78) calc(100% - 18px),
+    rgba(10, 10, 14, 0) 100%
+  );
+}
+
+/*
+ * A real submit control, and on every viewport. It was `↵ SEND`, hidden below `md` —
+ * mono chrome in a technical costume, and on a phone the only way to send was the
+ * on-screen keyboard's own return key, with nothing on the page to say so.
+ */
+.dock-send {
+  flex: none;
+  background: none;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-type-muted);
+  padding: 8px 14px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.dock-send:hover,
+.dock-send:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/*
+ * The WCAG 2.2.2 control, in the dock's own row after Send.
+ *
+ * Bordered like `.dock-send` and not like `.prompt-chip`. That is the whole design
+ * decision: a review of this dock found the four chips computing to
+ * `background: rgba(0,0,0,0)` with `border: 0px none` in body-text colour, sitting beside
+ * a bordered Send — four controls that do not look like controls next to one that does.
+ * A Level A mechanism cannot afford to be the fifth. It borrows Send's border, radius and
+ * transition so the dock reads as one system, and it is set in the mono face at the
+ * kicker's size so it is quieter than the primary action without being invisible.
+ *
+ * `--color-type-muted` rather than `--color-type-dim`: 8.8:1 against the page instead of
+ * 5.4:1, which clears the 4.5:1 the rest of the small type here holds to. The scene moves
+ * behind it, so it carries the mono halo like every other small label over the canvas.
+ */
+.motion-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--color-type-muted);
+  text-shadow: var(--halo-mono);
+  /*
+   * 8px block padding gives a 27px box, and the negative margin keeps that out of the
+   * form row's height so the dock does not grow — the same device `.carousel-toggle` and
+   * the apparel pager use. The row is 44px tall in total, which is where the tap target
+   * comes from; the control fills it.
+   */
+  padding: 8px 10px;
+  margin-block: -1px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.motion-toggle:hover,
+.motion-toggle:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.motion-toggle:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Pressed means held. `aria-pressed` is what a screen reader announces and it is set
+ * either way; this is the same fact for everyone else, and it has to be legible at a
+ * glance or the control cannot report its own state.
+ */
+.motion-toggle[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.motion-toggle-mark {
+  display: inline-flex;
+  flex: none;
+}
+
+/*
+ * The label is the state, so on a narrow phone the mark carries it alone and the word
+ * goes. 360px rather than a round number: at 390 the row still fits MOTION beside Send,
+ * and below that Send is what has to survive.
+ */
+@media (max-width: 360px) {
+  .motion-toggle {
+    font-size: 0;
+    gap: 0;
+    padding: 8px;
+  }
+}
+
+/*
+ * The skip link: nothing until it has focus, then the first thing on the page.
+ *
+ * Not `display: none` and not `visibility: hidden` — either one takes it out of the tab
+ * order, which is the one thing it exists to be in. Clipped to a single pixel is the
+ * technique that leaves it focusable, and the browser scrolls a focused element into view,
+ * so it appears exactly when it is reachable and at no other time.
+ *
+ * It borrows the dock's own control treatment rather than inventing a fifth one: mono at the
+ * kicker's size, a 1px rule, a 2px radius, accent on focus.
+ */
+.skip-to-ask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-to-ask:focus-visible {
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  margin: 12px;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-accent);
+  border-radius: 2px;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ── the ask field ─────────────────────────────────────────────────────────── */
+
+/*
+ * The only text input on the site, and until now it had no visible boundary and no
+ * focus ring at all. A rule under it is enough to say "type here"; the accent on
+ * focus is the same treatment the carousel controls use, so the site keeps one.
+ */
+.ask-input {
+  border-bottom: 1px solid var(--color-rule);
+  transition: border-color 0.15s;
+  /*
+   * An input's intrinsic `min-width: auto` refuses to shrink past its default size, so at
+   * 320px `flex-1` could not take the field below 182px and it pushed Send 27px out of its
+   * own row — 3px of it off the viewport, with the right border gone. `overflow-x: hidden`
+   * on the body kept `scrollWidth` at 320, so no overflow check saw it.
+   */
+  min-width: 0;
+}
+
+.ask-input:focus-visible {
+  border-bottom-color: var(--color-accent);
+  outline: none;
+}
+
+/* ── contact ───────────────────────────────────────────────────────────────── */
+
+/* Contact stacks its corpus card above the three destinations. */
+.contact-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contact-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-width: 30rem;
+}
+
+.contact-links a {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  border-top: 1px solid var(--color-rule);
+  border-bottom: none;
+  padding-top: 12px;
+  color: var(--color-type);
+  text-decoration: none;
+  transition: border-top-color 0.2s;
+}
+
+.contact-links a:hover,
+.contact-links a:focus-visible {
+  border-top-color: var(--color-accent);
+}
+
+/*
+ * The four links are the only conversion paths on the page, and nothing said so.
+ *
+ * `.contact-links a` overrides the base anchor rule's accent colour and underline, so its
+ * 18px serif `.kl` under a 1px `--color-rule` top border was pixel-for-pixel the same
+ * object as `.mini-card .mt` beside it: "Download resume" and "What I take on" rendered
+ * identically. Contrast was never the problem — 18.03:1 — the problem was that a static
+ * heading and the site's only outbound link were indistinguishable.
+ *
+ * A mark rather than an underline. The cards below now carry an accent top rule of their
+ * own (they became controls too), so an accent rule here would say "pressable" and not
+ * "leaves the site", and an underline under an 18px serif in this design is heavier than
+ * anything else on the page. The arrow is the one thing on screen that means elsewhere.
+ */
+.contact-links a .kl::after {
+  content: ' ↗';
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  /* Off the accessible name: the label already says where it goes. */
+  speak: never;
+}
+
+.contact-links .kk {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-type-dim);
+  white-space: nowrap;
+}
+
+.contact-links .kl {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+
+/* ── mobile: the restack the prototype never had ───────────────────────────── */
+
+@media (max-width: 900px) {
+  /**
+   * One column, media under text, and the panel is allowed to grow past a viewport.
+   * Growing it costs the exact 1-stop-per-viewport scroll mapping — which is why
+   * ScrollProgress derives u from each section's own offsetTop rather than assuming
+   * uniform heights.
+   */
+  .panel {
+    height: auto;
+    min-height: var(--stop-height);
+    overflow: visible;
+  }
+
+  .section-inner,
+  .section-inner.center-stage {
+    display: flex;
+    flex-direction: column;
+    /*
+     * The desktop gap is `clamp(3rem, 5vw, 6rem)` — at least 48px — and it is the gap
+     * between two side-by-side COLUMNS. Stacked into one column on a phone it becomes
+     * 48px of vertical dead air between a section's words and its media, on the axis
+     * where space is scarcest. Measured at 390x844: five of the nine sections already
+     * run past the top of the dock when scrolled to their own top, by 113px to 503px,
+     * and this returns 22px of that to every one of them.
+     */
+    gap: 26px;
+    /*
+     * `center` printed the last card of every cards stop underneath the dock. The
+     * reserve below is correct and was never the bug: when content exceeds
+     * `min-height`, centring pushes the overflow out symmetrically — through the
+     * reserved padding at the bottom and off the top. Starting at the top is what
+     * makes the reserve do the job it was written to do.
+     */
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+
+  /*
+   * Hero and the plain stops carry a title and two paragraphs and never overflow, so
+   * they centre in the space above the dock instead of sitting at the top with a dead
+   * band beneath them. The stops that can overflow keep flex-start, which is what stops
+   * their last card printing under the dock.
+   */
+  .section-inner.center-stage {
+    justify-content: center;
+    gap: 28px;
+    padding: 4vh 7vw calc(var(--dock-h) + 32px);
+    min-height: var(--stop-height);
+  }
+
+  .content-zone,
+  .content-zone.right,
+  .center-stage .content-zone {
+    order: 1;
+    max-width: none;
+    margin-inline: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  /*
+   * There was a reading glass here — a `backdrop-filter` pane behind the text column,
+   * with two long comments explaining its geometry on a stacked phone layout. The
+   * feature was removed and the comments were not, so for a while this file documented
+   * in detail a frame-killer the page did not have. A performance investigation went
+   * looking for it. Do not reinstate either: DESIGN.md forbids a scrim between the words
+   * and the scene, twice, after it was rejected on sight twice, and the words defend
+   * themselves with the per-glyph halo above instead.
+   */
+
+  /*
+   * `align-self: stretch` is the whole of this rule and it is not a tidy-up.
+   *
+   * The desktop layout is two grid columns and `.media-zone` carries `align-self:
+   * center` to sit the media against the middle of the text beside it. On a phone the
+   * container becomes `flex-direction: column`, and in a column flexbox the cross axis
+   * is the HORIZONTAL one — so that same declaration stopped meaning "centre it
+   * vertically" and started meaning "shrink it to its own content width", overriding the
+   * `align-items: stretch` set on the parent a few rules above.
+   *
+   * Measured at 390px: the RD 350 carousel rendered 132px wide with an 82px-tall image.
+   * The site's only photography, the one section that is not words, was coming out at a
+   * third of the column on every phone — which is a large part of why a phone reads as
+   * nothing but text. Desktop is unaffected: this only applies below 900px, where the
+   * axis has already swapped underneath it.
+   */
+  .media-zone,
+  .media-zone.left,
+  .media-zone.right {
+    order: 2;
+    padding: 0;
+    align-self: stretch;
+  }
+
+  /* 30.4px against a 16px body is only a 1.9x step; the display face needs more. */
+  .section-title {
+    font-size: clamp(2.05rem, 8.8vw, 2.8rem);
+    line-height: 1.14;
+    margin-bottom: 22px;
+  }
+
+  .section-lede {
+    font-size: 1.0625rem;
+    max-width: none;
+    margin-bottom: 14px;
+  }
+
+  .section-body {
+    font-size: 16px;
+    max-width: none;
+  }
+
+  /*
+   * No svh cap on a phone. Below 900px `.panel` is `height: auto; overflow: visible`, so
+   * height stopped being the binding constraint and width became it — and 56svh at a
+   * 664px-tall viewport is 372px, which would have squeezed a 351px column for no reason.
+   */
+  .jp {
+    --jp-w: none;
+  }
+
+  .card-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /*
+   * The spine survives on a phone — it is the left edge of a single column, which is
+   * where a spine wants to be anyway — but the gutter narrows, because 22px of a 375px
+   * screen is worth more here than it is at 1440.
+   */
+  .timeline {
+    max-width: none;
+    padding-left: 16px;
+  }
+
+  .tl-row::before,
+  .tl-era::before {
+    left: -16px;
+    width: 8px;
+  }
+
+  .tl-row[data-active]::before,
+  .tl-row[data-open]::before {
+    width: 12px;
+  }
+
+  /*
+   * The nested pair keeps its indent, halved. Any more and a 375px column starts losing
+   * title width to a relationship the body already explains in words.
+   */
+  .tl-row[data-nested] {
+    margin-left: 10px;
+  }
+
+  .tl-row[data-nested]::before {
+    left: -26px;
+    width: 18px;
+  }
+
+  .tl-row[data-nested][data-active]::before,
+  .tl-row[data-nested][data-open]::before {
+    width: 22px;
+  }
+
+  /*
+   * 44px minimum on the row, which is the touch target. The period moves above the title
+   * rather than beside it: a 5.25rem column is a third of a 375px screen, and
+   * "2021–2023" beside "Independent consulting" leaves the title two words per line.
+   */
+  .tl-row > button {
+    grid-template-columns: 1fr auto;
+    row-gap: 1px;
+    padding: 10px 0;
+    min-height: 44px;
+  }
+
+  .tl-year,
+  .tl-title {
+    grid-column: 1;
+  }
+
+  .tl-mark {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+
+  .tl-title {
+    font-size: 18px;
+  }
+
+  .tl-era {
+    margin: 16px 0 5px;
+  }
+
+  .carousel {
+    max-width: 100%;
+  }
+
+  /*
+   * A 4:3 hero is 245px of a 375-wide phone; with the title, six lines of body and a
+   * ~205px chat dock there is not 245px to give. 16:10 is 204, which is what fits, and
+   * a wider crop reads better in a single column anyway.
+   */
+  .carousel-hero {
+    aspect-ratio: 16 / 10;
+  }
+
+  .carousel-meta > span:nth-child(2) {
+    display: none;
+  }
+
+  .contact-links {
+    max-width: none;
+  }
+
+  .contact-links a {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+}
+
+/* ── reduced motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .section-inner {
+    transition: none;
+  }
+
+  /*
+   * The old reset was `.section-inner { transform: none }` at specificity (0,1,0),
+   * which lost outright to `.panel[data-active='false'] .section-inner` at (0,2,1) —
+   * so the 8px lift and the 1.5% scale still ran under `prefers-reduced-motion`. It
+   * has to be reset in the same selector to win. The opacity change stays: it is the
+   * whole "you are here" affordance, and it does not move anything.
+   */
+  .panel[data-active='false'] .section-inner {
+    transform: none;
+  }
+
+  .carousel-frame {
+    transition: none;
+  }
+
+  /*
+   * Nothing is reset for the before/after frame, because there is nothing there to reset:
+   * the eased seam went with the wipe, and a cut has no duration. The control stays — a
+   * button a visitor presses is motion they asked for, and taking it out would remove the
+   * comparison from exactly the people least able to work around its absence.
+   */
+
+  /*
+   * The timeline keeps its height transition, and that is deliberate. An accordion that
+   * snaps open moves everything below it by 100px with no signal that anything happened
+   * — a discontinuity, which is worse for someone sensitive to motion than a short,
+   * contained one. `prefers-reduced-motion` asks for less movement, not for jumps. What
+   * goes is the colour transition on the year mark, which communicates nothing the
+   * colour itself does not.
+   */
+  .tl-year {
+    transition: none;
+  }
+
+  /*
+   * Same argument for the answer swap: the fade and the 6px lift go, and the height
+   * change that the swap causes is left to the browser rather than being hidden. What
+   * must not happen is the old prose being replaced by different prose with no
+   * transition of any kind, which is what the page did before and what read as a glitch.
+   */
+  .answer-layer-in {
+    animation: answer-in-reduced 100ms linear both;
+  }
+
+  @keyframes answer-in-reduced {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/*
+ * ── the wide screen ────────────────────────────────────────────────────────
+ *
+ * MJK: "the images which really show off the work seem quite small. Why does the layout
+ * not dynamically match screen sizes?"
+ *
+ * It does worse than not grow. It SHRINKS. `max-width: 1460px` caps the container, but the
+ * padding and the gap above are in `vw` and keep growing after the cap has bound, so they
+ * eat the container from both sides:
+ *
+ *   media = 0.475 x ( min(vw, 1460) - 2(0.05 vw) - clamp(48, 0.05 vw, 96) )
+ *
+ * which peaks at 589.5px on a 1460px viewport and falls from there. Measured, exact to
+ * 0.1px at every width: 581.4px at 1440, 556.7 at 1920, 526.3 at 2560. A 2560 monitor has
+ * 3.1x the pixel area of a 1440 laptop and draws the photographs 9.5% NARROWER. A 430px
+ * phone draws §07's supplier frame 51% larger than a 2560 desktop does.
+ *
+ * The `min(5vw, 73px)` and the 4.5rem gap ceiling above are half the fix and cost nothing
+ * anywhere: 73px is what 5vw already is at 1460, and the gap's old 6rem ceiling was never
+ * reached below 1920.
+ *
+ * This block is the other half, and it is deliberately gated at 1500 rather than applied
+ * fluidly, because 1440x900 is the best screen on this site and nothing here may touch it.
+ * Verified byte-identical at 1280, 1366 and 1440.
+ *
+ * WHY THIS DOES NOT REOPEN THE DECISION THE 1460 CAP MADE. The recorded objection to a
+ * wider container was "600px of nothing at 2000px" — and that was measured on a
+ * proportional layout whose gutter was itself `5vw`. Here the gutter is a fixed 72px at
+ * 1500 and at 2560, and the prose track is frozen at 640px rather than grown, so the extra
+ * width goes to the media column and nowhere else. Freezing the prose is what makes this
+ * safe, and it is licensed by DESIGN.md's deliberately short measure — the prose column
+ * never reaches its own 736px cap today, and above 1460 it is actually shrinking to 591.7.
+ *
+ * Raising `max-width` on its own is the wrong move and was measured too: with `1.05fr
+ * 0.95fr` and `5vw` still in place, an 1860 cap gives the media column 716px at 2560,
+ * pushes the prose past its cap, and puts the gutter back to 96-151px — the exact failure
+ * the cap was introduced to fix, for two thirds of the benefit.
+ */
+@media (min-width: 1500px) {
+  .section-inner {
+    max-width: clamp(1460px, 100vw - 160px, 1860px);
+    /* Fixed, not `vw`: this is the rule the whole block exists to break. */
+    padding-inline: 73px;
+    gap: 72px;
+    /*
+     * The prose is frozen and the media column takes the remainder. `minmax(0, ...)` on
+     * both tracks because a `1fr` track's automatic minimum is its content, and a
+     * photograph inside one would refuse to shrink below its intrinsic width.
+     */
+    grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  }
+
+  /* `data-align` carries the authored left/right alternation, so the freeze follows it. */
+  .section-inner[data-align='right'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 640px);
+  }
+
+  /* One column, so there is no ratio to state and stating one would break it. */
+  .section-inner.center-stage {
+    grid-template-columns: none;
+  }
+
+  .fig-ga {
+    max-width: 760px;
+  }
+
+  /*
+   * The RD 350's ceiling, here rather than on `.carousel` itself, so that 1440x900 keeps
+   * the hero it has. 560px is the width of the three portrait frames — the narrowest
+   * sources in the set — so at this cap nothing in §05 is upscaled at DPR 1.
+   */
+  .carousel {
+    max-width: 560px;
+  }
+
+  /*
+   * The JewelAI figure was the one thing on the page that did not grow with the screen.
+   *
+   * `--jp-w: min(436px, 56svh)` is a hard cap, so above 780px of height it is 436px at
+   * 1440, at 1920 and at 2560 alike — refs 92px square, output 276px square — while the
+   * apparel pair beside it in the same column grew to 407px and 495px photographs. That is
+   * MJK's "the images which really show off the work seem quite small", located precisely,
+   * on the figure that carries the strongest technical claim in the corpus.
+   *
+   * 600px, not more: it puts the output tile at 420px and the whole flow at about 479.5px,
+   * for a §07 total of 743.3 in an 818.6px band at 1920 — 75.3px spare. 680px leaves 15.3,
+   * which is the same fuse that was removed once already and should not be re-lit.
+   */
+  .jp {
+    --jp-w: 600px;
+  }
+}

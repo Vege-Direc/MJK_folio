@@ -5,17 +5,20 @@
 
 - id: arc-aircraft-to-agents
   section: story
+  stopId: origin
   title: The arc, compressed
   tags: [origin, aerospace, ai, pivot]
+  period: 2010-2026
   body: >
-    I dreamt of flying fighters. Trained to design aircraft — mechanical engineering, then a masters in
-    aerospace design in the UK. Applied twice for short-service commissions; aged out of the third window.
-    The UK aerospace market wasn't hiring by then. So I rebuilt the toolkit. A decade in APAC performance
-    marketing followed. Now I'm building the systems that do that work faster and better than any team I
-    ever ran.
+    I dreamt of flying fighters. Trained to design aircraft — mechanical engineering at BITS Pilani in
+    Dubai in 2010, then an aerospace masters at Brunel in London in 2012. The UK aerospace market wasn't
+    hiring by the time I finished. So I rebuilt the toolkit. Media strategy at Omnicom in India from
+    2013, then Kinnect, Hotstar, Taboola, and eventually Singapore. Now I'm building the systems that do
+    that work faster and better than any team I ever ran.
 
 - id: pattern-imagine-then-learn
   section: story
+  stopId: pivot
   title: The pattern
   tags: [method, imagination, learning]
   body: >
@@ -25,7 +28,8 @@
 
 - id: project-jewel-ai
   section: projects
-  title: The Automated Jewelry Studio
+  stopId: work
+  title: JewelAI Studio
   tags: [ai, agents, creative, langgraph]
   body: >
     A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
@@ -33,52 +37,675 @@
 
 - id: project-mrunn-erp
   section: projects
-  title: Mrunn — chat-native ERP
+  stopId: work
+  title: MruNN-ERP — chat-native ERP
   tags: [ai, ops, mastra, agents]
   body: >
-    An ERP you talk to. Purchase orders, invoices, stock queries — all through a Mastra multi-agent
-    system that also renders traditional forms when they're the right tool. Built because every ERP I've
+    An ERP you talk to: purchase orders, invoices and stock queries through a Mastra multi-agent
+    system that also renders traditional forms when they are the right tool. Built because every ERP I've
     used forces the human to translate their intent into a form.
 
-- id: project-taboola
+- id: project-tallybridge
   section: projects
-  title: Taboola product work
-  tags: [product, payments, security, apac]
+  stopId: work
+  title: TallyBridge
+  tags: [ai, open-source, mcp, accounting]
   body: >
-    Product work at Taboola across payment expansion into new APAC markets, the Ads UI refresh, and a
-    company-wide 2FA rollout that landed without breaking a single advertiser account.
+    An open-source project, MIT licensed, that syncs Indian accounting software into a queryable
+    database and puts an AI assistant in front of it — 27 MCP tools for plain-English financial
+    queries.
+
+- id: project-taboola
+  section: timeline
+  stopId: apac
+  title: Taboola
+  tags: [taboola, product, payments, security, apac, thailand, employment]
+  period: 2020-2021
+  body: >
+    Media Product Specialist at Taboola, based in Thailand. I led product rollouts including
+    emerging-market payment expansion into Korea and Indonesia, the APAC Ads Interface revamp, and a
+    global two-factor authentication launch. I also ran beta programs with product and account teams
+    and built the training that took it all to sales and clients across APAC.
 
 - id: project-kinnect-automation
   section: projects
+  stopId: apac
   title: Kinnect reporting automation
   tags: [engineering-inside-marketing, automation, origin]
+  period: 2017-2019
   body: >
-    The origin of the engineer-inside-the-marketer. Kinnect's reporting was manual. I wrote the
-    automation that replaced a week of analyst work per client, per month. This is when I realised the
-    marketing job was really a systems job in disguise.
+    The origin of the engineer-inside-the-marketer. Kinnect's reporting was manual, so I automated it
+    with Supermetrics and Looker Studio and cut report generation time by half. I also grew the media
+    team from two to five. This is when I realised the marketing job was really a systems job in
+    disguise.
 
 - id: cap-paid-media
   section: capabilities
+  stopId: apac
   title: Paid media
-  tags: [media, apac]
-  body: A decade of performance media across APAC. Canon, Laughing Cow, Evian, Hotstar. 5x ROAS at Evian, 10x spend growth at Kinnect.
+  tags: [media, apac, india]
+  body: >
+    A decade of performance and brand media, first across India, then Southeast Asia. Hindustan Unilever,
+    Parle, Tourism Australia and Visa at Omnicom. Skechers, Rustomjee and Lodha at Kinnect. Canon, Evian
+    and The Laughing Cow at The Triad Co. 5x ROAS for Evian; a 10x increase in ad spend on Rustomjee's
+    first project.
 
 - id: cap-ai-agents
   section: capabilities
+  stopId: now
   title: AI agents
   tags: [ai]
-  body: Mastra, LangGraph, Vercel AI SDK. Multi-agent systems for ERP, creative pipelines, and this site.
+  body: >
+    Multi-agent systems on Mastra, LangGraph and the Vercel AI SDK, for ERPs, creative pipelines
+    and this site.
 
 - id: cap-full-stack
   section: capabilities
+  stopId: now
   title: Full-stack builds
   tags: [engineering]
-  body: Next.js, TypeScript, R3F, Postgres, Redis. From marketing automations to production ERPs.
-
-- id: contact-brief
-  section: contact
-  title: How to brief me
-  tags: [cta]
   body: >
-    Tell me what you're working on, when you need it, and what's tried already. I'll come back within a day
-    with a scoped proposal or an honest "not the right fit."
+    From marketing automations through to production ERPs: Next.js, TypeScript, three.js, Postgres
+    and Redis.
+
+# ── Added 2026-08-26, verified against the resume ──────────────────────────────
+
+- id: krunch-labs
+  section: timeline
+  stopId: now
+  title: Krunch Labs
+  tags: [ai, consulting, singapore, founder, employment]
+  period: 2025-present
+  body: >
+    I founded Krunch Labs in January 2025 in Singapore, building AI systems for consumer and B2B
+    clients across Southeast Asia and India — production multi-agent pipelines, custom ERPs, and
+    automation tools.
+
+- id: paxel-assessment
+  section: capabilities
+  stopId: work
+  title: External assessment
+  tags: [credential, ai, engineering, third-party, paxel, architect]
+  period: 2026
+  body: >
+    Y Combinator's Paxel read twenty of my working sessions and reported back in July 2026. Its
+    summary: "You turn Claude Code into a shipping system, steering agents through architecture,
+    deploys, money bugs, and production smoke." It classified me as The Architect, on the grounds
+    that 78% of my sessions include architecture discussions. On the work itself it said I steer
+    Claude Code with "unusually strong architectural judgment," and that I am "operating at a strong
+    engineering level: your best work is not raw implementation, it is the judgment you apply while
+    directing Claude Code through architecture, deployment, product, and workflow decisions."
+
+- id: paxel-numbers
+  section: capabilities
+  stopId: work
+  title: What that looked like in numbers
+  tags: [credential, paxel, volume, depth, measurement, agents]
+  period: 2026
+  body: >
+    The same assessment measured the work rather than describing it. 208,803 lines shipped across
+    993 commits. 154 hours logged. 67 deep sessions, averaging 183 minutes of uninterrupted focus,
+    with a longest single stretch of 16 hours and a longest streak of 28 consecutive days shipping
+    something. Prompts averaging 143 words, about 30 of them a session, which it called
+    conversational rather than instructional.
+
+- id: how-i-work-with-agents
+  section: capabilities
+  stopId: now
+  title: How I actually direct an agent
+  tags: [ai, agents, method, architecture, judgement, claude-code]
+  period: 2026
+  body: >
+    The Paxel assessment classified 172 of my decisions and found 150 of them were architectural. The
+    named patterns are the ones I would have picked myself. Full Stop and Investigate, thirty times:
+    I halt the agent when a premise looks unsafe or under-evidenced. Audit Completeness, thirteen
+    times: I check whether it skipped a document or a source it needed. Codify the Lesson, eleven
+    times: I turn a one-off correction into a project rule so it cannot recur. Then Correct the Tool
+    Choice and Challenge the Constraint, eight times each. The report's phrase for the shape of it
+    was that I treat delivery as a gated system. That is the job. The model writes the code; the
+    judgement about what is worth building, and when to stop, is still mine.
+
+- id: project-photoshoot-pipeline
+  section: projects
+  stopId: work
+  title: The multi-agent photoshoot
+  tags: [ai, agents, creative]
+  body: >
+    A pipeline of creative-director, prompt-writer and QA-critic agents with self-improving prompt
+    memory. It turned raw supplier photos into more than 50 on-brand catalog images across 20+
+    products for an apparel client.
+
+- id: hotstar-scale
+  section: timeline
+  stopId: apac
+  title: Hotstar, at scale
+  tags: [scale, india, live, media]
+  period: 2019-2020
+  body: >
+    Client success and ad operations at Disney+ Hotstar through IPL 2019 and the ICC Cricket World
+    Cup 2019 — a then-record 25 million concurrent viewers on the platform. I led client relations
+    for ICICI Lombard, Redbull and Apple through it.
+
+- id: omnicom-years
+  section: timeline
+  stopId: apac
+  title: Omnicom Group
+  tags: [omnicom, media, india, strategy, phd, omd, resolution, employment]
+  period: 2013-2017
+  body: >
+    Four years at Omnicom in India, across three of its agencies. Senior Media Planner at PHD from May
+    2013 to May 2014, building media strategy for Hindustan Unilever across eight categories and
+    reporting competitive activity back to the brand. Digital Business Manager at OMD from January 2015
+    to May 2016, developing digital business for Parle, Tourism Australia, Visa, Bank Bazaar, Bunge's
+    Dalda and 101 India across display, social and mobile. Digital Media Manager at Resolution Media
+    from May 2016 to January 2017, running SEM, social and display for Hindustan Unilever. The gap in
+    the middle, from June to December 2014, is when I went home and built the motorcycle.
+
+- id: build-rd350
+  section: story
+  stopId: rd350
+  title: The RD 350
+  tags: [bike, fabrication, self-taught, aside]
+  media: gallery:rd350
+  body: >
+    Off the clock I restored a 1986 Yamaha RD 350 into a custom cafe racer. Self-taught fabrication
+    and design — the same instinct behind everything else I build.
+
+- id: education
+  section: timeline
+  stopId: engineering
+  title: Education
+  tags: [education, aerospace, mechanical, brunel, bits, school]
+  period: 2004-2012
+  body: >
+    MSc Aerospace Engineering, Brunel University London, 2012, Merit. The taught modules were design
+    and analysis of aerospace vehicles, advanced aerodynamics, propulsion systems and space mechanics,
+    aircraft structures and loads, and strategic management. BEng Mechanical Engineering, BITS Pilani
+    Dubai, 2010, First Class with a 7.17 CGPA. Before that, The Choice School in Kochi: 86.8% in the
+    CBSE Class XII exams in 2006 and 90.6% in Class X in 2004.
+
+- id: awards
+  section: capabilities
+  stopId: work
+  title: Awards
+  tags: [awards, recognition]
+  body: >
+    Best Social Media Brand at the Sammies in 2018, silver, for Skechers. Best Integrated Campaign at
+    the CMO Asia Awards in 2016, for Tourism Australia.
+
+# ── Added 2026-09-02, verified against the resume (public/resume.pdf) ──────────
+
+- id: nanomark-solutions
+  section: timeline
+  stopId: apac
+  title: Nanomark Solutions
+  tags: [consulting, singapore, founder, media, partnerships]
+  period: 2023-2024
+  body: >
+    I founded Nanomark Solutions in Singapore in June 2023 as a marketing consultancy. Through it I
+    was contracted as Head of Paid Media at The Triad Co, which became the full-time Paid Media and
+    Data Partner role. I partnered with PNL9 India on performance strategies driving subscriptions
+    and installs for Final Round AI and Ultra Jhakaas across Southeast Asia and MENA, negotiated an
+    exclusive Singapore partnership for Asianet News, and built a LinkedIn content strategy for
+    Taran DM.
+
+- id: consulting-2021-2023
+  section: timeline
+  stopId: apac
+  title: Independent consulting
+  tags: [consulting, india, thailand, singapore, edtech]
+  period: 2021-2023
+  body: >
+    From June 2021 to June 2023 I worked as an independent digital marketing consultant across India,
+    Thailand and Singapore. I led market research for GoLearn, a London edtech, to shape its Indian
+    market entry. I planned, launched and optimised Coursera campaigns through the agency Kinnect,
+    and mentored the Kinnect team on digital strategy.
+
+- id: triad-laughing-cow
+  section: projects
+  stopId: apac
+  title: The Laughing Cow
+  tags: [media, brand, southeast-asia, triad]
+  period: 2024
+  body: >
+    Performance and brand marketing for The Laughing Cow across Southeast Asia at The Triad Co,
+    October to December 2024. The measured result was a 5% average lift in brand awareness.
+
+- id: triad-evian
+  section: projects
+  stopId: apac
+  title: Evian
+  tags: [media, performance, southeast-asia, triad]
+  period: 2024
+  body: >
+    Performance and brand marketing for Evian across Southeast Asia at The Triad Co in late 2024.
+    The measured result was 5x return on ad spend.
+
+- id: triad-canon
+  section: projects
+  stopId: apac
+  title: Canon
+  tags: [media, brand, southeast-asia, triad]
+  period: 2024
+  body: >
+    Performance and brand marketing for Canon across Southeast Asia at The Triad Co, October to
+    December 2024. I don't quote a number for Canon. The measured results I share from that period
+    are Evian's and The Laughing Cow's.
+
+- id: triad-spend-growth
+  section: capabilities
+  stopId: apac
+  title: Growing spend at The Triad Co
+  tags: [media, growth, triad]
+  period: 2024
+  body: >
+    Across The Triad Co's clients I grew media spend by 2x during the engagement, by earning the
+    budget with measured performance rather than asking for it.
+
+- id: outreach-engine
+  section: projects
+  stopId: work
+  title: The outreach engine
+  tags: [ai, automation, demand-generation, krunch]
+  period: 2025-present
+  body: >
+    I orchestrated Clay, Attio and other SaaS workflow APIs into a personalised multi-channel
+    outreach engine for a client's demand-generation programme. It is now a repeatable Krunch Labs
+    service.
+
+- id: artha-gtm
+  section: projects
+  stopId: work
+  title: Artha go-to-market
+  tags: [growth, ai, paid-media, launch, krunch]
+  period: 2025-present
+  body: >
+    I owned the go-to-market growth engine for Artha, an AI-commerce SaaS, end to end: comms
+    strategy, generative-AI ad creative, LinkedIn and Google Search campaign management, pixel and
+    tracking setup, and a Looker Studio dashboard. A ground-up brand launch on a lean budget.
+
+- id: mrunn-approval-gate
+  section: projects
+  stopId: work
+  title: MruNN-ERP, approval-gated
+  tags: [ai, erp, mastra, india, safety]
+  body: >
+    MruNN-ERP is built for Indian SMBs on Telegram and the web. Its architecture is approval-gated:
+    no data change ships without a human sign-off. It is GST and HSN compliant for Indian trading
+    businesses.
+
+- id: jewelai-platform
+  section: projects
+  stopId: work
+  title: JewelAI Studio, under the hood
+  tags: [ai, video, langgraph, architecture, krunch]
+  body: >
+    JewelAI Studio is a multi-service AI photography and video platform: Next.js, NestJS, a
+    LangGraph.js orchestration worker and a Cloudflare edge worker, deployed as four independent
+    services. The multi-reference technique is in the image path, not the video path. I tried
+    attaching the reference set to the video model as well, and it dragged the source photograph's
+    own scene into the clip, so I took it out on purpose: the video animates an image the pipeline
+    has already generated and already checked, and inherits its fidelity instead of arguing for it
+    again. Three video models sit behind one interface, and the pipeline falls through them in order
+    when one refuses the job.
+
+- id: kinnect-rustomjee
+  section: projects
+  stopId: apac
+  title: Rustomjee at Kinnect
+  tags: [media, lead-generation, real-estate, india]
+  period: 2017-2019
+  body: >
+    At Kinnect I built a data-driven lead-generation strategy for Rustomjee's first project. It won
+    all of their marketing business and drove a 10x increase in ad spend. Other Kinnect clients
+    included Spencers, Skechers, Runwal, Lodha, Hypercity, Safari and Everyuth.
+
+# ── Added 2026-09-02 from MJK's own account, his 2012 statement of purpose, his Brunel
+# ── dissertation and Airbus design report, and the Krunch Labs deck ────────────────────
+
+- id: origin-why-aircraft
+  section: story
+  stopId: origin
+  title: Why aircraft
+  tags: [origin, aerospace, childhood, flying]
+  body: >
+    One of my earliest memories is flying alone as a child, Trivandrum to Cochin, not yet ten. I was
+    scared and I cried. The crew kept me busy: a bag of chocolates, a phone call to my parents that was
+    almost certainly the intercom, and then the cockpit. The pilot, the instruments, the clouds through
+    the windscreen. That view has faded but it never left. I have wanted to fly since. Somewhere along
+    the way it narrowed to fighter jets. I have not made it happen yet. The plan now is a private
+    pilot's licence, at the very least.
+
+- id: engineering-what-stuck
+  section: story
+  stopId: engineering
+  title: What the engineering years left behind
+  tags: [engineering, aerospace, mechanical, method, fabrication]
+  period: 2006-2012
+  body: >
+    Mechanical engineering at BITS Pilani Dubai from 2006 to 2010, because there was no aeronautical
+    course and mechanical was the broadest way in. AutoCAD, SAE and ASME, and eight months of steel
+    fabrication internships in the UAE. My final-year project was a Visual Basic application that
+    simulated a four-stroke compression-ignition engine: you gave it bore, stroke, compression ratio,
+    cylinder count and the rest, and it returned air standard efficiency, mean effective pressure,
+    brake power, brake thermal efficiency, volumetric efficiency and specific fuel consumption, with
+    the pressure-volume diagram beside them. That is the earliest thing I built that was software
+    rather than hardware. Then the aerospace masters at Brunel in London, 2011 to 2012. The Airbus
+    design project was a dual-role airliner: 100 passengers on short European routes or 28 in business
+    class across continents, operating out of London City. My dissertation compared single and double
+    chamber synthetic jet actuators for active flow control; the double chamber design ran quieter and
+    more efficiently, at jet speeds around 20 m/s. A group project tried to build a model aircraft out of
+    recyclable self-reinforced polypropylene; I owned the material characterisation, the modelling and
+    the tail section, and we ended with thermoformed wing sections rather than a finished aircraft.
+    Between 2010 and 2011 I applied to the air force
+    twice and did not make the cut. No reason was given. What stuck is the way of thinking: define the
+    problem, model it, build it, measure it. It is why I still build things.
+
+- id: mjk-101
+  section: story
+  stopId: engineering
+  title: The MJK-101
+  tags: [aircraft, airbus, brunel, design, aerospace, mjk-101, wingspan, blueprint, airliner, london city]
+  period: 2012
+  body: >
+    The Airbus design project at Brunel had a name, and I drew it. The MJK-101 is a dual-role
+    airliner: 100 passengers on short European routes, or 28 in business class across continents.
+    It is a high-wing layout with triple-slotted flaps, because it had to get in and out of London
+    City, which means a short runway. Two underwing engines and a T-tail. The wingspan is 110 feet
+    and the length is 97 feet, which puts it inside ICAO code C. It carries fuel for a range of
+    4112 nautical miles. The project ran under the Royal Academy of Engineering's HE STEM
+    programme, and the drawing on this page is traced from my own CAD render of it.
+
+- id: pivot-how-it-happened
+  section: story
+  stopId: pivot
+  title: How the pivot to media happened
+  tags: [pivot, media, first-job, analysis]
+  period: 2012-2013
+  body: >
+    After the masters I could not find design work in India. The market wanted computation, CFD and the
+    like, and I had specialised in design. I applied for a doctorate at IIT Bombay; the thesis proposal
+    was not accepted. I wanted to be working, so I walked into an interview at Omnicom on a family
+    referral and started as a trainee in May 2013. Six months later I was confirmed as a senior planner.
+    The engineering habits carried straight over: break the problem down, model it, measure what changed.
+    Media ran on spreadsheets and instinct. I brought analysis.
+
+- id: rd350-the-build
+  section: story
+  stopId: rd350
+  title: Building the RD 350
+  tags: [bike, fabrication, self-taught, mumbai, kerala, cafe-racer]
+  period: 2014
+  body: >
+    I have always loved motorcycles. The 1986 Yamaha RD 350 was my uncle's; I lived with him when I
+    first moved from Cochin to Mumbai, and I rode it to work every day. A year into the job it broke
+    down. I had spent months reading about cafe racers and custom builds, so I took time off to rebuild
+    it myself, with half an idea of starting a custom garage with this bike as the first build. I
+    stripped it and rebuilt it as a cafe racer of my own design, self-taught fabrication included. The
+    build ran from June to December 2014, back home in Kerala, one continuous build from bare frame
+    to finished bike. I taught myself design, mechanics and electronics as I went, and made the seat,
+    the tank, the handlebar and the headlight bracket in-house by trial and error. Then
+    reality: Indian regulations are not friendly to custom vehicles, and a garage was not viable. I went
+    back to Mumbai and rejoined Omnicom. The bike was the proof that I could imagine something and get
+    there with my own hands.
+
+- id: contact-what-i-take-on
+  section: contact
+  stopId: contact
+  title: What I take on
+  tags: [cta, scope, krunch, services]
+  body: >
+    Through Krunch Labs I take on solutions and automations, with or without AI: custom systems that fit
+    the stack you already have. Agentic workflows, custom ERPs, analytics dashboards that become the
+    single source of truth, outreach engines, creative pipelines. Alongside that, web design and
+    development, and paid media and growth work, because I know that side from the inside. Based in
+    Singapore, with clients across Southeast Asia and India.
+
+# ── Added 2026-09-02 from the older resume versions MJK supplied: the Feb 2025 and
+# ── Dec 2016 PDFs and the June 2013 Word document. These fill the career timeline and
+# ── the pre-media years, which the latest one-page resume compresses out. ──────────────
+
+- id: eng-internships
+  section: timeline
+  stopId: engineering
+  title: Trainee engineer
+  tags: [engineering, fabrication, steel, shipbuilding, dubai, internship]
+  period: 2008-2011
+  body: >
+    Three engineering jobs before marketing ever came up. Eversendai Engineering in Dubai in the
+    summer of 2008, then ETA Ascon in Dubai from August 2009 to January 2010, both in structural steel
+    fabrication: cutting, bending, welding, sanding, painting, robotic and CNC plasma cutting, and
+    non-destructive testing for quality control. At the end of the ETA Ascon stint I presented on
+    activity-based costing as a way to improve plant efficiency. Then Master Shipyard in India from
+    September 2010 to May 2011, building flat-bottom barges and a sailing yacht. That is where I
+    learned what it costs to actually make a thing, rather than draw one.
+
+- id: kinnect-years
+  section: timeline
+  stopId: apac
+  title: Kinnect India
+  tags: [kinnect, media, india, leadership, employment, adtech]
+  period: 2017-2019
+  body: >
+    Senior Manager, then Account Director, at Kinnect in India from January 2017 to February 2019. I
+    ran ROI-driven performance and branding campaigns for Spencers, Skechers, Runwal, Lodha, Rustomjee,
+    Hypercity, Safari and Everyuth. I built and led the media team, ran the agency and vendor
+    relationships, and evaluated emerging ad tech for the agency to adopt: programmatic platforms,
+    data management platforms and automation tools.
+
+- id: triad-engagement
+  section: timeline
+  stopId: apac
+  title: The Triad Co
+  tags: [triad, media, singapore, southeast-asia, employment]
+  period: 2024
+  body: >
+    Paid Media and Data Partner at The Triad Co in Singapore, October to December 2024. I came in
+    through Nanomark as contracted Head of Paid Media and converted to the full-time partner role,
+    running performance and brand marketing for Canon, The Laughing Cow, Evian and others across
+    Southeast Asia.
+
+- id: taboola-rollouts
+  section: projects
+  stopId: apac
+  title: Three rollouts at Taboola
+  tags: [taboola, product, payments, 2fa, ads-interface, apac, rollout]
+  period: 2020-2021
+  body: >
+    The payment expansion opened new payment methods in Korea and Indonesia, which meant driving the
+    integrations and the finance operations behind them. The Ads Interface rollout took a rebuilt,
+    user-centric interface across APAC, with language support as a first-class requirement, shaped by
+    usability testing and client feedback. The two-factor authentication launch went to advertiser
+    accounts globally, carried by training material, a communication plan and hands-on support so that
+    security arrived without disrupting the people using it. Alongside those I collected product
+    enhancement requests from advertisers and argued for them in the quarterly product planning cycle.
+
+- id: origin-competitions
+  section: story
+  stopId: origin
+  title: Competing, early
+  tags: [origin, aerospace, competitions, school, guitar]
+  period: 2004-2009
+  body: >
+    The interest showed up early and competitively. First place at an inter-school aerospace
+    competition in 2004, fourth the following year. First place at Enginuity 2009, a national
+    inter-college technical festival in Dubai. Somewhere in the same years I was playing guitar on
+    stage and once on a Christmas radio show in the UAE. Aero modelling was the constant.
+
+- id: career-overview
+  section: timeline
+  stopId: apac
+  title: The career, in order
+  tags: [career, employment, work-experience, history, cv, resume, jobs, roles]
+  body: >
+    Every role, in order. Trainee engineer in steel fabrication and shipbuilding from 2008
+    to 2011. Omnicom in India from 2013 to 2017, across PHD, OMD and Resolution Media. Kinnect in India
+    from 2017 to 2019, as Senior Manager then Account Director. Disney+ Hotstar from 2019 to 2020, in
+    client success and ad operations. Taboola in Thailand from 2020 to 2021, as Media Product
+    Specialist. Independent consulting across India, Thailand and Singapore from 2021 to 2023. Nanomark
+    Solutions in Singapore from 2023 to 2024. The Triad Co in Singapore in late 2024, as Paid Media and
+    Data Partner. Krunch Labs in Singapore since January 2025, as founder.
+
+- id: build-overview
+  section: projects
+  stopId: work
+  title: What I have built
+  tags: [projects, built, shipped, portfolio, systems, work, software]
+  body: >
+    The things I have shipped, rather than the jobs I have held. JewelAI Studio, a multi-service AI
+    photography and video platform. MruNN-ERP, a chat-native ERP for Indian SMBs. TallyBridge, an
+    open-source bridge from Indian accounting software to an AI assistant. A multi-agent photoshoot
+    pipeline for an apparel client. A multi-channel outreach engine built on Clay and Attio. The
+    go-to-market engine for Artha. And this site, which answers questions about me from a corpus it is
+    not allowed to contradict.
+
+- id: who-i-am
+  section: story
+  stopId: origin
+  title: Who I am
+  tags: [identity, introduction, about, bio, name, singapore, summary]
+  body: >
+    I'm Mathew John Kondekeril. I trained as an engineer, mechanical at BITS Pilani in Dubai and
+    aerospace at Brunel in London, then spent a decade running paid media across India and Southeast
+    Asia for brands like Hindustan Unilever, Visa, Skechers and Evian. Since January 2025 I have run
+    Krunch Labs in Singapore, building AI systems for clients across Southeast Asia and India. Engineer
+    by training, marketer by trade, builder by habit. This site is one of the things I built, and it
+    answers from a written record it is not allowed to contradict.
+
+- id: what-i-do-now
+  section: story
+  stopId: now
+  title: What I do now
+  tags: [now, current, today, role, work, ai, systems, singapore]
+  body: >
+    I build AI systems for people who have a business problem rather than an AI problem. Multi-agent
+    pipelines, custom ERPs, automation and the analytics to see whether any of it worked. I still take
+    on paid media and growth work, because I ran that side for a decade and know where the money leaks.
+    Most engagements start as one automation and turn into the system around it.
+
+- id: contact-how-it-starts
+  section: contact
+  stopId: contact
+  title: How an engagement starts
+  tags: [contact, engagement, process, availability, scoping, capacity, proposal, start]
+  body: >
+    Tell me the problem, when you need it, and what has been tried. I come back within a day with
+    either a scoped proposal or an honest "not the right fit", and I say no about as often as yes.
+    Scope and start date depend on what you need and what I am already carrying, so ask and I will
+    tell you straight rather than guess in public. Most engagements begin as one automation and turn
+    into the system around it.
+
+- id: jewelai-reads-the-piece
+  section: projects
+  stopId: work
+  title: How JewelAI Studio reads a piece of jewellery
+  tags: [ai, jewelai, pipeline, jewellery, multi-reference, vision, generation, krunch]
+  body: >
+    JewelAI Studio asks for three to five photographs of one piece, shot from different angles, and the
+    whole set travels together rather than one at a time. A single vision call receives every photograph
+    at once and is asked three things in order: can the geometry be deduced from what is here, are these
+    really all the same piece, and which of these angles are different enough from each other to be worth
+    keeping. It is told up front that the inputs are amateur phone photos and that dark, yellow-cast and
+    slightly blurred is expected, not a reason to refuse. A second call then reconciles the whole set
+    into one physical description — stone shape and cut, exact hue, metal tone, band texture, setting,
+    silhouette — and its job is specifically to resolve the contradictions, so a stone that looks dark in
+    one photograph and bright in the next is settled as one true property rather than averaged. After
+    that, every image the pipeline generates is produced with the entire reference set attached to the
+    prompt. That last part is the piece people assume is a trick. It is the opposite of a trick: the
+    model is never told in words what the piece looks like, because describing a ring in text is how you
+    get a different ring back.
+- id: jewelai-gates
+  section: projects
+  stopId: work
+  title: The gates inside JewelAI Studio
+  tags: [ai, jewelai, quality, qc, validation, judgement, agents, krunch]
+  body: >
+    What I care about most in JewelAI Studio is that it is allowed to stop. Before it spends anything it
+    checks that the uploaded photographs really are one piece, and when they are not it halts and asks
+    the person rather than guessing. It checks that the angles genuinely differ, throws away any
+    photograph too close to one it has already kept, and refuses to run at all on fewer than two usable
+    angles. After generation a judge scores each image against the original photographs, and the bar is
+    deliberately higher for a bare product shot than for one on a model, because a product shot has
+    nowhere to hide. Then a second pass describes the generated image while kept blind to the source, the
+    two descriptions are compared as plain text, and the anatomy audit in that pass is mandatory —
+    that is how a changed stone cut or a hand with the wrong number of fingers gets caught. A failure is
+    not thrown away either: the judge's specific complaint is folded back into the prompt and the image
+    is made again. If only part of a batch survives, the run finishes with what passed and refunds the
+    credits for what did not.
+- id: jewelai-video
+  section: projects
+  stopId: work
+  title: The video half of JewelAI Studio
+  tags: [ai, jewelai, video, animation, models, fallback, krunch]
+  body: >
+    Video in JewelAI Studio does not animate the uploads. It animates one of the images the pipeline has
+    already made and already checked, which is the whole argument — fidelity was won at the image stage,
+    so the clip inherits it instead of arguing it again from scratch. Before the clip is requested, a
+    director step goes back to the original photographs behind that chosen image and writes a description
+    of the piece to ride along in the prompt, while the prompt itself is confined to camera, light and
+    motion. Clips are five seconds, ten seconds or fifteen seconds long, and the motion is kept
+    deliberately small — a gentle turntable, a highlight travelling across metal — because big moves are
+    exactly where a generated piece stops being the piece. Three video models sit behind one interface and the pipeline falls
+    through them in order when one refuses the job.
+- id: photoshoot-how-it-works
+  section: projects
+  stopId: work
+  title: How the photoshoot pipeline turns a supplier photo into a catalogue image
+  tags: [ai, agents, apparel, clothing, catalogue, photoshoot, prompt-memory, qa]
+  body: >
+    A supplier sends one flat photograph of a garment — hung on a rail, shot against a wall, watermarked,
+    lit by whatever was in the room. What comes out is a finished catalogue image. Five agents do the
+    work in between. A classifier places the product, a creative director reads the photograph and plans
+    the staging, backdrop, lighting and pose, a prompt writer turns that plan into the actual prompt, and
+    a validator checks the prompt against the category's rules before any money is spent on it. Then a
+    critic scores the finished image against the source photograph on colour fidelity, pattern and
+    embroidery survival, whether the fabric drapes and folds the way that material actually drapes, and
+    whether the set is clean. It scores out of ten points and seven points is the pass mark. Below that
+    the image is filed away as a failure and the critic's own complaint is fed back for exactly one more
+    attempt. For the sarees the model's
+    face is pinned to a single reference so the same woman appears through the whole catalogue, and the
+    instruction on the product photograph is blunt: replicate every colour, print, pattern, embroidery
+    and layout from this image exactly, because this is the actual thing being sold.
+- id: photoshoot-numbers
+  section: projects
+  stopId: work
+  title: The photoshoot pipeline's own ledger
+  tags: [ai, agents, apparel, volume, cost, measurement, prompt-memory]
+  body: >
+    The pipeline keeps its own ledger, so I do not have to estimate. It logged 107 runs, attempted 249
+    jobs, and produced 125 accepted images across seven product categories — sarees, shawls, dupattas,
+    dress materials, accessories, art and homeware. 55 attempts failed the critic and were kept rather
+    than deleted, which is the part that made the thing improve: the memory file holds 129 logged product
+    runs, and every new prompt is written with the past winners and the past failures in front of it, the
+    winners being anything the critic scored 8 points or better and the failures carrying the exact
+    complaint that sank them. The whole body of work cost 27 dollars in model calls.
+- id: jewelai-infrastructure
+  section: projects
+  stopId: work
+  title: What JewelAI Studio runs on
+  tags: [ai, jewelai, architecture, stack, langgraph, nestjs, nextjs, cloudflare, supabase, krunch]
+  body: >
+    Four services, deployed independently. A Next.js front end, a NestJS API, a LangGraph worker that
+    owns the pipeline itself, and a Cloudflare Worker sitting in front of the media so that no generated
+    asset is ever readable without authorisation. Jobs move between them on a Postgres-backed queue with
+    a visibility timeout and a heartbeat that extends it while work is genuinely in progress, so a worker
+    that dies mid-job releases it rather than losing it, and the graph checkpoints into Postgres so a
+    resumed job picks up where it stopped instead of starting over. Every generated image is written to
+    Cloudflare R2 twice, the full-resolution original and a compressed copy for the browser, into a
+    private bucket read only through signed URLs. Every model call has something behind it: two image
+    providers, three video providers, and the text models routed through whichever endpoint still has
+    credit. Sentry and OpenTelemetry run in all of the Node services.
+- id: jewelai-the-ring
+  section: projects
+  stopId: work
+  title: The ring I use to show what JewelAI Studio does
+  tags: [ai, jewelai, jewellery, photography, video, example, krunch]
+  body: >
+    The piece I show people is a handmade ring, a twisted gold wire band with a rose quartz bead held
+    in a wire wrap, and the pictures of it are exactly what JewelAI Studio is built for: three
+    photographs taken on a phone on a white windowsill, unlit and unstyled, with one photograph looking
+    almost straight down the band so the wrap around the bead reads clearly. I sent that set through and
+    it came back with the ring on wet slate, moss growing out of a crack behind it, the sun low. Then a
+    short clip that begins on that same frame and pulls the camera away. Nothing in the prompt described
+    the ring. The wrap in the picture that came back is the wrap in the photographs, turn for turn, and
+    that is the only test of this I trust.

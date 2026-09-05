@@ -6,36 +6,49 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "corpus:check": "tsx scripts/check-corpus.ts",
+    "guard:eval": "tsx scripts/guard-eval.ts",
+    "route:eval": "tsx scripts/route-eval.ts",
+    "knip": "knip --no-exit-code",
+    "prebuild": "npm run corpus:check"
   },
   "dependencies": {
-    "next": "^15.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@react-three/fiber": "^9.0.0",
-    "@react-three/drei": "^10.0.0",
-    "three": "^0.170.0",
-    "ai": "^4.0.0",
-    "@ai-sdk/openai": "^1.0.0",
-    "motion": "^12.0.0",
-    "@radix-ui/react-dialog": "^1.1.0",
-    "@radix-ui/react-visually-hidden": "^1.1.0",
-    "lucide-react": "^0.454.0",
+    "@ai-sdk/react": "^4.0.93",
+    "@openrouter/ai-sdk-provider": "^3.0.0",
+    "ai": "7.0.90",
     "ioredis": "^5.4.0",
+    "minisearch": "^7.2.0",
+    "next": "16.3.4",
+    "rate-limiter-flexible": "^11.2.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "three": "0.169.0",
     "yaml": "^2.6.0",
-    "zod": "^3.23.0"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@types/three": "^0.170.0",
-    "typescript": "^5.6.0",
-    "tailwindcss": "^4.0.0",
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "@types/three": "0.169.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.3.4",
+    "knip": "^6.32.3",
     "postcss": "^8.4.0",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0"
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.23.12",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5"
   }
 }
