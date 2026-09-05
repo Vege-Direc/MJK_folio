@@ -218,11 +218,30 @@ export const CFG: Record<Tier, MindConfig> = {
     nebulaDrift: 0.2, nebulaMouse: 7, nebulaMouseRadius: 6,
     subBranchDepth: 2, subBranchProb: 0.72, subLenDecay: 0.7, subMaxNodes: 200, subPulseFrac: 0.28,
     swayAmt: 0.35, swayFreq: 0.4,
-    t2Seeds: 10, t2RadMin: 8, t2RadMax: 14, t2MaxNodes: 220,
+    /**
+     * The midground shell, back to the desktop geometry — and `t2Seeds` is the only one
+     * of these four that does anything.
+     *
+     * `t2MaxNodes` is a cap on a number that is never reached. `growGW` is bounded by
+     * `subMaxNodes + t2MaxNodes`, which was 420 here, and the mobile field measured 49
+     * grown sub-nodes against it. Desktop grows 339 against its own 1,420. Neither cap
+     * has ever bound on either tier, so raising this one buys nothing; it is restored
+     * only so the two tiers stop telling different stories about a number that does not
+     * matter. What actually governs the midground is the seed count, because every seed
+     * is a growth front.
+     *
+     * Pushing the shell outward is the half that makes it cheap. Screen area goes with
+     * the inverse square of distance, so a soma at 16 world units costs a third of the
+     * same soma at 9. Restoring 8-14 to 9-16 buys depth and pays less for it.
+     */
+    t2Seeds: 26, t2RadMin: 9, t2RadMax: 16, t2MaxNodes: 700,
     t3SegScale: 0.4, t3Radial: 4, t3TubeRadius: 0.035, t3TrunkRadius: 0.1, t3NodeScale: 0.46,
     t3PulseCount: 240, t3EdgeFrac: 0.55, t3AxialFloor: 0.62, t3Bright: 1.5,
     t3Dust: 2600, t3DustSize: 2.4, t3DustSpread: 3.2, t3Accent: 0.24,
-    corridorInner: 8, corridorOuter: 14,
+    // Paired with t2RadMin/t2RadMax above: the corridor is what tapers seed density
+    // toward the camera path, so widening the shell without widening the corridor would
+    // have put the new seeds straight back in front of the lens.
+    corridorInner: 9, corridorOuter: 16,
   },
 };
 
