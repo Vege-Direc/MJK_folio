@@ -276,6 +276,12 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     alpha: false,
     powerPreference: 'high-performance' as const,
     preserveDrawingBuffer: false,
+    // Every material in this scene is depthWrite:false, so the depth buffer is never
+    // written and every depth test that reads it therefore passes. r169 defaults this to
+    // true, which allocates and clears a full-size attachment each frame to answer a
+    // question whose answer is always yes. The materials that used to ask it have had
+    // depthTest turned off with it.
+    depth: false,
   };
   const testCtx = canvas.getContext('webgl2', ctxAttrs) ?? canvas.getContext('webgl', ctxAttrs);
   if (!testCtx) {
@@ -289,7 +295,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     // These are very nearly decorative: the canvas already has a context by now, so
     // three.js reuses it and its attributes are ignored. Kept in step with `ctxAttrs`
     // above so the two cannot tell different stories to the next reader.
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: false, depth: false });
     renderer.setPixelRatio(Math.min(view.devicePixelRatio || 1, cfg.pixelRatioCap));
     renderer.setSize(viewW, viewH, false);
     renderer.toneMapping = THREE.NoToneMapping;
@@ -453,7 +459,39 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     // AdditiveBlending + transparent + depthWrite:false is the canonical glow technique
     // (Stemkoski "Shader-Glow" + SO additive-sprite). Per-instance color + size preserved.
     // ShaderMaterial auto-injects instanceMatrix / instanceColor for InstancedMesh.
-    const nodeGeo = new THREE.PlaneGeometry(1, 1);
+    /**
+     * A twelve-sided disk instead of a quad, and it is worth 19.6% of every soma's
+     * fragments.
+     *
+     * The billboard shader cuts a round glow out of its geometry, so a unit quad shades
+     * the four corners for nothing. Imagination put a number on exactly this case in the
+     * PowerVR performance recommendations: a circular sprite on a best-fitting quad
+     * wastes 22% of the fragments it processes, and a dodecagon takes that to 3% — "any
+     * impact this may have is most likely outweighed by the savings of rendering less
+     * transparency". Computed for this geometry: quad area 1.0, 12-gon 0.8038, the disk
+     * it is covering 0.7854.
+     *
+     * The circumradius is 0.5 / cos(pi/12) rather than 0.5, so the EDGE MIDPOINTS land on
+     * the disk's rim. At 0.5 the polygon would be inscribed and would clip the glow.
+     * `vUv = position.xy + 0.5` in the vertex shader is unchanged and still puts d = 1.0
+     * exactly on the rim, so the fragment shader did not have to change with it.
+     *
+     * Only the somas get this. The pulse billboards keep their quad: their shader uses
+     * position.x and position.y independently to build an elongated tapered head along
+     * the filament, and that maths assumes a rectangular domain.
+     */
+    const nodeGeo = (() => {
+      const N = 12;
+      const R = 0.5 / Math.cos(Math.PI / N);
+      const pos = [0, 0, 0];
+      for (let i = 0; i < N; i++) pos.push(Math.cos((i / N) * Math.PI * 2) * R, Math.sin((i / N) * Math.PI * 2) * R, 0);
+      const idx: number[] = [];
+      for (let i = 0; i < N; i++) idx.push(0, 1 + i, 1 + ((i + 1) % N));
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+      g.setIndex(idx);
+      return g;
+    })();
     const nodeMat = new THREE.ShaderMaterial({
       uniforms: {
         uSizeScale:  { value: cfg.nodeSizeScale },   // world-space glow radius = 0.5 * instanceScale * uSizeScale (visual metaphor, sized for calm)
@@ -544,9 +582,13 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         uniform float uProxFloor, uProxNear0, uProxNear1;
         void main(){
           vec2 p = vUv - 0.5;
-          float d = length(p) * 2.0;     // 0 center -> 1 edge of the quad
-          if (d > 1.0) discard;          // round disk, not a square
-          float fall = 1.0 - d;
+          float d = length(p) * 2.0;     // 0 center -> 1 edge of the disk
+          // No discard. fall clamps instead, which is bit-identical here - alpha is
+          // driven by pow(fall, uHaloPower) and already reaches 0 at d = 1 - and a
+          // fragment shader that can discard forces a late depth/stencil test on every
+          // mobile GPU vendor. The discard only existed because pow() of a negative
+          // base is undefined, and max() fixes that without the pipeline cost.
+          float fall = max(0.0, 1.0 - d);
           float core = pow(fall, uCorePower); // hot core (tight)
           float halo = pow(fall, uHaloPower); // soft halo (broad) -> drives alpha
           // Excitation: a signal arriving/departing makes the node briefly hotter +
@@ -573,7 +615,8 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       `,
       transparent: true,
       depthWrite: false,
-      depthTest: true,
+      // Was true, against a depth buffer nothing in this scene ever writes.
+      depthTest: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
     });
@@ -836,7 +879,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           gl_FragColor = vec4(col, a);
         }
       `,
-      transparent: true, depthWrite: false,
+      transparent: true, depthWrite: false, depthTest: false,
       blending: THREE.AdditiveBlending,
     });
     const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
@@ -954,11 +997,14 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           void main(){
             vec2 pc = gl_PointCoord - 0.5;
             float d = length(pc) * 2.0;
-            if (d > 1.0) discard;
+            // Clamp rather than discard: gl_POINTS is always a screen-aligned square so
+            // there is no geometry to fit here, but the late-ZS cost of discard is the
+            // same, and the corners already contribute nothing.
+            float fall = max(0.0, 1.0 - d);
             // core glow + a faint broad haze base so overlapping particles read as
             // diffuse tissue rather than isolated dots (neuropil felt, not a starfield).
-            float core = pow(1.0 - d, 1.5);
-            float haze = pow(1.0 - d, 0.5) * 0.18;
+            float core = pow(fall, 1.5);
+            float haze = pow(fall, 0.5) * 0.18;
             // Subtle per-point twinkle: a slow secondary opacity sine (distinct freq
             // 0.7 vs drift's 0.25) so the haze reads as living tissue, not static dust.
             // Amplitude tiny (±12%) so it never fights the Step 6 bloom/fog tuning.
@@ -973,7 +1019,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
           }
         `,
         transparent: true,
-        depthWrite: false,
+        depthWrite: false, depthTest: false,
         blending: THREE.AdditiveBlending,
       });
       nebulaMesh = new THREE.Points(nebGeo, nebMat);
@@ -1172,15 +1218,15 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
             uniform float uOpacity, uFogDensity, uTime;
             void main(){
               vec2 pc = gl_PointCoord - 0.5; float d = length(pc) * 2.0;
-              if (d > 1.0) discard;
-              float core = pow(1.0 - d, 1.5); float haze = pow(1.0 - d, 0.5) * 0.18;
+              float fall = max(0.0, 1.0 - d);
+              float core = pow(fall, 1.5); float haze = pow(fall, 0.5) * 0.18;
               float twk = 1.0 + 0.12 * sin(uTime * 0.7 + vPhase * 2.7);
               float a = (core + haze) * uOpacity * twk;
               float fog = 1.0 - exp(-uFogDensity * uFogDensity * vFogDepth * vFogDepth);
               gl_FragColor = vec4(vColor * (1.0 - fog), a * (1.0 - fog));
             }
           `,
-          transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+          transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
         });
         t3DustMesh = new THREE.Points(dg, dm);
         t3DustMesh.renderOrder = -2; // behind the far tubes
@@ -1236,6 +1282,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         }
         t3PulseMesh.instanceColor.needsUpdate = true;
         t3PulseMesh.renderOrder = 2;
+        t3PulseMesh.frustumCulled = false;
         scene.add(t3PulseMesh);
       }
       if (process.env.NODE_ENV !== 'production') {
@@ -1460,6 +1507,13 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       }
       if (particleMesh.instanceColor) particleMesh.instanceColor.needsUpdate = true;
       particleMesh.renderOrder = 2;
+      // These three rewrite `instanceMatrix` every frame and `InstancedMesh` caches its
+      // bounding sphere, so the sphere the culler tests is the one computed at build
+      // time. Nothing goes wrong today because the camera flies inside the field and the
+      // sphere contains it, but it is a stale-bounds bug waiting for a vantage outside.
+      // There are five objects in this scene; culling one of them saves nothing, so
+      // turning the test off is a straight correctness win.
+      particleMesh.frustumCulled = false;
       scene.add(particleMesh);
 
       // --- triggered pulses: fire one from the node the camera just reached ---
@@ -1480,6 +1534,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       const defCol = new THREE.Color(PALETTE.particle);
       for (let s = 0; s < trigCount; s++){ trigMesh.setMatrixAt(s, dummy.matrix); trigMesh.setColorAt(s, defCol); }
       if (trigMesh.instanceColor) trigMesh.instanceColor.needsUpdate = true;
+      trigMesh.frustumCulled = false;
       scene.add(trigMesh);
 
       for (let s = 0; s < trigCount; s++) trigData.push({ active: false, curve: null, dir: 1, startTime: 0, speed: 0 });
@@ -1565,6 +1620,11 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
 
     // --- post processing ---
     const composer = new EffectComposer(renderer);
+    // Same reasoning as the context's `depth: false`, for the two full-size RGBA16F
+    // targets EffectComposer allocates: nothing writes depth, so neither needs the
+    // attachment. Set before the first render, which is when three.js builds them.
+    composer.renderTarget1.depthBuffer = false;
+    composer.renderTarget2.depthBuffer = false;
     composer.addPass(new RenderPass(scene, camera));
     let bloomPass: UnrealBloomPass | null = null;
     /**

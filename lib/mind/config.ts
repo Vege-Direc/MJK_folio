@@ -220,7 +220,19 @@ export const CFG: Record<Tier, MindConfig> = {
      * here with less lateral spread to do it with, and some of the falloff is what keeps
      * the field reading as a corridor rather than a wall.
      */
-    tubeSeg: 26, tubeRad: 5, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.022,
+    /**
+     * `tubeRad` 5 -> 8: radial segments per filament, and this is a defect fix rather
+     * than a density change.
+     *
+     * Five radial segments is a pentagonal prism. On a desktop that is invisible because
+     * the filaments are thin on screen; on a phone the camera flies down the middle of
+     * an axon that fills the height of the frame, and the flat faces and the polygon
+     * silhouette are plainly there in a 390x664 screenshot. Desktop has run 12 all along.
+     *
+     * It is close to free because it is vertex work, not fill: the silhouette area of a
+     * tube barely changes between 5 and 8 sides, and fill is what a phone is short of.
+     */
+    tubeSeg: 26, tubeRad: 8, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.022,
     bloomStrength: 0.45, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
     // No bloom on mobile => the shader carries all the glow, so keep the white-peak a
     // touch higher than desktop so nodes still read as light. Turning bloom on here is
