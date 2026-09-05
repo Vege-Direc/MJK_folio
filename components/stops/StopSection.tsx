@@ -277,11 +277,10 @@ export default function StopSection({ stop }: { stop: Stop }) {
       // Rendered by the server so the first paint already has stop 0 lit and the other
       // eight sitting back. ScrollProgress takes it over on the first scroll.
       data-active={stop.index === 0 ? 'true' : 'false'}
-      // The reading glass hangs off this element, so the two facts it needs to place
-      // itself live here: which side the text is on, and whether there is a media
-      // column at all. It cannot hang off `.section-inner` — that takes `opacity` when
-      // the stop is inactive, and an ancestor below 1 makes a backdrop root, which
-      // would leave `backdrop-filter` with nothing to sample.
+      // Which side this stop puts its words on, and whether it has a media column at
+      // all. The CSS reads both. (This used to carry a second justification about
+      // keeping a `backdrop-filter` reading glass off an ancestor with opacity < 1;
+      // both the glass and that opacity are gone, so only the layout reason is left.)
       data-align={contentSide}
       data-centred={centred ? '' : undefined}
       className="panel"

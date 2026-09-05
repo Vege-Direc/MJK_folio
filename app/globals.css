@@ -179,18 +179,22 @@
  * The same trim, for the length of a programmatic flight, on every pointer.
  *
  * The measurement above was taken on a phone and the fix was keyed to phones, and that
- * left the fuller halo running on exactly the machine that flies furthest. A desktop
- * flight from the hero to contact measured a 95th-percentile frame gap of 86ms — worse
- * than a 4x-throttled phone at 19ms — and mid-flight screenshots show 490px of a 900px
- * viewport arriving unpainted. The cause is the same one the phone had: a `text-shadow`
- * is a CPU-rastered Gaussian blur of every glyph, and a page in motion re-rasters every
- * tile the scroll uncovers through all ten layers of it.
+ * left the fuller halo running on exactly the machine that flies furthest. The reasoning
+ * is the same one the phone had: a `text-shadow` is a CPU-rastered Gaussian blur of every
+ * glyph, and a page in motion re-rasters every tile the scroll uncovers through all ten
+ * layers of it.
  *
- * With this attribute set for the duration of the flight and nothing else changed, that
- * p95 drops to 12ms. `lib/flight.ts` sets it and unconditionally clears it, including on
- * the interrupt path, so the resting page keeps the halo it was designed with. There is
- * no transition on these: a halo that animates its radius is a halo that re-rasters
- * every frame on purpose.
+ * NO FRAME NUMBER IS CLAIMED HERE, deliberately. This block used to cite a desktop
+ * flight at a 95th-percentile frame gap of 86ms against 12ms with the trim. PLAN.md §2
+ * retracts that figure — it could not be reproduced on a warm localhost production build,
+ * where both the native scroll and the tween hold a clean 60fps — and this stylesheet was
+ * the last place in the repository still asserting it. The trim ships anyway because its
+ * cost at rest is zero and its reasoning is sound, which is the whole of the case for it.
+ *
+ * `lib/flight.ts` sets the attribute and unconditionally clears it, including on the
+ * interrupt path, so the resting page keeps the halo it was designed with. There is no
+ * transition on these: a halo that animates its radius is a halo that re-rasters every
+ * frame on purpose.
  */
 html[data-flying] {
   --halo: var(--halo-lite);
@@ -3259,31 +3263,13 @@ html[data-flying] .answer-layer-in {
   }
 
   /*
-   * One column and a panel that grows, so the desktop geometry does not transfer: an
-   * ellipse inscribed in a 1200px-tall stacked panel puts its solid core in the middle
-   * and leaves the top and bottom of the column uncovered. The two panes become one
-   * full-width pane instead, feathered top and bottom only — there are no margins on a
-   * phone for the scene to glow through at the sides anyway.
-   *
-   * The blur radius drops with the tint raised to compensate. Filter cost scales with
-   * filtered area and with radius, and this is the tier most likely to be on a phone
-   * GPU that is also running the scene.
-   */
-  /*
-   * One column and a panel that grows, so the desktop geometry does not transfer twice
-   * over. An ellipse inscribed in a 1200px-tall stacked panel puts its solid core in
-   * the middle and leaves the top and bottom of the column uncovered — and with
-   * `justify-content: flex-start` the top of the column is exactly where the kicker
-   * sits. Measured: the apac kicker came in at 2.63:1 against a background of
-   * rgb(102,119,129), because it was sitting in the mask's own feather.
-   *
-   * So there is no vertical feather here at all, and that is the point rather than a
-   * compromise. Panels stack edge to edge, every one of them carries the same pane, and
-   * the panes therefore butt together into one continuous sheet of glass running the
-   * length of the page — no seam to hide, because there is no gap between them. The
-   * left and right edges sit 6vw off-screen. The blur radius drops and the brightness
-   * rises to match: cost scales with radius and with area, and this is the tier most
-   * likely to be a phone GPU already running the scene.
+   * There was a reading glass here — a `backdrop-filter` pane behind the text column,
+   * with two long comments explaining its geometry on a stacked phone layout. The
+   * feature was removed and the comments were not, so for a while this file documented
+   * in detail a frame-killer the page did not have. A performance investigation went
+   * looking for it. Do not reinstate either: DESIGN.md forbids a scrim between the words
+   * and the scene, twice, after it was rejected on sight twice, and the words defend
+   * themselves with the per-glyph halo above instead.
    */
 
   /*
