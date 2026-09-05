@@ -1155,6 +1155,179 @@ instead of guessing a third time.
 
 ---
 
+# 48 — the vision pass, and the control that settles it
+
+Local production build, Playwright Chromium under SwiftShader. **No timing claim appears
+anywhere in this work** — composition and legibility only, which is the correct use of that
+environment. Screenshots are in the session scratchpad under `research/vshots`, `pairs`,
+`hero` and `ablate`.
+
+## The measurement nobody had taken: the same phone frame with the desktop tier
+
+A fourth viewport — **390x664 forced onto the desktop tier** (`detectTier` keys on pointer and
+core count, so a fine pointer gets desktop). Same frame, same DOM, same 147px dock, same
+sections. Lit coverage of the mobile tier as a share of that control:
+
+| stop | mobile tier as % of the same frame on the desktop tier |
+|---|---|
+| work | **18%** |
+| contact | **17%** |
+| hero | **19%** |
+| origin / apac / pivot | 22% / 23% / 26% |
+| now / engineering | 29% / 29% |
+| rd350 | 34% |
+
+And at 390x664 **the desktop tier is brighter than the 1440 desktop at seven of nine stops** —
+a narrow portrait cone through the same network fills more of its frame, not less.
+
+> **The phone frame is not the problem. The tier is.** Every previous explanation of this —
+> the small viewport, the halo, the veil — is wrong, and this single control disposes of all
+> of them.
+
+Second fact, and it is the one that matches what MJK saw: **on the phone the median pixel is
+exactly the background colour at all nine stops.** On desktop that is true at one stop.
+
+## Where the phone is worse than empty, not merely thinner
+
+- **§07 `work` is the worst frame on the site.** Two ring photographs cut by the veil with
+  every label off screen — `PHONE SNAPS · ONE PIECE`, `GENERATED`, the arrow legend, `▶ PLAY
+  THE CLIP`, the caption and both cards. It reads as a half-loaded gallery rather than a
+  portfolio. 5.3% lit; the frame's light is two-thirds photograph.
+- **§07 and §08's scene is one flat grey disc and one grey tube on black.** That is what a 3D
+  asset looks like **before the lighting is turned on** — not a stylistic reduction. With
+  `bloom: false` a soma has no hot core; in a dense field its neighbours supply the contrast,
+  and in an empty one it simply looks broken.
+- **§06** shows a card sentence dissolving mid-word into the veil, which is the signature of a
+  failed render.
+- **The hero reads as a different site**: one soft disc, one trunk, eight dots, no orange, no
+  dust.
+
+Concentrated rather than uniform, and predictably so — the three collapsed stops are the three
+whose camera does not park near a large tube. Origin, pivot and engineering hold up because a
+fat near mesh survives every cut and fog cannot reach it.
+
+## The DOM is innocent, measured rather than assumed
+
+| suspect | verdict |
+|---|---|
+| the halo | darkens 11.9–14.8% of the phone frame against 14.5% on desktop; the phone already runs `--halo-lite`, 8 layers at 22px against 10 at 76px |
+| the dock veil | keeps **77.2%** of scene luminance inside the dock band and about 100% above it; roughly 5% whole-frame cost |
+| section opacity | **no longer exists** — it is `translateY(8px)` only |
+| the 390px frame itself | the control above: guilty of nothing |
+
+The dock's 147px costs *content* height, which is task 38. It does not cost scene.
+
+## Ranked restoration, from a per-knob ablation
+
+Each desktop value was put back one at a time by rewriting the built chunk's `mobile` literal
+in flight, with no repository file touched. `hero` and `contact` are stable across runs;
+`apac` swung 14.7 to 30.0 on identical config and is excluded from the ranking rather than
+quoted.
+
+1. **`secondaryPerNode` 2.0 → 5.5** — the only knob that is large at both stable stops
+   (contact gradient 0.523 → 1.547, **+196%**). It is the difference between a ball on a stick
+   and a neuron.
+2. **A waypoint nudge at hero, work and contact to bring a trunk into frame** — not a config
+   value, costs nothing, and it is the observed difference between the phone's best and worst
+   stops.
+3. **`nebulaPoints` 2700 → 9000** — turns black from *nothing* into *air*. Hero gradient +61%,
+   and it is points rather than geometry.
+4. **`bloom` on — but only after 1.** Alone it measures **zero** (0.683 against 0.691). With
+   structure restored, contact goes 6.26% to 46.27% lit. It is the specific cure for the
+   "unfinished 3D" reading, and it is worthless before its cause is fixed.
+5. **`t2Seeds` / `t2MaxNodes` up** — the best single knob at the hero, +91% gradient. Restores
+   the sense that the world continues past the edge of the frame.
+6. **`fog` 0.030 → ~0.024** — zero geometry; restores the dim distant marks that carry depth.
+7. **Do not re-add `farNetwork`.** Last by a distance, and the images agree with the
+   measurement already recorded in `config.ts`.
+
+**This converges with the performance work, and the convergence is the headline.** The
+performance pass found that the budget is blended pixels and that fill is area, so *more,
+smaller, further out* is the cheap direction and *fewer, larger* is the expensive one. The
+vision pass, independently and by a different method, ranks **more small distant nodes** as
+the single largest visual restoration. The cheapest fix and the best-looking fix are the same
+fix.
+
+Note that these are **mobile-tier values**, so changing them invalidates mobile screenshots
+only. Desktop measurements survive.
+
+## 2560 — the number is right and the conclusion in task 39 is not
+
+The content box is **8.35%** of the frame at origin and pivot, which is exactly the figure
+task 39 records, 12.2% at the hero and 23–34% at the composed stops. **But the frame does not
+read empty** — the other 91% is the scene, and it is the best the site looks anywhere.
+
+What actually reads wrong there is different, and worth re-recording:
+
+- **The two horizontal systems**, about 400px apart at each edge — the input rule is visibly
+  shorter than, and inset from, the caption rule directly above it.
+- **`.section-title` computes 69.12px at 1440 and 70.4px at 2560** — a 1.9% increase for a 78%
+  wider viewport.
+
+That is a typographic scaling and alignment defect rather than an emptiness one, and nothing
+is lost at any stop. **Lowest priority**, against how task 39 currently frames it.
+
+# 44 — the portrait, tested against real frames
+
+Measured room at the hero: **1440x900 leaves 631x900 free to the right** of the 736x607 ink
+box. **390x664 leaves 28px to the right, minus 6px below and 27px above** — the copy already
+overlaps the veil by 6px.
+
+- **In the right gutter, it works.** A tone-quantised head at 520x693 reads unambiguously as a
+  person and takes nothing from the type. **The dissolve is free**: the portrait's shoulder
+  dots and the scene's nebula dust are the same mark, so the bottom already merges into the
+  field with nothing designed. The 0.55-opacity version is better — at full strength it reads
+  as a pasted halftone because it has no fog, which is a direct argument for building it *in*
+  the scene as 44b specifies rather than compositing it in the DOM.
+- **Behind the words it reads as damage — specifically as a redaction.** The title occupies
+  y≈180–460, which is exactly eye height for a centred portrait, and the halo's soft-edged
+  dark pool wipes a bar through the brow and the eyes. The text is unaffected; the face is
+  destroyed in the one region that carries identity. **Structural, not tunable.**
+- **On a phone: no, at all three placements tested.** It fails twice over — the face is
+  illegible, *and* the lit cheek becomes the brightest thing on the hero, underneath six lines
+  of body copy.
+
+**Legibility threshold, from the coarse test: between ~27 and ~47 marks across the head
+width** — 27 marginal, 47 clear. By free gutter that puts the breakpoint at **~1280px and
+comfortable from 1366**, which is **more permissive than the >=1500px fallback recorded in 44**
+and corrects it. At 2560 it would also fill the 1,401px of unused right frame that task 39
+complains about — so the portrait and the wide-screen defect are one job.
+
+# Corrections to the record
+
+- **PLAN §4.5 does not reproduce.** §08 is the third-*darkest* desktop frame, mean 18.37
+  against rd350's 38.45 — not pale. And the light is not symmetric: left column scene mean
+  14.96, right column 26.02 with p90 60.59. The real condition today is that **the brightest
+  region of §08 is exactly where the four outbound links sit**, and the darkest is behind the
+  prose. That may be right rather than wrong; it is certainly not what the plan says.
+- **Task 38 is a fold problem, not a content problem.** Scrolled 380–430px, the phone shows the
+  full timeline, the complete MJK-101 figure with its specs and Replay, the whole JewelAI
+  figure with every label, and the RD 350 before/after with its carousel — all four good, two
+  excellent. §07 reads broken **at the fold**, which is exactly where a routed answer and a
+  shared link put a visitor. Still real, but it is a first-screen defect per stop rather than
+  a composition failure.
+
+# New, found while looking for something else
+
+**`detectTier` keys on pointer type and core count, so a touch-screen laptop at 1440px gets
+the mobile tier** — and would show all of the emptiness above at desktop size, on a machine
+well able to render the desktop scene. Untested, and worth someone's time.
+
+# Protected, confirmed by looking rather than by assertion
+
+The halo — every word readable everywhere, including over a full-strength lit cheek. The
+mobile halo trim, which is **innocent of the emptiness and must not be touched while fixing
+it**. The dock veil. The phone timeline. The §02 figure sequence. The §05 before/after and the
+carousel crops. **And one addition: the scene's near trunks — they are the only part of the
+mobile scene still working.**
+
+**Not verified, and listed rather than glossed:** anything about performance (software
+renderer, and the report makes no timing claim); a real device; dpr 3; the 25 focus rings;
+contrast ratios; the dissolve in motion; MJK's actual photograph resolution; and one ablation
+variant that produced blank frames and was discarded.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
