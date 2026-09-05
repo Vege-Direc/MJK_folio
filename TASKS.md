@@ -1328,6 +1328,147 @@ variant that produced blank frames and was discarded.
 
 ---
 
+# New, raised 2026-09-05 (second round)
+
+MJK has approved the phone work — "I'm fine with your plan to optimize phone experience" —
+and it proceeds in parallel with the research below, because every item in it is independent
+of the stop count and of the narrative architecture. Everything else here is out for research,
+a judging panel, and a research→reason→judge→research loop before anything is built.
+
+## 49. Is the story we are telling the one people want? — `researching`
+
+"I want you to analyze if the whole story we're putting up for users is currently even
+something people want to see? The advantage is that if people chat they can go straight to see
+what they want. However if they scroll then they are presented with my airforce story, moving
+to marketing and what not."
+
+The question underneath is whether §01 to §05 — the flying dream, two engineering degrees, the
+pivot, a decade of paid media, a motorcycle rebuild — earn their scroll for a visitor who came
+to find out whether he can build them something. **This has never been asked.** The sections
+were ported from the prototype, the copy was rewritten to carry facts, and the ORDER was never
+interrogated. `PLAN.md` states the site's purpose is commercial in one line and then the
+architecture spends five stops before reaching any work.
+
+Not a rhetorical question, and the answer is not obviously "cut it". The story is what makes
+the site memorable and it is the only thing on it a competitor cannot copy. But it is
+currently unavoidable, and that is a decision nobody made deliberately.
+
+## 50. A branch after step 1: the whole story, or just the work — `researching`
+
+"if we wanted to branch it after the first step to allow users to choose between the whole
+story (longer flow) or just my work (shorter flow) but both the same scroll mechanism after
+the choice. If they choose the shorter flow there should be a path directly from step 1 to
+step whatever where my work starts... Not sure if bioligcally nuerons have multiple
+connections between two points which could make this look odd."
+
+Distinct from task 46's branching, which hung project DEPTH off a node. This branches the
+SPINE ITSELF, once, early, and rejoins.
+
+Three things the research owes:
+
+1. **The evidence on asking a visitor to classify themselves.** "Choose your path" is a
+   pattern with a real literature and it is not uniformly positive — a choice presented before
+   the visitor knows what is on offer is a choice made badly.
+2. **The biological question, answered properly rather than waved at.** MJK is right to ask.
+   Parallel and reciprocal connections between two neurons do exist, but whether a *shortcut
+   edge* reads as anatomy or as a wiring diagram in THIS scene is a rendering question and it
+   should be looked at, not reasoned about.
+3. **What it costs in this codebase.** `ScrollProgress` maps the k-th section to `u =
+   k/(count-1)` and `sampleSeg` maps `u` to a node. A skip is not a camera problem — it is a
+   question about what the document contains, which is what makes it harder than it looks.
+
+## 51. Key information on scroll; the rest by asking — `researching`, and it is the thesis
+
+"making all information available on scroll... I think is not right - ideally it's all key
+information on scroll so we don't lose people because of boredom before they even reach the
+end... The key difference of this website is the fact that more information can be shown when
+the user asks - which allows us to differentiate from most standard website where this option
+doesnt exist and hence they have to show everything they can. We can choose to not show some
+information but at everystep cue or encourage the habit for the user to chat and query about
+things more."
+
+This is the strongest articulation of the site's thesis anyone has written down, and it should
+be treated as a design principle rather than a feature request:
+
+> **This is literally like mimicing a conversation with me right? hence 'my mind' aspect which
+> is this website being like my virtual mind? ... the idea is to make them feel like they're
+> speaking with me, not with a machine. It's not just a website from that angle.**
+
+Two consequences the research must weigh honestly rather than agree with:
+
+- **The risk it inverts.** If a visitor does not ask, they see only what is on the scroll. The
+  earlier research found on-page chat engagement in the 5–15% band; if that transfers, then
+  "we can choose not to show some information" means 85–95% of visitors never see it. The
+  thesis is right about the mechanism and the number decides whether it is right in practice.
+  **This is the single most important number in the whole redesign** and it should be
+  established as well as it can be.
+- **It collides with the site's own rule** — TASKS 24: anything a question can reveal must
+  ALSO be reachable without asking. Deliberately withholding from the scroll is in tension
+  with that. The rule exists for crawlers and JS-off visitors. Resolve it explicitly; do not
+  quietly drop it.
+
+**And one specific proposal inside it, which needs its own answer:** *"if not can say
+something like 'i'm not sure about this but i'll check and get back to you'"*. Today an
+unanswerable question gets a refusal. A promise to follow up is warmer and more human — and it
+is a **promise**, which means it needs a way to keep it, which means capture, which is the
+lead-capture decision still sitting in Blocked. Do not build the sentence without the
+mechanism behind it.
+
+## 52. Two audiences, and they want opposite things — `researching`
+
+"this website serves as both my protforlio of work I can do as a service and also as a means
+for recruiters to consider my experience in case they want to hire me as an employee for a
+full time job. Both are very different sets of questions. For example a recruiter would want
+to see my overall expereince, what roles I held, what are my capabilities and so on. On the
+other hand someone looking for my services may be more interested in my web design and
+development work... Similarly someone may be interested in imagery or someone else in the
+agentic operational capabilities."
+
+**This has never been stated before and it reframes the whole site.** Every previous piece of
+research, including the twenty-question buyer eval, optimised for one audience — the client
+with a budget. A recruiter reading this site wants the timeline, the roles, the years and the
+titles, which is precisely the material §04 already holds and which the buyer research treated
+as backstory.
+
+So there are at least four intents, not one: hire him permanently; commission a website;
+commission imagery; commission an agentic system. The research owes a view on whether one
+scroll can serve all four, whether the chat is what resolves them, and whether the site should
+detect intent rather than ask for it.
+
+## 53. What must be on the scroll for the work — `researching`, with his list
+
+"work is definitely the most likely thing that most users would want to see hence, the images
+of apparel (supplier to generated image and multiple pairs of these preferably so that we show
+scale and consistency), jewel AI (3 source images, static generated image then video from that
+generated image should be shown), MruNN video (can ship now as cards), paxel details, website
+work (even if it's just short videos?) and more. I'm fine with having more nodes/steps for all
+this however we really need to consider how best to showcase all of this without losing it
+because we're afraid it will be too long and users drop off."
+
+This confirms task 41's three-station JewelAI figure from his own mouth, confirms §10 shipping
+as cards now, and adds website work as something that must be visible on the scroll rather
+than only in a route.
+
+## 54. A new corpus fact: the apparel work is for the asanjokutch client — `blocked`, partly unblocked
+
+"the apparel imagery is for the same asanjo website, so we can take some of the story behind
+the apparel from there but framed for our website's purpose of course."
+
+**This connects two projects that the corpus holds as unrelated**, and it is materially useful:
+it turns two thin claims into one substantial engagement — a storefront and the catalogue
+imagery that fills it. It is the closest thing on the site to an end-to-end client story.
+
+It also **sharpens the naming question rather than settling it.** Every other client on the
+site is anonymous, the apparel memories deliberately do not name one, and `asanjokutch.org` is
+a public storefront whose name is its URL. Linking the two names the client by construction.
+That is MJK's call and it is now a live one — see Blocked.
+
+What is still needed before anything is written: his role on the site, the dates, the stack,
+whether the client may be named, and which theme is his (the link he sent is an unpublished
+preview). The apparel side already has three corpus memories and four image pairs on disk.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
@@ -1364,6 +1505,23 @@ Raised 2026-09-05, and each of these blocks a build rather than a decision:
 11. **The MruNN ERP screen recording** (task 45), when he records it. Useful to know in
     advance whether it can show real data or needs a seeded demo tenant — the site names no
     client, and an ERP screen is full of client names.
+
+Raised 2026-09-05, second round:
+
+12. **May the apparel client be named?** He has told me the apparel imagery and
+    `asanjokutch.org` are the same client (task 54). That is the closest thing on the site to
+    an end-to-end engagement — a storefront and the catalogue imagery that fills it — and
+    showing them together **names the client by construction**, because the storefront's name
+    is its URL. Every other client on this site is anonymous and the apparel memories
+    deliberately name nobody. Three options, and it is entirely his call: name them and gain a
+    real case study; keep them anonymous and lose the connection; or show the storefront named
+    and the imagery unattributed, which is the weakest of the three because a visitor can
+    join them anyway.
+13. **Does the lead-capture decision change now?** Task 51 proposes that an unanswerable
+    question should say "I'm not sure about this but I'll check and get back to you" rather
+    than refuse. That is a promise, and keeping it requires somewhere to put the question and
+    an address to answer it to. **The sentence cannot ship without the mechanism**, so blocked
+    item 5 is no longer optional if he wants that behaviour.
 
 ---
 
