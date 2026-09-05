@@ -724,6 +724,113 @@ constants elsewhere in `lib/mind/` assume nine.
 
 ---
 
+## 45b. MruNN has no clients yet — `answered`, and it changes the architecture
+
+MJK, 2026-09-05: "Mrunn has no clients yet, so we have to work with what we have."
+
+That closes gap G4 with a fact rather than leaving it open, and the fact has consequences
+worth stating plainly rather than working around.
+
+**MruNN is a build, not a case study.** The corpus licenses architecture only — approval
+gated, GST/HSN compliant, Telegram and web, Mastra multi-agent — and there is no user, no
+client, no time saved and no result, because there is nothing yet to measure. So §10 as
+proposed would have been a stop that promises a case study and delivers a specification.
+
+**Therefore it should not be one of the three routes.** Revised from the research
+recommendation:
+
+- `/work/jewelai` and `/work/apparel` keep their routes. Both have assets on disk, both have
+  outcomes in the corpus, and neither needs a fact MJK does not already have.
+- **MruNN becomes a stop on the spine with the video as its proof, and no route behind it.**
+  A screen recording of an approval gate actually stopping something IS the evidence; it does
+  not need a page of prose behind it claiming more. When there is a client, it earns a route.
+
+This is the better answer for a second reason. A build with no users is a normal and
+defensible thing for a consultancy to show — it is a capability demonstration — but only if
+the page does not dress it as a delivered engagement. Saying "this is what I built, here it
+is running" is stronger than an outcome section with nothing in it.
+
+**And to be explicit, because it is the kind of thing that gets misread later: the site says
+nothing at all about MruNN's client status.** MJK, 2026-09-05: "We don't have to mention the
+fact that mrunn has no clients anywhere on the website right now of course." Correct, and it
+is not a compromise. The corpus licenses no client claim, so none can be made; the fix is
+silence, not a disclaimer. Showing the thing running and describing what it does is the whole
+of it. The rule the site already follows applies unchanged — **never claim an engagement that
+did not happen, and never volunteer an absence nobody asked about.** A disclaimer would be
+the only way to turn a normal capability demonstration into a weakness.
+
+Note that this differs from gap G6, where the research recommended saying "not public" about
+a missing link. That is a fact a visitor is actively looking for once a project is named, and
+silence there reads as evasion. Client status is not a question the page raises.
+
+**What it needs from the corpus:** nothing new. What it needs from MJK is the recording
+(task 45), and the decision about seeded demo data versus real data with the names changed.
+
+## 44b. The portrait does not replace the hero's words — `clarification`
+
+MJK: "just having the tone quantiser with no text is kind of confusing for new visitors
+right?"
+
+He is right that it would be, and the proposal was never that. Worth writing down because
+the ambiguity was mine.
+
+The portrait lives in the **WebGL layer**, behind the DOM, at the hero waypoint. Everything
+in `content/stops.ts` for `hero` stays exactly where it is — the name, "I build AI systems",
+the Krunch Labs lede and the body. The face is what the *scene* is doing at stop 0, in the
+same place the particle field is doing something today. Nothing is removed and no text is
+replaced.
+
+So the two recommendations stack rather than compete: **the sentence changes** (promote the
+imperative, invert scroll-first-ask-second), and **the scene's first state becomes a face**
+that dissolves as the visitor scrolls. A visitor who never notices the face still reads a
+hero that tells them what to do. That is the test the design has to pass, and it is worth
+verifying with a vision pass rather than asserting.
+
+## 47. The scene lags on a phone while scrolling — `open`, and it is a defect
+
+MJK: "the animation on phone lags as we scroll."
+
+This is a report against the live site and it outranks every feature on this list, because it
+is the first thing a visitor on a phone experiences and it happens during the one gesture the
+whole site is built around.
+
+What is already known and must not be re-derived:
+
+- The scene honours `prefers-reduced-motion` and the new motion control; measured pixel change
+  1.16% to 0.00% on a phone.
+- `far-network.json` (67 kB, 4,664 nodes) is **not requested at all** on the mobile tier.
+- The mobile tier already cuts `subMaxNodes` 720 to 200, `subBranchDepth` 3 to 2 and
+  `nebulaPoints` 9000 to 2700.
+- Cursor repulsion and its per-particle solve are already off on touch.
+- The halo is trimmed during flight via `html[data-flying]`, and the halo was previously
+  measured as the site's real raster cost — a 100ms p95 on mobile.
+
+So the cheap wins are spent. This needs profiling rather than another guess, and the profiling
+has to happen somewhere with a GPU: **this repo has already retracted two performance claims
+taken under headless software rendering**, and a paint-cadence number from that environment is
+worthless. Whatever is measured must say where it was measured.
+
+## 48. The mobile scene reads empty against the desktop — `open`, and it pulls against 47
+
+MJK: "when you removed the other layes on mobile which are there on desktop it looks kind of
+empty now and not as impressive as on desktop."
+
+He is right, and it was already half-recorded: a judge panel found the scene "nearly absent on
+the phone's first screen" at 1.16% pixel change, and that finding was folded into task 29 and
+then partly lost when the near-falloff work closed it.
+
+**47 and 48 are one budget, pulling in opposite directions, and that is the actual problem.**
+Anything that makes the phone richer costs frames, and the phone is already dropping them. So
+neither can be answered alone, and a fix for one that ignores the other is not a fix.
+
+The interesting version of the question is not "what can be cut" — that has been done twice —
+but **what is being paid for that does not show**. Density that reads on a 1440px desktop may
+be noise at 390px, and a cheaper arrangement may look richer. That is a rendering-technique
+question (instancing, draw-call count, overdraw, fill rate, texture bandwidth, DPR, adaptive
+quality) rather than a content question, and it is where the research should go.
+
+---
+
 # Research verdicts, 2026-09-05
 
 Four agents. All four were killed twice by process exits and both times resumed from their
