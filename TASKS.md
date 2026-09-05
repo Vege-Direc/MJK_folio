@@ -1560,6 +1560,256 @@ is his**, since the link he sent previews an unpublished one.
 
 ---
 
+# 50 — the branch after step 1. `spec'd`: do not build the branch, build the jump
+
+Three findings decide it, and the first two are specific to this codebase rather than to
+branching in general.
+
+## 1. The spine is too straight for a shortcut to be legible
+
+Run against `buildWaypoints`' own arithmetic, seed 20260723. The chord from `S[1]` to `S[6]`
+is **52.4 units against a spine path of 53.0 — 1.1% shorter — and never leaves a 3.07-unit
+tube around the axon.** Identical at n=9 and n=12.
+
+The camera sits 1.4 units off the spine, secondary nodes are seeded at r = 2.2–6.7, and
+`config.ts:148` keeps the midground 9+ units clear. So a shortcut edge would run *inside* the
+existing tuft shell, about 3 units from the lens, through additive billboards and fog. **It
+would not read as a branch; it would read as a duplicated mesh.** Making it legible means
+bowing it away from the spine, which is a subway map.
+
+> MJK's instinct that it might look odd was right, and it is right for a **geometric** reason
+> rather than a biological one.
+
+**The biology, since he asked, and it is not the objection.** Multi-synaptic contacts, axon
+collaterals, parallel fibre bundles and reciprocal connections are all ordinary, so a bundle
+that leaves and rejoins is fine anatomy. The problem is topological: a chord is a **cycle**,
+and this scene contains none — every filament in `growGW` is parent-to-child in an acyclic
+tree off a linear spine. Being the only closed loop in the graph is what would make it read as
+notation rather than tissue.
+
+## 2. In this codebase a "skip" does not skip
+
+`sampleSeg` normalises over `V.length - 1`, where `V` is a constant nine-waypoint array;
+`ScrollProgress.progress()` normalises `u` over the sections actually in the DOM. **Two
+independent denominators.** So removing sections **compresses the flight rather than
+shortening it** — the short path flies all eight segments at double speed. To skip vantages
+you must change `M`, and `mulberry32(0x5eed ^ M)` re-rolls the entire field, so **the two
+paths would show visibly different neuron fields.**
+
+**And every branch form breaks the chat.** `retrieve()` routes to any of the nine stopIds, and
+`ChatProvider` looks up `answer-${stopId}` by id. On a short path four or five of those stops
+are not in the document — an answer with nowhere to dock.
+
+The collapse-to-zero-height variant is the worst, and it is computable: duplicate `offsetTop`
+values make `u` jump 0.125 → 0.625 on a single scroll pixel, which at the scene's 125ms ease
+is **32 stops per second against `CALM.speedFull` of 0.55 — 58x the saturation point**,
+slamming the proximity floor. With `display: none` instead, `marks` stops being monotonic and
+**`u` pins near 1, so the camera sits at `contact` for the whole short path.**
+
+## 3. The evidence on self-classification is negative, and there is a real abandonment case
+
+- **GOV.UK built audience-based navigation, user-tested it, and dropped it** (Cath Richardson,
+  18 July 2014). Users did not fit the categories, and **needs shift by task, not by job
+  title.** A school governor: *"I would think it is all there — I start panicking that there is
+  nothing there for governors."* Their replacement was chosen partly because it stays "fully
+  linkable and accessible without JavaScript", which is this site's own constraint.
+- **NN/g (Sherwin, 2015)**: self-identification "takes people out of their task mindset", and
+  visitors suspect the other segment is getting the better material.
+- Checked locally against the four peer homepages saved in this repo: **all four use audience
+  LANGUAGE in copy; none contains "choose your", "I am a", "who are you" or "which best
+  describes".** Audience words as copy, universal. Audience as a gate, zero of four.
+
+**One argument not to make, on the evidence.** Do not cite choice paralysis: Scheibehenne 2010,
+63 conditions, N = 5,036, found a mean choice-overload effect of approximately zero. At two
+options that is definitively not the mechanism. The case rests on self-classification,
+opportunity cost and irreversibility.
+
+## What to build instead
+
+1. **One anchor in the hero, and it works today.** `StopSection` already sets `id={stop.id}`,
+   so **`/#work` is a live, server-rendered, crawlable, JS-off deep link right now and nothing
+   on the site tells anyone it exists.** A plain `<a href="#work">` gives a history entry so
+   Back works, is already animated by the stylesheet, and is already reduced-motion-safe.
+   Enhance with `flyToElement` and `pushState`.
+2. **A section index at the twelve-stop migration.** Task 46 reached this independently; the
+   branch turns out to be the same finding wearing a costume.
+3. **If a recruiter needs a different document, give them a different document.** A `/cv` route
+   with genuinely different content is not a spine fork and has none of the routing problems.
+4. **Free, and anatomically honest:** when a jump is taken, do not draw a second edge — run the
+   pulse **fast down the existing axon**. That is myelination, it uses the existing pulse pool,
+   it adds no geometry and no cycle, and it says "same path, travelled quickly", which is
+   exactly what happened.
+
+**What would change this:** instrument the anchor. Under about 2% uptake and neither a jump nor
+a branch is warranted. Heavy uptake argues for the index, not for the fork.
+
+## Three contradictions this raises for the panel, recorded rather than resolved
+
+- **Against task 51's thesis.** If "show less, invite asking" ships *and* a short path ships,
+  the reductions multiply — most visitors never ask, and a short-path visitor additionally
+  never passes five sections. **Only one reduction may be taken.**
+- **Against tasks 49 and 52.** Segmentation is right about the content and wrong the moment it
+  reaches the entry. **Segment the content, never the entry.**
+- **Against task 44.** The gate and an entry choice both want the first screen, and that budget
+  is not divisible — NN/g measures 57% of viewing time above the fold and 74% within two
+  screenfuls. **At most one new element on §00, and it must not be a question.** Since the
+  branch is not being built, the gate may have it.
+- **And a caution about citing task 46 in support of this**: its ranking of "routes > insertion
+  > tree scroll > nested scroll" is for *depth hanging off a node*. A route for depth adds a
+  document; a route for the spine forks the scene and splits the routing table. The two are
+  not the same question and the ranking does not transfer.
+
+---
+
+# The method for judging all of this — `done`, and it is honest about its own name
+
+MJK asked for a judging panel and for "loop engineering principles" to shape the loop of
+research → reason → judge → research.
+
+## "Loop engineering" is a 2026 practitioner coinage, not a discipline
+
+Every substantive source is a vendor or engineer blog from mid-2026 — IBM Think, LangChain,
+Addy Osmani, CodeRabbit. **There is no peer-reviewed corpus under the name and no canonical
+principle list that two sources share.** Anyone offering "the seven principles of loop
+engineering" is synthesising rather than citing. The homonyms — chromatin loop engineering,
+process control-loop tuning, Kirchhoff's loop law — must not be raided for authority.
+
+What it genuinely supplies: the loop shape, IBM's demand for stopping criteria evaluated at
+*every* iteration, and LangChain's **verification loop**, a grader checking output against a
+rubric and sending it back. That last maps onto a judging panel and is the piece worth
+borrowing. What it does not supply is anything about the failure modes that actually threaten
+this work.
+
+## The five results that do apply, and the first one governs everything
+
+1. **External feedback is not optional.** Huang et al., *LLMs Cannot Self-Correct Reasoning
+   Yet*, ICLR 2024: intrinsic self-correction without an external signal does not improve
+   reasoning and **often degrades it**. A swarm that researches, judges itself and researches
+   again converges on *confidence*, not truth. **Every round must import one fact from outside
+   the swarm** — a repo measurement, a primary source actually read, or MJK.
+2. **Judges are biased in measured ways, and the biases point here.** *Self-preference bias*:
+   judges favour familiar, low-perplexity output — so **a panel briefed in my words will rate
+   my framing higher for that reason alone.** *Position bias* is worst when the quality gap is
+   small, which is exactly the story-first/work-first case. *Sycophancy* (Sharma et al.): a
+   response matching the user's view is more likely to be preferred — **MJK has asked for the
+   intro screen twice, and a panel that knows this will find reasons for it.**
+3. **Similar panels collapse toward agreement.** Degeneration-of-Thought; *The Cost of
+   Consensus* measures conformity to the modal peer answer up to 85.5%. **Independence before
+   exchange, never the reverse.**
+4. **Criteria drift is unavoidable, so log it.** Shankar et al., UIST 2024: you need criteria to
+   grade outputs, and grading outputs is how you discover criteria. **The defect is unlogged
+   drift, not drift.**
+5. **Assigned devil's advocacy is weak.** Nemeth, Brown & Rogers 2001: authentic dissent beats
+   a role-player, and a group that knows the objection was assigned discounts it and can end
+   *more* confident.
+
+**One conflict inside this repo's own documents, and its resolution.** `DESIGN.md` says
+"Verify in bounded passes, not a loop." MJK is asking for a loop. That rule governs *verifying
+a built artefact*; this loop governs *deciding a direction* before anything is built. Different
+objects — but the doctrine carries, and it is why the round cap is three.
+
+## The panel: six lenses, never averaged
+
+Task 27's structure survives. Three changes, and the new lens in the middle is the important
+one:
+
+| lens | why it cannot fold into another |
+|---|---|
+| **Service buyer**, budget and thirty seconds | the original; the only lens scoring commercial conversion |
+| **Recruiter** — new, from task 52 | wants the opposite evidence type: chronology, roles, titles. Scores **time-to-disqualify**, not time-to-persuade |
+| **The non-asker** — new, and **forbidden to use the chat** | every other lens can be rescued by the dock; this one cannot. The standing proxy for the majority who never type, and **the only lens that can falsify task 51's thesis** |
+| **Designer** | the only lens judging the artefact rather than the transaction, and the only one positioned to defend "the story is what a competitor cannot copy" |
+| **Engineer / sceptic** | the sole feasibility veto. Task 50 was killed on geometry rather than taste; that is this lens working |
+| **Corpus custodian / fact auditor** — new | earned by three retractions. No aesthetic or commercial stake. Checks every number in the swarm's **and the panel's** output for a primary source |
+
+**Deliberately not built: a simulated MJK.** He is real and reachable, and a model-of-MJK lens
+would launder the panel's preferences as his — and, given the sycophancy result, would
+systematically agree with whatever he asked for most recently. Where the panel needs him it
+produces a **question**, not a guess.
+
+**The devices that do the work:**
+
+- **Every proposal is restated as numbered claims by a non-author before scoring**, which
+  generalises this repo's own rule — screenshots described before they are judged — from images
+  to arguments. The panel judges claims, not the prose that sold them.
+- **"Change nothing" is a first-class option in every packet, with its case written by someone
+  who believes it.** The cheapest and strongest anchoring defence available.
+- **Option order is rotated per lens**, because position bias is worst at small quality gaps.
+- **Evidence tokens on every score** — M measurement (which must state its **instrument** and
+  its **moment**), C corpus fact with a memory id, S source with a URL and whether the primary
+  was reached, O observation quoting the description file, J bare judgement. **A 4 or a 0 may
+  not rest on J alone.** Opinions are allowed; they cannot swing the result.
+- **The output is a matrix, and publishing a column total is forbidden.** A gap of two or more
+  between lenses is a **named collision**, recorded with one sentence per side in that lens's
+  own voice, plus **the fact that would settle it**.
+
+**Why the two past retractions become structural rather than lucky:** both were
+*instrument/moment* errors — a focus reading taken 160ms into a smooth scroll, and a contrast
+reading taken with the wrong instrument. Requiring every measurement to state its instrument
+and its moment makes both visible **at write time** instead of in hindsight, for one line per
+measurement.
+
+## The stopping rule
+
+**"Foolproof" is reframed, honestly: no direction is foolproof, and promising one is how this
+project ends up retracting things.** What is achievable and worth more is **falsifiable and
+reversible** — every decision states what would prove it wrong and what it costs to undo.
+
+**Hard cap of three rounds**, and convergence is measured in **decision flips, not word count**.
+Each round publishes FLIPPED, ADDED and COLLISIONS-OPEN at the top. **A round producing no
+flip, no new decision and no settled collision is a NULL ROUND and is deleted rather than
+appended** — text is not progress. Three distinct ways to stop, and only one is convergence:
+
+1. **Convergence** — the flip test returns zero.
+2. **Escalation** — every remaining collision turns on a fact only MJK holds. Ship the question
+   list.
+3. **Measurement** — the disagreement turns on a number nobody has. The clear case is task 51's
+   chat-engagement rate *for this site*, which cannot be researched into existence. The correct
+   exit is **a decision that holds at both ends of the 5–15% band, plus the instrument to
+   measure it once live.**
+
+## The nine assumptions the whole swarm shares — the devil's advocate's target list
+
+Recorded because they are the ones nobody will otherwise test. The uncomfortable ones first:
+
+1. **That this site, in this form, is the right instrument.** Everyone argues about the scroll's
+   order; nobody has tested whether three strong case-study pages plus LinkedIn convert better
+   at a tenth the cost. **The site is the premise and has never been the hypothesis.**
+2. **That the chat is a differentiator rather than a tax.** In 2026, a box at the bottom of a
+   page that answers questions is a support widget, and visitors have a decade of training to
+   ignore it. Nobody has tested whether the dock reads as "his mind" or as "a chatbot", and the
+   entire thesis rests on that difference.
+3. **That MJK's story is an asset.** To a buyer, a flying dream plus two degrees plus a decade
+   of paid media plus a motorcycle rebuild is evidence of **diffuseness** — the commonest
+   objection to hiring a solo generalist. Memorable and disqualifying at once. **No agent was
+   briefed to make this case.**
+4. **That more work on the scroll is better.** MruNN has no clients yet. Showing scale you do
+   not have is the fastest way to be caught, and one padded item discounts everything beside it.
+5. **That the audiences are two and that they conflict.** There may be one — *is this person
+   good, and will he finish* — and the split may produce two thinner paths serving neither.
+6. **That the panel and the loop improve the answer.** Huang et al. is direct evidence that
+   iteration without external feedback degrades, and six agents grading each other is not
+   external feedback. **One hour with three real people — one recruiter, two buyers — would
+   settle more than three rounds of this loop, and could be arranged this week.**
+7. **That the failure modes I named are the operative risk.** The operative risk may be
+   **elapsed time**. The site is live; every round is a week with no real visitor data, and
+   the loop cannot see its own latency cost.
+8. **That the corpus is the ceiling of truth.** "The corpus does not license it" has functioned
+   as a rule and possibly also as an excuse not to ask MJK. **Task 54 is the proof: two projects
+   held as unrelated for months turned out to be one engagement, revealed by a question.**
+9. **That describing before judging makes judgement objective.** It makes it *auditable*. The
+   describer still chooses what to describe, and anything unmentioned is invisible to every
+   lens downstream.
+
+**Dispatch notes for the advocate, from the same research:** run it on a **different model**
+from the panel, since homogeneous panels hit 85.5% conformity; give it the repo and primary
+sources but **not** my briefs or the sibling reports until it has formed its own view, which is
+the only defence against self-preference bias; and its report enters as an **input to round 2,
+not an appendix to round 1** — an objection answered after the conclusion is a rebuttal, and
+read before it is a fact.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
