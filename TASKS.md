@@ -2219,6 +2219,143 @@ here is worth more than any further reading.
 
 ---
 
+# 44 — the intro gate, re-evaluated against MJK's two arguments. `spec'd`
+
+> **The loading argument does not survive measurement. The orientation argument survives in
+> half. A third argument nobody made — the phone — is stronger than either, and it is what
+> changed the position.**
+
+Every timing below is the repository's own, cited to the file that recorded it. **No browser
+was run for this pass**, and the report says so.
+
+## (a) Loading — wrong about the size, right about the principle
+
+Measured artefacts: the scene chunk is **140,024 B gzipped** and `far-network.json` is
+**67,110 B**. At Chrome's Fast 3G profile (1.6 Mbit/s) that is **about 1.04s of transfer**.
+Working back from `scene.ts`'s own recorded timings — JSON done at 4.7–4.9s, `createMind` at
+5.1–5.6s — `start()` fires at **~4.0s**.
+
+**So the 5.8s figure is ~4.0s of the page's own critical path plus ~1.1–1.6s of scene load, and
+a gate joins the first number rather than removing it.**
+
+Two further problems:
+
+- **It is self-defeating.** `requestIdleCallback` cannot fire during a full-screen particle
+  animation, so **the gate delays the load it exists to cover.**
+- On a phone `CFG.mobile.farNetwork === false`, so 67 kB of what it claims to cover is never
+  fetched at all.
+
+**Where his argument is productive, and it is a real gain: the gate legitimises eager loading,
+which today the site does not do.**
+
+## (b) Orientation — the earlier research was wrong to dismiss it
+
+**A tutorial overlay and a title card are different mechanisms** — procedural instruction
+versus an advance organizer — **and they measure oppositely.** NN/g's n=70 made perceived ease
+worse (4.92 against 5.49, p=.047) with success unchanged; Bransford & Johnson's title-before
+condition roughly **doubled recall**. And NN/g's own stated scope is "straightforward
+applications", which this site is not. **That statistic was being over-applied, by me.**
+
+Applying the mechanism honestly splits his argument in two:
+
+- ***who this is about*** is already unambiguous in the first paint, so an advance organizer has
+  nothing to resolve. This half fails.
+- ***what you can do*** is the procedural half — and that is exactly where NN/g bites.
+
+## (c) The phone — the finding that changed the balance, and nobody had made it
+
+The vision pass concluded a portrait fails at every phone placement. **Both of its causes are
+properties of the hero, not of the phone**: 0.0px of spare height, and eight lines of body copy
+with halos lying across the face. **A fixed full-screen overlay has neither.**
+
+Worked from the vision pass's own table, which is consistent at 11.15px of portrait width per
+mark: a gutter portrait must contain shoulders; a title card need not. So a **full-screen phone
+gate carries the head at 38–48 marks — matching a 1440x900 desktop, and beating every desktop
+below 1366px** — at `dust.ts`'s already-measured 17.4ms/frame **at exactly 390x844 under 4x
+throttle**.
+
+> **It is the only shape in which a phone visitor ever sees the portrait at all. And the phone
+> hero is 96.5% pure black.**
+
+## Two corrections to this session's own work
+
+- **The earlier estimate of 6,000–8,000 particles at 43ms is wrong by about 3x.** The
+  legibility threshold was measured at 27–47 marks, and `sqrt(N/1.35)` puts 2,000 particles at
+  38. **The performance objection to the rendering does not stand.**
+- **Task 44's ranking was decided on an incomplete ledger** — no phone argument, no
+  labour-illusion evidence. That does not make it wrong; it makes it **MJK's to re-decide**.
+
+## The contract
+
+**A fixed duration is a timer, not a load screen.** The shape: a fixed head of 900ms, then an
+**elastic HOLD between 500 and 1,700ms**, then a fixed tail of 1,300ms zoom and disperse plus
+700ms handover. **X = 3,400ms, Y = 4,600ms**, blocking for 2,700–3,900ms.
+
+**Y is under 5,000ms because that is what keeps the gate out of WCAG 2.2.2 on two counts.**
+2.2.1 Timing Adjustable *does* bite, and the only reachable satisfaction is "turn it off before
+encountering it" — so **reduced-motion suppression and the once-per-visitor flag are the
+substantive compliance, not the skip button.**
+
+**The three cases, and the one that matters:**
+
+- **Case A (ready before X): the gate invents 1.5–2.2s of wait.**
+- **Case C: on today's code, Fast 3G IS case C — the gate lifts at 4.6s onto an empty canvas.**
+- The band where it is honestly a load screen is ready-between-2.6-and-3.9s.
+  **`modulepreload` plus an eager `start()` plus `import()` on the HOLD moves Fast 3G into that
+  band, around 4.0–4.4s. Build that first, or do not build the gate at all.**
+
+**The trap that would ship broken.** `onMindReady` **is not "the scene is visible"**:
+`setMind()` fires while the canvas is still at `opacity: 0`, and the reveal then waits up to
+`T3_GRACE_MS = 1200` (desktop) plus `REVEAL_MS = 700`. **Ending the gate on `onMindReady` lands
+the visitor on a black canvas for up to 1,900ms.** It needs a new `onRevealStart` — five lines,
+and invisible from `controller.ts`.
+
+**LCP delta is about 0ms** — a canvas is not an LCP candidate, and a server-rendered gate's
+sentence paints with the hero `<h1>` — **provided it is in the server HTML and never animates
+from `opacity: 0`** (Shopify measured a six-second regression from exactly that). **A warning
+for whoever reads the dashboard afterwards: if the gate's sentence outranks the hero title,
+Core Web Vitals will report an improvement while the site gets slower.**
+
+**The gate runs on a minority of visits** — reduced motion, `calm`, a return visit, a hash deep
+link, JavaScript off. **So it cannot be the delivery mechanism for the sentence. The hero must
+carry it, which makes the hero copy change a prerequisite rather than an alternative.**
+
+Two placement notes: `content/static-copy.ts` is the wrong home, because its own docstring
+records that a second copy of hero text was "the drift that put two fabrications on the live
+site" — **add an `invitation` field to the hero stop in `content/stops.ts`** and render it in
+both places. And **do not lock the body**: `touch-action: none` on the overlay with `inert`
+beneath, any scroll, wheel or key ends the gate, plus a `<noscript>` style and a CSS
+`intro-expire` animation **so the gate cannot outlive Y under any JavaScript failure.**
+
+## The words
+
+**"my mind" is the best phrase written for this site — keep it.** NN/g's guideline 92 objects
+to exactly one word, "welcome".
+
+**The substantive problem is new: "let's have a chat" writes a cheque the guard may bounce.**
+Task 27a records six of ten buying enquiries being refused. **Fix the machine, not the
+sentence** — do not ship the invitation until the first turn cannot be a refusal.
+
+Recommended: **"I'm Mathew. This is my mind — ask it something."**
+
+## Blockers to settle before any pixels
+
+- **`DESIGN.md` forbids what the vision pass prototyped, as written.** Cyan exists "only inside
+  the WebGL layer", and the gate is DOM. Either draw the portrait neutral white, or rule the
+  intro part of the WebGL layer and **amend `DESIGN.md` so the exception is recorded** rather
+  than silently taken.
+- **Split `dust.ts` — add a luminance sampler. Do not fork it.**
+- **Measure the photograph's pupils before anything else.**
+
+## Disagreement with the cueing sweep, and it is a fair one
+
+Benway & Lane's 24% is strong evidence that on-page cues are missed, but **banner blindness is a
+position and format effect**, and the hero `<h1>` is neither. It supports **the sentence at
+display size** more cleanly than it supports the gate — whose unmissability is bought in the
+one format NN/g says trains reflexive dismissal.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
