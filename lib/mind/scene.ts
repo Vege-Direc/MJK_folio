@@ -246,14 +246,36 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
 
   if (M < 2) console.warn('[mind] need >=2 waypoints');
 
-  // Probe with attributes matching WebGLRenderer so the reused context keeps
-  // alpha:false + the antialias setting. preserveDrawingBuffer keeps the last frame
-  // readable for canvas capture (screenshots/thumbnails); one buffer copy, negligible.
+  /**
+   * The probe, and it is load-bearing. Do not delete it as redundant.
+   *
+   * `WebGLRenderer` HARDCODES `alpha: true` in the attributes it asks for — r169
+   * WebGLRenderer.js:228, landed in mrdoob's #23230 — and its own `alpha` parameter only
+   * sets the default clear alpha. So `new WebGLRenderer({ alpha: false })` does not give
+   * you an opaque drawing buffer. THIS call does: a second `getContext` on the same canvas
+   * returns the context that already exists and ignores the attributes it is handed, so
+   * whatever is asked for here is what the page gets. Verified on the running build:
+   * `getContextAttributes().alpha === false`.
+   *
+   * That matters because an opaque drawing buffer is composited with
+   * `SetContentsOpaque(true)`, which is what lets Chromium occlusion-cull behind it and
+   * consider it for an overlay plane. It looks like a feature-detection leftover. It is
+   * the only thing making this canvas opaque.
+   *
+   * `preserveDrawingBuffer` used to be true here, with a comment calling it "one buffer
+   * copy, negligible". Measured, in headed Chrome on a real GPU at a 390-wide phone
+   * viewport: it is 22% of the scene's whole GPU time (0.111 -> 0.086 ms p50, 0.117 ->
+   * 0.098 p95, n~1150 frames each side). With it true Chromium cannot swap buffers and
+   * must `CopySubTextureCHROMIUM` the entire drawing buffer every frame. Nothing in this
+   * repository reads the canvas back — there is no `toDataURL`, `toBlob`, `readPixels` or
+   * `captureStream` anywhere — and a browser screenshot composites the layer rather than
+   * asking the page for it, so the capture case it was kept for does not need it either.
+   */
   const ctxAttrs = {
     antialias: !isMobile,
     alpha: false,
     powerPreference: 'high-performance' as const,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: false,
   };
   const testCtx = canvas.getContext('webgl2', ctxAttrs) ?? canvas.getContext('webgl', ctxAttrs);
   if (!testCtx) {
@@ -264,7 +286,10 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
 
     const rng = mulberry32(0x5eed ^ M);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+    // These are very nearly decorative: the canvas already has a context by now, so
+    // three.js reuses it and its attributes are ignored. Kept in step with `ctxAttrs`
+    // above so the two cannot tell different stories to the next reader.
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
     renderer.setPixelRatio(Math.min(view.devicePixelRatio || 1, cfg.pixelRatioCap));
     renderer.setSize(viewW, viewH, false);
     renderer.toneMapping = THREE.NoToneMapping;
