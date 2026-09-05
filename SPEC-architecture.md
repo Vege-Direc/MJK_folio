@@ -1552,7 +1552,7 @@ tile.
 
 ## 7.15 Not relying on the chat to carry any project's existence
 
-Site-embedded live chat engages 5–15% of visitors — an aggregated practitioner benchmark, not a
+Site-embedded live chat engages 5–15% of visitors — **RETRACTED 2026-09-05: traced to an unattributed editorial page citing no dataset, vendor, sample size or year. The checkable anchors are 0.84% (Smartsupp, 4.78bn visits) and 0.5% (GA4 demo store); the honest estimate is 2–8% of sessions.** The original claim was an aggregated practitioner benchmark, not a
 primary vendor number — and **no source anywhere publishes "% of site visitors who engage an
 on-page AI chat"**. Compound it with roughly half of sessions never reaching half the page and
 the chat's reach on a portfolio is single digits.

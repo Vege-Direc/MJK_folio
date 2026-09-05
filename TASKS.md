@@ -1397,7 +1397,9 @@ be treated as a design principle rather than a feature request:
 Two consequences the research must weigh honestly rather than agree with:
 
 - **The risk it inverts.** If a visitor does not ask, they see only what is on the scroll. The
-  earlier research found on-page chat engagement in the 5–15% band; if that transfers, then
+  earlier research found on-page chat engagement in a "5–15%" band — **since RETRACTED as
+  unattributed editorial; the checkable anchors are 0.84% and 0.5%, and the honest estimate is
+  2–8% of sessions**. If that transfers, then
   "we can choose not to show some information" means 85–95% of visitors never see it. The
   thesis is right about the mechanism and the number decides whether it is right in practice.
   **This is the single most important number in the whole redesign** and it should be
@@ -1765,7 +1767,8 @@ appended** — text is not progress. Three distinct ways to stop, and only one i
    list.
 3. **Measurement** — the disagreement turns on a number nobody has. The clear case is task 51's
    chat-engagement rate *for this site*, which cannot be researched into existence. The correct
-   exit is **a decision that holds at both ends of the 5–15% band, plus the instrument to
+   exit is **a decision that holds at both ends of the plausible range (see the retraction —
+   2–8% of sessions, floor under 1%), plus the instrument to
    measure it once live.**
 
 ## The nine assumptions the whole swarm shares — the devil's advocate's target list
@@ -2081,6 +2084,138 @@ says so.
   navigation. If the ask rate is a tenth of what the folklore claims, the scroll and the links
   carry the site, and the chat is the thing that makes it *better* rather than the thing that
   makes it *work*.
+
+---
+
+# 51 — the thesis, answered. `spec'd`
+
+## RETRACTION: the "5–15%" band is unattributed editorial
+
+The figure this project has leaned on all session traces to a single page —
+`which-50.com/live-chat-engagement-rate-benchmarks/` — which **cites no dataset, no vendor, no
+sample size and no year** for any number on it. It is not a benchmark; it is editorial.
+
+**It belongs on the retraction list beside the "attract loop lost by 90%" figure**, and it had
+spread further: three sibling reports and two places in this file were still quoting it, all
+downstream of me handing it to them. Both retracted numbers reached the agents through my
+briefs, which is the mechanism the method agent warned about — a swarm converging on the
+coordinator's confidence rather than on evidence.
+
+**Three checkable anchors exist, and two of them are under 1%:**
+
+| anchor | value | quality |
+|---|---|---|
+| Smartsupp 2024 live chat — 175,438 accounts, 4.78bn visits | **0.84%** | **recomputable**: 40,085,914 / 4.78e9 |
+| site search, Google's public GA4 demo store | **0.5%** | real dataset, e-commerce context |
+| Tidio, ~300k sites | ~15% | vendor; denominator is widget *impressions*, and proactive greetings are not excluded. **This is where the band was copied from.** |
+
+**No source anywhere publishes the share of visitors who engage an on-page AI chat, and none
+publishes adoption for a site where chat is the primary navigation.** That gap is real rather
+than an oversight.
+
+**The estimate, labelled for what it is: 2–8% of sessions ask at least once, best guess ~5%,
+LOW confidence, honest floor under 1%** — a construction from anchors in the wrong context.
+
+**And the decision does not need it.** At every value in the plausible range, "we can choose
+not to show some information" means **92–99% of visitors never see it.** The recommendation has
+to hold at 3% and at 30%, and it does.
+
+## The resolution: MJK's own two messages, and the class distinction he supplied
+
+Task 51 ("we can choose to not show some information") and task 53 (the apparel pairs,
+JewelAI's three stations, the MruNN video and the website work **must be on the scroll**) pull
+against each other, in the same round, from the same person.
+
+> **51 is right about the story. 53 is right about the work.** Withhold biography depth and
+> work depth. **Never withhold a project, an artefact, a role, a year or a title.**
+
+That also fixes a slogan I had been repeating. `SPEC-architecture.md` says "the scroll carries
+EXISTENCE" — which is weaker than what the spec itself then builds. It should read **existence
+AND evidence**. A name without an artefact is an unevidenced claim, which is MJK's own
+"missing out showing off our work" complaint arriving through a different door.
+
+## The strongest objection to the thesis, and it is structural
+
+**The thesis is self-undermining.** Every mechanism that produces an ask **is a thing drawn on
+the scroll**: `AskCard` turns a rendered memory into a pre-phrased question, and `stopPrompts`
+addresses the ones not drawn. **Withholding removes the cue.** The thesis proposes to increase
+asking by deleting the causes of asking.
+
+## Rule 24 is already being violated, and it should become a build gate
+
+**54 memories. 8 `AskCard`s**, each rendering only `firstSentence(m.body)`. **Roughly 36 memory
+bodies appear in no HTML at all.**
+
+Two consequences that are worse than "hard to index":
+
+- Answers stream from `/api/ask`, which `robots.ts` **disallows**. Withheld content is
+  therefore **structurally unindexable** — not slow to index, impossible.
+- It has **no URL**, so it cannot be forwarded to a hiring committee. That is fatal for the
+  recruiter audience specifically, who scan and forward rather than converse.
+
+**Keep the rule; do not weaken it.** Make it satisfiable at memory grain — *existence and
+evidence in the server HTML; only composition and connective prose chat-only* — and **make it a
+build gate in `scripts/check-corpus.ts`**: every memory id must appear in the rendered HTML of
+`/`.
+
+## The voice: ship the change, never the promise
+
+**The architectural finding, and it is the sharpest thing in the report.** `lib/grounding/guard.ts`
+catches `unlicensed-quantity`, `unknown-entity` and `mispaired-quantity`, and `claims.test.ts`
+does not scan `lib/fallback.ts` or `content/system-prompt.md` at all.
+
+> **A promise is the one class of falsehood this architecture is blind to. Every guard checks
+> the past; a commitment is a claim about the future.**
+
+So "I'll check and get back to you" must not ship. Ship instead: **"I do not know that one, and
+I am not going to guess,"** followed by what he does have — and where only he can answer,
+*"That one is better put to me directly."* That is an **affordance, not a promise**. Add a
+forbidden-phrase test for commitment language.
+
+## "A virtual version of me" holds, with two additions
+
+**EU AI Act Article 50(1) has applied since 2 August 2026 — that is now.** Its only escape
+hatch is that the AI interaction be *obvious*, which a persona designed to feel human is
+designed to defeat.
+
+The costs run both ways and both are measured. Disclosure costs are real but context-bound
+(Luo et al. 2019: 79.7% purchase drop, n=5,392, in outbound sales calls). Concealment costs
+land on **hireability and personal reputation** (*Scientific Reports* 2023, four studies) —
+which are precisely the two assets this site exists to build.
+
+**The line: the voice is his; the chrome is the machine's.** `AnswerBlock`'s "Checked against
+the corpus" verdict already *is* the disclosure. Keep it visible, and **never clean it up to
+improve the illusion.**
+
+## "Habit" is the wrong word — recruit the one that exists
+
+Lally's 66-day median cannot be reached by a portfolio with no repeat-visit population. So stop
+trying to build a habit and **recruit an existing one**: make the ask surface conventional
+rather than clever.
+
+The best-evidenced mechanism is the one already shipped — **a card *is* the question, one press
+away.** Clarification-pane click-through runs **17.2–52.9%** against **0.5–0.84%** for
+spontaneous typing. No motion (Benway & Lane found animation had no significant effect on
+noticing) and no tutorial (already settled).
+
+**And ship the instrument**: sessions, sessions-with-an-ask, and asks split by origin — card
+versus chip versus typed. **Nobody has published that split for any site**, so measuring it
+here is worth more than any further reading.
+
+## Contradictions, resolved and open
+
+- **Accepted in full, from the audiences agent:** segmenting through the chat and `retrieve.ts`
+  alone fails, because detection reaches only those who type. It corrects an overclaim in this
+  report's own text. The joint position both reports sign: **the scroll is authored to need no
+  segmentation; the chat personalises for the minority who opt in; detection is the second half
+  of an answer whose first half is a navigation.**
+- **Conceded, from the branch agent:** "only one reduction may be taken" — and worse than
+  multiplicative, because the reductions are correlated in the wrong direction.
+- **Open, and for the panel:** this report adds that *if* only one may be taken, take the
+  branch, because a branch is an **opt-out** while the thesis is an **opt-in**. The branch
+  agent killed the branch on geometry and on the two-denominator problem, not on reduction
+  budget. So the two do not actually conflict — but the reasoning should be reconciled rather
+  than left as two verdicts that happen to point the same way.
 
 ---
 
