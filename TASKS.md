@@ -1810,6 +1810,280 @@ read before it is a fact.
 
 ---
 
+# 49 and 52 — the story is not the problem. The distance is. `spec'd`
+
+## The measurement nobody had taken
+
+`PLAN.md` §2 measured every panel height at 390x844 months ago. **Nobody added them up.**
+
+| stop | top at | screenful |
+|---|---|---|
+| apac | 3,376 | 5.0 |
+| now | 5,728 | 7.8 |
+| **work** | **6,807** | **9.1** |
+| **contact** | **7,869** | **10.3** |
+
+**The first evidence that MJK ships software is 6,807px down the page.** NN/g's 2018
+eyetracking — Fessenden, 120 participants, 130,000 fixations — puts **74% of viewing time in
+the first two screenfuls** and 42% in the top fifth of the page. The résumé PDF and the
+LinkedIn link sit at 7,869px.
+
+And `app/page.tsx` renders the stops and nothing else. The document's only anchor is
+`skip-to-ask`. **There is no navigation: a visitor cannot jump to the work. They can only
+scroll, or ask.**
+
+> **Under `SPEC-architecture.md` at n=12, `work` does not move one pixel earlier, and `contact`
+> — carrying the recruiter's only two artefacts — moves to roughly 10,869px. The twelve-stop
+> architecture fixes reachability and makes distance worse. Nobody flagged that, including me.**
+
+## Presence or position? Position, and the cost structure proves it
+
+`buildWaypoints(n)` and `mulberry32(0x5eed ^ M)` key off the stop **count**, never the order.
+So:
+
+- **Reordering at fixed n: no seed re-roll, no geometry moves, nothing re-measured.**
+- Merging or cutting: M changes, the field re-rolls, and every screenshot-derived number in
+  `PLAN.md` and `TASKS.md` dies.
+
+**Reorder; do not cut. And decide it inside the 9→12 migration**, where the re-measurement pass
+is already budgeted. Taken later it costs a second pass.
+
+**The real diagnosis:** the hero already tells the whole arc in one sentence — *"Before that:
+aerospace engineering at Brunel, then a decade running paid media…"*. So §01–§05 are the
+**expansion of a summary already given**, and the expansion is mandatory while the payload is
+optional-by-distance. **That is progressive disclosure, inverted.**
+
+NN/g's About-Us research (Loranger 2015) is *pro*-story and specific about its form: a
+scannable summary of concrete facts at the top, because "forcing people to work hard… to
+receive an introduction is bad manners." Four practitioner sites read directly — thoughtbot,
+Sara Soueidan, Paul Stamatiou, Jason Lengstorf — all do one sentence of identity, then a
+visible menu of work.
+
+**Two corrections found on the way.** `PLAN.md` §6 item 2 ("LinkedIn. Absent from the site")
+is **stale** — both it and the résumé ship. And **the spine is already not chronological**:
+rd350 (Jun–Dec 2014) sits after apac (2013–2024). "Reordering breaks the chronology" is not an
+available objection.
+
+**No evidence found, stated plainly:** no study compares story-first with work-first on a
+portfolio, and none measures drop-off by chapter count on a scroll-driven page. The decay
+*direction* is well evidenced; the magnitude for this page shape is not.
+
+## The four intents, and two of them have no content at all
+
+| intent | wants | where the site puts it |
+|---|---|---|
+| hire permanently | name → current title → current company → dates → previous → education | current role at 5,728px; CV and LinkedIn at 7,869px |
+| commission a website | proof, a live URL, a price signal | **nowhere** |
+| commission imagery | before/after at scale | ~7,900–8,900px |
+| commission agents | architecture, guardrails, failure behaviour | the thinnest stop, plus material scattered over three others |
+
+**Order fixes distance. It cannot fix absence.**
+
+And the gap nobody had named: a grep over `content/memories.yaml` finds **no memory licensing
+any statement about availability for permanent employment.** The site cannot honestly answer
+the recruiter's only real question — in any ordering, with or without a chat.
+
+(The widely-quoted six-second résumé figure is TheLadders 2018, n=30 and vendor-funded. It is
+weak, and it is a *rejection* time rather than a reading time. Do not lean on it.)
+
+## Detect, do not ask — and only one signal is honest
+
+Referrer is out: there is no `document.referrer` in the codebase and `app/privacy/page.tsx`
+promises "No account. No cookies. No analytics." Dwell time is out for the same reason.
+**The typed question is the only honest signal, and the site already has it.**
+
+`ENGAGEMENT` in `lib/retrieve.ts` is already a deterministic, CI-gated intent classifier, and
+its discipline is right — it overrides the vote *only* where the corpus had nothing to go on,
+which is the correct design for a classifier whose realistic ceiling is about 74%.
+
+**Its concrete defect: it collapses the buyer and the recruiter into one class landing on
+`contact`, whose copy answers a buyer.** The pattern list literally contains **"notice
+period"** — an employment term inside a commercial classifier. Recommendation: a second
+`RECRUITMENT` class of eight to ten patterns landing on `apac`, which holds `career-overview`
+and sixteen timeline memories; same weak-vote-only override, same standing eval.
+
+And the limit, per NN/g (Schade 2016): detection may change **which stop the camera flies to
+and which prompts the dock offers — never which stops exist.**
+
+## The recommendation: three moves
+
+**Move 1 — `now` to index 1.** Note the arithmetic honestly: reordering *within* the story
+prefix does not move `work` at all. Necessary, not sufficient.
+
+**Move 2 — the work block above the story block, with Asanjo leading:**
+
+    hero, now, work(index), asanjo, jewelai, mrunn, origin, engineering, pivot, apac, rd350, contact
+
+**First proof moves from screenful 9.1 to 2.3.** The result is **reverse-chronological — the
+résumé convention**, and what the recruiter's own fixation order matches. `contact` stays last,
+n stays 12, nothing is cut.
+
+Stated cost, not hidden: `apac` moves from screenful 5.0 to 10.1, which **Move 3 pays for**.
+Without Move 3 this report would not recommend Move 2.
+
+**Move 3 — a server-rendered `<nav>` of the twelve stops, plus résumé and LinkedIn, at the
+top.** Topic-based, never audience-based. Buyers get the spine; the recruiter gets **one
+honest labelled door that is not co-equal with it**.
+
+## Asanjo is the biggest single change in the report
+
+It is the only artefact with all four of: **a named client, a live third-party-checkable URL,
+an end-to-end engagement** (he built the shop *and* the catalogue that fills it), **and a
+ledger already in the corpus** — 107 runs, 125 accepted images, $27. Everything else on this
+site is a claim the visitor must accept. This one they can open in another tab.
+
+**Who values it, ranked and deliberately unequal:** website buyer (zero → one; the largest
+marginal gain anywhere in this redesign) >> imagery buyer (proof of *use*, not just generation)
+> agentic buyer (credibility, not capability) > recruiter (least).
+
+**It inverts the project order in `SPEC-architecture.md`**, which is corpus-depth order —
+7/3/2 memories — an author-side criterion. The visitor-side criterion is **checkability**.
+Framed as one engagement, that stop serves two intents with the same pixels.
+
+**Permission to name is not a licensed fact.** `claims.test.ts` still binds: the corpus needs
+the name, his role, the dates, the stack and the URL before a word is written.
+
+## Against the branch agent: agreement, one refinement, one load-bearing disagreement
+
+- **Agreed** on not forking the entry, from independent evidence.
+- **On choice paralysis:** agreed, and never relied on it. But the objection here is a
+  different mechanism and should not be confused with Scheibehenne — **the choice is made
+  before the information needed to make it exists.** At stop 1 the visitor does not know what
+  "the work" contains. That is an *uninformed* choice, not a hard one.
+- **Refinement: "never segment the entry" is slightly too absolute.** thoughtbot segments the
+  entry and it works, because it is asymmetric and never asks anyone to declare an identity.
+  **A labelled door is not a gate.**
+- **Disagreement, and it is load-bearing: if "segment the content" is implemented through the
+  chat and `retrieve.ts` alone, it fails for the reason this repo already wrote down** — a
+  mechanism reachable only through a JS interaction duplicates the chat rather than completing
+  it. Detection reaches only those who type: not the crawler, not the JS-off visitor, not the
+  recruiter who scans and forwards a link.
+
+  > **Detection is the second half of an answer whose first half is a navigation. Shipping only
+  > the second half is the same defect task 40 already found.**
+
+- A limit on the peer-homepage check, without undermining it: Linear, LangSmith, Trigger.dev
+  and Windmill are developer-tool SaaS with no employment intent at all. Good evidence about
+  gates; none about the employment axis.
+
+## On the timed gate: it survives, and gets more expensive
+
+Nielsen's response-time limits put 1.0s at unbroken flow and 10s at the limit of attention, so
+**3–5s will be noticed as a wait**, and on a cold arrival nothing has yet earned it. It makes
+Moves 1 and 3 **more** important, because the first informational screen becomes the second
+screen. Three conditions: it must overlay a fully server-rendered DOM, and **it must not run on
+a hash deep-link or on a return visit** — those are exactly the paths an intent-carrying
+visitor arrives on.
+
+## The cheapest item in the report, and it needs MJK rather than research
+
+**Two corpus memories.** One naming the Asanjo engagement. One licensing a plain statement of
+what he is open to.
+
+---
+
+# 51 — the cueing evidence, and it is the hardest thing on this list to read
+
+A literature sweep on whether the site's "cue the habit of asking" strategy has any support.
+This is the **external fact imported from outside the swarm** that the method requires each
+round to carry, and it does not flatter the thesis. Recorded in full because the temptation to
+soften it is exactly what the loop is built to resist.
+
+## Q1 — do suggested prompts increase how much people ask?
+
+**No primary source found that isolates a causal effect.** What exists:
+
+- **Bing production data at scale** (Zamani et al., MIMICS, CIKM 2020; 414,362 unique queries):
+  clarification panes get positive click-through on **17.2%** of query-clarification pairs in
+  one collection and **52.9%** in another. Real, large, primary — but it measures *engagement
+  once shown*, not an increase in total asking.
+- **Directly against it:** NN/g's enriched site-search suggestions were used **7 times out of
+  60 encounters — 11.7% — and users "did not notice or use" them "even after conducting
+  multiple searches over time on a site."** Secondary and a consultancy study, so labelled as
+  such, but it is the closest analogue to this site's chips and it is a negative result.
+
+Honest reading: suggestion uptake is real, highly variable, roughly 10–50% depending on design
+and fit, and **can be near zero when the suggestions do not match the visitor's task frame**.
+
+## Q2 — will people type into a box at all?
+
+**The industry's numbers are folklore.** The circulating "30%", "a third", "24–44% of visitors
+use site search" figures trace to vendor blogs citing each other with no underlying dataset.
+Nielsen's "more than half of users are search-dominant" has **no disclosed methodology, n or
+date** on the page it lives on.
+
+**The one figure traceable to a real, checkable dataset: 0.5%.** That is site-search usage on
+Google's own public GA4 demo data for the Google Merchandise Store — searchers converted about
+5x better, but only one visitor in two hundred searched at all.
+
+That number is from an ecommerce store, where search competes with a product catalogue, so it
+does not transfer directly. But it is the only one in this space that can be checked, and it
+points the opposite way from the folklore.
+
+## Q3 — can a habit be cued in one visit?
+
+**No.** And this is the most load-bearing finding against the strategy as written.
+
+- Lally et al. 2010 (*EJSP*, n=96): median **66 days** to automaticity, range 18–254.
+- Wood, Mazar & Neal 2021 explicitly warn that habits form through **reward-contingent
+  repetition in a stable context**, and that mere exposure to a cue is insufficient.
+
+Every study in this literature operates on **weeks to months of repeated visits with real
+reward**. None operates at the timescale of a first-time visitor to a portfolio.
+
+> **"Cue the habit at every step" is not supported for a first visit. It is aspirational for a
+> returning visitor, and this site has few of those.** Transplanting habit language to justify
+> first-visit cue density is not something the sources permit.
+
+**NO PRIMARY SOURCE FOUND** for single-session cueing effects on later voluntary feature use.
+
+## Q4 — has chat ever become the primary navigation of a content site?
+
+**No published case, with measured adoption. Anywhere.** Museum and gallery conversational
+guides have been deployed and evaluated, but they report satisfaction and engagement quality —
+**none reports the chatbot displacing traditional navigation**, and none gives a comparable
+adoption share.
+
+The best available ceiling numbers, both real and primary:
+
+- **Reuters Institute, Digital News Report 2026** (multi-country survey): weekly AI-chatbot use
+  for news is about **10% globally**, up from 7%, and **4% in the UK** — the lowest market
+  surveyed. Of those who do use a chatbot for news, only about **4% click through to the
+  original source**.
+- **Bain, Sept 2025** (n=1,500 US consumers, self-report): **56% mostly or always default to a
+  search engine against 16% for chatbots**, and even Millennials and Gen Z prefer search at 42%.
+
+And the classic counter-evidence for any "they will see the cue" argument:
+**Benway & Lane 1998** (n=72): only **24% of participants reported seeing non-ad banners at
+all**, and 20% recalled seeing any advertisement — with **no significant effect of animation**.
+Visible, repeated on-page cues are measurably not noticed by task-focused visitors.
+
+## What this does and does not settle
+
+**It does not kill the thesis.** Three things genuinely distinguish this site from every case
+above: the chat is the *primary* interface rather than a widget in a corner; the cards are
+already the content rather than an overlay on it; and the answer docks *into the page* rather
+than into a chat window. None of the studies measured anything shaped like that, and the sweep
+says so.
+
+**What it does settle is the burden of proof.** The site cannot assume asking will happen. So:
+
+- **Anything the scroll withholds must be genuinely optional, never the proof.** If 10% is the
+  realistic ceiling — and every number found here sits at or below it — then withholding the
+  work means most visitors never see it, which is precisely what MJK objected to two weeks ago.
+- **The decision must hold at both ends of the band.** This is the method's "measurement stop":
+  the honest exit is a design that works whether the true rate is 3% or 30%, plus the
+  instrument to find out once it is live.
+- **The chips and cards should be judged as navigation, not as habit formation.** They are
+  worth having because they make the *next* action obvious, not because repetition will train
+  anyone in one visit.
+- **This is the strongest argument yet for the audience research's Move 3** — a server-rendered
+  navigation. If the ask rate is a tenth of what the folklore claims, the scroll and the links
+  carry the site, and the chat is the thing that makes it *better* rather than the thing that
+  makes it *work*.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame
