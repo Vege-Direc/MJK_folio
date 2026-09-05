@@ -83,7 +83,7 @@ how this project has already retracted four numbers.
 | "Portrait needs ≥1500px" (mine) | **~1280px, comfortable from 1366** |
 | "The scroll carries existence" (mine) | **Existence AND evidence** |
 | "`subMaxNodes` 720→200 is a saving" | **It is not.** Neither cap is ever reached |
-| The 86ms flight frame gap | Retracted earlier; **still asserted in `globals.css:185-190`** |
+| The 86ms flight frame gap | Retracted earlier; the last place still asserting it was fixed in `8f424c2` |
 
 ## The one number to measure
 
