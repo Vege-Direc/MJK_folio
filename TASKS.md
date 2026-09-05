@@ -2466,6 +2466,92 @@ rather than gating it pending entry.
 
 ---
 
+# 47 and 48 — `done`. The phone is no longer a reduced desktop
+
+Eight commits, measured in **headed Chrome on a real GPU against a local production build at
+390x664 and DPR 3**. Nothing headless anywhere in this work.
+
+| commit | change |
+|---|---|
+| `7dfbcc2` | `preserveDrawingBuffer: false` — 22% of GPU time, for a feature nothing used |
+| `45b9f15` | `secondaryPerNode` 2.0 → 5.5 |
+| `cb3e479` | `nebulaPoints` 2700 → 9000 |
+| `0d04133` | the tier-2 midground shell restored and pushed outward |
+| `6d0089f` | `fog` 0.030 → 0.022 |
+| `04ba04d` | bloom on, at half pyramid resolution |
+| `31e7b21` | 12-gon billboards, three `discard`s gone, no depth buffer, `tubeRad` 5→8 |
+| `8f424c2` | the orphaned `backdrop-filter` comments and the retracted 86ms figure |
+
+**Geometry:** somas **74 → 185**, filament triangles **8,340 → 28,384**.
+
+**Lit coverage, share of frame above luminance 20:**
+
+| stop | before | after | change |
+|---|---|---|---|
+| hero | 3.16% | **8.84%** | +180% — the screen a judge panel called "nearly absent" |
+| §07 work | 5.17% | **17.68%** | +242% |
+| contact | 6.10% | **23.35%** | +283%, mean luminance 14.70 → 25.30 |
+
+> **The desktop tier measures 8.61% at the hero and 13.84% at contact. Mobile now exceeds it at
+> both.** The control finding that opened this work — the same frame rendering 5x the coverage
+> on the desktop tier — no longer holds in that direction.
+
+**The gate held.** Halo contrast on the pixels body text actually sits on, worst 5%, worst of
+six animated frames, all nine stops: **10.50 → 10.28 on mobile**, 10.59 → 10.60 on desktop,
+against a 4.5:1 floor. The harness reproduces the original audit's 10.79:1 at stop 8 exactly at
+baseline, which is why the number is trustworthy.
+
+## The fork, decided: bloom wins, and the composer stays
+
+**Bloom measured zero on the sparse field and large on the restored one** — contact 12.11% →
+27.92%, §02 21.3% → 50.9%. It is the specific cure for §07 and §08 reading as an unlit asset,
+and it only works *after* the density, which is why every earlier measurement of it said zero.
+
+**Path B — deleting the composer — is dead, and its price is worth recording: it would have
+bought 56% of GL time and 6x less framebuffer traffic.** Bloom needs the composer, so the two
+were never compatible.
+
+**Path A's cost, stated plainly: full-screen fill goes 1.0 → 2.13 frames.** Half-resolution
+took the bloom pyramid from 384,266 to 96,648 device pixels, but bloom's final blend is
+full-resolution and sits on top of the output pass's own.
+
+## Abandoned deliberately, both with reasons
+
+**Path C — merging bloom's blend into the output pass.** The two passes read and write the same
+buffer consecutively and only one needs to exist; merging takes the frame to **1.13 full-screen
+frames — bloom for +13% of fill instead of +113%.** It requires overriding
+`UnrealBloomPass.render()` to stop before its blend, which means vendoring library internals
+against a pinned three.js. **The right change at the wrong moment**, at the end of a session
+already killed twice by limits. Specified in the report, not built.
+
+**`detectTier` — written up, not changed, and this CORRECTS what I told MJK.** I reported that a
+touch-screen laptop at 1440px gets the mobile tier. **That is wrong.** `pointer: coarse` asks
+about the *primary* pointer, so a touchscreen laptop with a trackpad reports `fine` and never
+takes this path — only a 2-in-1 in tablet mode does. `screen.width` would sidestep the config's
+stale-number objection, but choosing the threshold is a judgement call and stranding a real
+tablet on the desktop tier is the worse failure. **And the cost of being wrong just collapsed
+anyway, because the mobile tier now renders more than desktop at two stops.**
+
+## Two things to act on
+
+**S3 (adaptive DPR) should be un-held.** Path A winning changed its premise. `onFps` is already
+computed every 500ms and thrown away, and an adaptive controller should **shed bloom first,
+then DPR 1.5 → 1.25 → 1.0**. That is the only way both of MJK's reports are answered on the
+same device.
+
+**If budget is ever needed, take it from `nebulaPoints` (`cb3e479`)** — 44 coverage-points per
+millisecond against the tier-2 shell's 1,470, and now the single most expensive draw in the
+frame. **Not `secondaryPerNode`, not the shell.** Those are the efficient ones, and reverting
+them would be the obvious mistake.
+
+## One observation for MJK's eye
+
+Where a pulse crosses the near axon it reads as **a hard-edged rectangle rather than a glow
+inside the wire**. It is present in the pre-change screenshots too — this round did not cause
+it — but brighter filaments make it easier to see.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame

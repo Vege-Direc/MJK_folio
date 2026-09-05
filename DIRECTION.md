@@ -21,7 +21,7 @@ how this project has already retracted four numbers.
 | 5 | **Ship the hero sentence now** — promote the imperative, drop "scroll first, ask second" | One string. The site's own copy trains the behaviour we are fighting |
 | 6 | **Build eager scene loading first.** Then decide the gate | Without it the gate lifts onto an empty canvas at 4.6s on Fast 3G |
 | 7 | **Voice: "I do not know that one, and I am not going to guess."** Never a promise | A commitment is the one falsehood class the guard cannot check |
-| 8 | **Finish the phone**: density shipped, then settle bloom vs. composer | Hero coverage already 3.16% → 8.46% lit |
+| 8 | ~~Finish the phone~~ **DONE, 8 commits.** Bloom won the fork; composer stays | Hero **3.16% → 8.84%**, contact **6.10% → 23.35%**. Mobile now exceeds desktop at both |
 | 9 | **Asanjo as one engagement** — storefront and the catalogue imagery that fills it | The only named, checkable, end-to-end work on the site |
 | 10 | **Animate only the return edge and the token** in the workflow chart | +803 bytes, zero JS, zero dependencies |
 | 11 | **Expose the Redis ask-counter** as a private, cookie-free aggregate | The instrument already exists and has never been read |
@@ -38,7 +38,7 @@ how this project has already retracted four numbers.
 | 5 | Nothing. This is free | One string |
 | 6 | Scene chunk already cached for most real visitors | One import change |
 | 7 | Nothing found. Disclosure costs are context-bound; concealment costs hit hireability | Copy only |
-| 8 | Halo contrast falling below the protected 10.79:1 at p95 | Per-commit revert; each step is separate |
+| 8 | Contrast fell? It did not — **10.50 → 10.28 mobile**, floor 4.5 | Per-commit revert; each step separate. Take budget from `nebulaPoints`, never `secondaryPerNode` |
 | 9 | Asanjo asking not to be named after all | Delete two memories |
 | 10 | A judge panel finding the motion says nothing | Two CSS rules |
 | 11 | Nothing. It is a counter that already runs | Delete an endpoint |
