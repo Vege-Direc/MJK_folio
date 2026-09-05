@@ -185,7 +185,24 @@ export const CFG: Record<Tier, MindConfig> = {
      * field's absence is a thinner version of this world; theirs is another one.
      */
     farNetwork: false,
-    secondaryPerNode: 2.0, bloom: false, pulseCoverage: 0.8, pixelRatioCap: 1.5,
+    /**
+     * Back to the desktop value, and it is the single largest thing on this tier.
+     *
+     * Counted on the running build by wrapping the live WebGL context: the mobile scene
+     * drew 74 node billboards and 8,340 filament triangles against the desktop's 392 and
+     * 175,442 in the near field alone — 19% of the somas and 4.8% of the filaments — and
+     * a vision ablation that put desktop values back one at a time ranked this first by a
+     * distance, at +196% on the contact stop's gradient. It called the difference "a ball
+     * on a stick against a neuron", which is what a spine node with two branches instead
+     * of five and a half is.
+     *
+     * It is affordable because of WHERE the geometry goes. Fill is area: a spine soma at
+     * 3 world units covers about 517,000 device pixels of a 585x996 frame, and a
+     * first-generation branch soma at 10 units covers about 23,000. Twelve more of the
+     * second cost a fortieth of one of the first. The expensive kind of density is the
+     * kind that is already there.
+     */
+    secondaryPerNode: 5.5, bloom: false, pulseCoverage: 0.8, pixelRatioCap: 1.5,
     tubeSeg: 26, tubeRad: 5, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.030,
     bloomStrength: 0.0, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
     // No bloom on mobile => the shader carries all the glow, so keep the white-peak a
