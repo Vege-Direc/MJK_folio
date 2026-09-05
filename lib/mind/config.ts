@@ -214,7 +214,7 @@ export const CFG: Record<Tier, MindConfig> = {
     pulseSpeed: 0.30, pulseGap: 0.6, pulseTailSharp: 6.0, pulsePeak: 1.35,
     exciteDecay: 3.4, exciteRise: 5.2, refractory: 0.35,
     triggerPulses: 12, triggerJitter: 1.0, triggerEarly: 0.4,
-    nebulaPoints: 2700, nebulaSize: 3.0, nebulaOpacity: 0.6, nebulaSpread: 4.0,
+    nebulaPoints: 9000, nebulaSize: 3.0, nebulaOpacity: 0.6, nebulaSpread: 4.0,
     nebulaDrift: 0.2, nebulaMouse: 7, nebulaMouseRadius: 6,
     subBranchDepth: 2, subBranchProb: 0.72, subLenDecay: 0.7, subMaxNodes: 200, subPulseFrac: 0.28,
     swayAmt: 0.35, swayFreq: 0.4,
