@@ -202,7 +202,7 @@ export const CFG: Record<Tier, MindConfig> = {
      * second cost a fortieth of one of the first. The expensive kind of density is the
      * kind that is already there.
      */
-    secondaryPerNode: 5.5, bloom: false, pulseCoverage: 0.8, pixelRatioCap: 1.5,
+    secondaryPerNode: 5.5, bloom: true, pulseCoverage: 0.8, pixelRatioCap: 1.5,
     /**
      * `fog` 0.030 -> 0.022, and it is the only change on this tier that costs nothing at
      * all — it is a uniform, so every draw's GPU time is bit-for-bit what it was.
@@ -221,7 +221,7 @@ export const CFG: Record<Tier, MindConfig> = {
      * the field reading as a corridor rather than a wall.
      */
     tubeSeg: 26, tubeRad: 5, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.022,
-    bloomStrength: 0.0, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
+    bloomStrength: 0.45, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
     // No bloom on mobile => the shader carries all the glow, so keep the white-peak a
     // touch higher than desktop so nodes still read as light. Turning bloom on here is
     // a one-line experiment (bloom:true, bloomStrength:0.45) but costs five full-screen

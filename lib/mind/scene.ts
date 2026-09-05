@@ -1567,17 +1567,32 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
     let bloomPass: UnrealBloomPass | null = null;
+    /**
+     * Bloom's own internal resolution, as a fraction of the frame.
+     *
+     * `UnrealBloomPass` is a five-level mip pyramid and it costs thirteen full-screen
+     * draws — counted on the running build, which goes from 6 draw calls to 19 the moment
+     * this is switched on. That cost is pure fill, and it is dominated by the top of the
+     * pyramid, so halving the base resolution takes roughly three quarters off the whole
+     * chain. Bloom is a low-frequency effect by construction — the entire point of it is
+     * a broad soft halo — so it is the one thing in this scene that can be computed at
+     * half resolution and upsampled without anyone being able to tell.
+     *
+     * Desktop keeps full resolution: it has the headroom, and its bloom was co-tuned at
+     * that resolution against a far field this tier does not draw.
+     */
+    const bloomScale = isMobile ? 0.5 : 1;
     if (cfg.bloom){
       bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(viewW, viewH),
+        new THREE.Vector2(Math.max(1, Math.round(viewW * bloomScale)), Math.max(1, Math.round(viewH * bloomScale))),
         cfg.bloomStrength, cfg.bloomRadius, cfg.bloomThreshold
         // Step 6 final co-tune (busier scene: sub-network, contained pulses,
         // excitation firing, sway, shimmer, nebula haze). Threshold 0.6 keeps it
         // above the nebula haze (~0.1-0.2 lum) + tube shimmer baseline so they DON'T
         // bloom (no background wash), while node cores + excited-firing peaks (additive,
         // exceed 1.0) still bloom into a soft halo. Strength 0.45 (softer, eye-comfort),
-        // radius 0.85 (broad soft halo, less banding than a tight kernel). Mobile: bloom
-        // off — shader glow carries the look (see cfg.mobile).
+        // radius 0.85 (broad soft halo, less banding than a tight kernel). Mobile now
+        // runs the same values at half the pyramid resolution — see `bloomScale`.
       );
       composer.addPass(bloomPass);
     }
@@ -2156,7 +2171,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
       composer.setSize(w, h);
-      if (bloomPass) bloomPass.setSize(w, h);
+      // Same fraction as at construction, or the pyramid silently returns to full
+      // resolution the first time the viewport changes.
+      if (bloomPass) bloomPass.setSize(Math.max(1, Math.round(w * bloomScale)), Math.max(1, Math.round(h * bloomScale)));
       if (nebulaMesh) (nebulaMesh!.material as THREE.ShaderMaterial).uniforms.uPixelRatio.value = renderer.getPixelRatio();
       if (t3DustMesh) (t3DustMesh!.material as THREE.ShaderMaterial).uniforms.uPixelRatio.value = renderer.getPixelRatio();
     }
