@@ -348,6 +348,12 @@ phone the median falls **58%** and mean luminance **24%**.
 of the frame above luminance 160. Whatever is bright there is not the billboard core this
 touches. It is the last stretch of the path, around §08.
 
+> **All four figures in this section are n=9 and none has been re-taken.** The stop count is
+> twelve now and `mulberry32(0x5eed ^ M)` re-rolled the field they were measured against. The
+> band is the worst of them to carry forward: `u = 0.78` was between §07 and §08 at nine stops
+> and is between §09 and §10 at twelve, so finding the worst band again is a fresh search
+> rather than a re-read. See "Decision 2 — the re-measurement at twelve stops".
+
 ## 30. The judge panel's ranked defects — 5 of 13 fixed
 
 | # | Defect | Status |
@@ -945,6 +951,94 @@ evidence it rests on; the evidence itself is under Research verdicts.
 | 10 · Animate only the return edge and the token | 43 | `DIRECTION.md` 10 |
 | 11 · Expose the Redis ask-counter | 51, and the advocate's dent | **in flight, agent M2** |
 | 12 · Make rule 24 a build gate in `check-corpus.ts` | 24, 51 | **in flight, agent M1** |
+
+## Decision 2 — the re-measurement at twelve stops — `done`, 2026-09-06
+
+`mulberry32(0x5eed ^ M)` seeds the whole secondary network, the Galton-Watson sub-branches,
+the tier-2 midground and the dust, and `0x5eed ^ M` is a different seed for every stop count:
+**24292 at nine, 24289 at twelve.** The twelve somas the camera looks at are bit-identical —
+`S[0..8]` and `V[0..7]` do not move — but **every filament, midground cluster and dust mote
+around them is a different stream.** So every screenshot-derived number in this file and in
+`PLAN.md` became a measurement of a scene that does not exist any more, and the two that
+matter were re-taken rather than carried forward.
+
+**Instrument, stated because this repo requires it.** Headful Chrome 152 over CDP with a real
+GPU — never headless, where the scene software-renders and saturates the main thread. Field
+frozen with `prefers-reduced-motion: reduce`, which this repo has measured at 7.88% → 0.01%
+pixel change per frame, because a moving scene makes the two frames of a difference
+incomparable. No timing number is produced or implied.
+
+### The protected measurement holds, and it did not move
+
+Body text against the pixels it actually sits on. The glyph mask is the difference between
+the stop rendered normally and the same stop with `-webkit-text-fill-color: transparent`,
+which takes the ink away and **leaves the halo**, because `text-shadow` paints from the glyph
+outline rather than from its fill. The three "frames" are three scroll offsets inside the
+stop, which puts the same glyphs over different field.
+
+> `visibility: hidden` was tried first and is the wrong instrument. It removes the shadow as
+> well as the ink, so what it returns is the contrast of the glyph against the raw scene —
+> p05 between 1.9 and 10.4 — a real number about a page this site does not ship. **The claim
+> is about the halo. Measure the halo.**
+
+| | worst stop | its p05 | worst single glyph pixel | floor |
+|---|---|---|---|---|
+| desktop 1440x900 | `rd350` | **10.67:1** | 9.00:1 (`hero`) | 4.5:1 |
+| phone 390x664 | `origin` | **10.60:1** | 9.51:1 (`now`) | 4.5:1 |
+
+Every one of the twenty-four measurements sits between **10.60 and 10.85**, against the
+recorded baseline of 10.79 — so the instrument reproduces the site's own number and the
+re-rolled field cost nothing anywhere. The worst single pixel is **9.00:1**, where the
+figure on record at nine stops was 5.10:1.
+
+### `contact` did not go pale, which is the trap that fails silently
+
+`lib/mind/waypoints.ts` gives the last vantage a nine-unit pullback under `i === n - 1`. It
+is positional and has never known the word `contact`; the three project stops were inserted
+BEFORE it so the rule moved from `V[8]` to `V[11]` and followed. There is no test for this
+and one cannot cheaply be written — it is a property of a rendered frame.
+
+Whole-frame mean luminance at each stop's own top, desktop, one instrument:
+
+    pivot 20.9 · hero 20.7 · origin 23.3 · contact 24.5 · engineering 25.1 · now 25.2
+    apac 25.5 · mrunn 25.8 · work 26.1 · jewelai 30.6 · asanjo 32.4 · rd350 38.8
+
+**`contact` is the fourth-darkest of twelve, where it was the third-darkest of nine.** The
+three brightest are the three stops carrying photographs. The pullback survived.
+
+### Layout, re-taken at four viewports
+
+`.panel` is `overflow: hidden` above 900px, so a media column past its band is destroyed
+rather than scrolled. Media column height against the band, after the fixes in `30552e6`
+and `b5659c4`:
+
+| stop | 1920x1080 | 1440x900 | 1280x720 | 390x664 section |
+|---|---|---|---|---|
+| work (index) | 494 | 548 | 548 | 1691 |
+| asanjo | 713 | 596 | 540 | 1410 |
+| jewelai | 652 | 595 | 563 | 1257 |
+| mrunn | 220 | 220 | 220 | 899 |
+
+Nothing clips at any of them. The tightest is `jewelai` at 1280x720 with **20px** of column
+above it. `--dock-h` is **143px on all twelve stops** at both desktop viewports and 147px on
+all twelve at 390x664 — checked because §05's chip row was wrapping and republishing it.
+
+### What was NOT re-measured, and is therefore not to be quoted
+
+- **The far-network frustum coverage** — 3.4% / 10.6% / 15.5% / 37.8% per tier. n=9.
+- **The bright-pixel coverage figures** from task 29 — −71% median, −50% worst frame,
+  −58% median on a phone. n=9.
+- **The phone's worst luminance band, u = 0.78–0.86 at 16.26%.** Not just unverified but
+  differently located: at nine stops that band lay between §07 and §08, and at twelve it
+  lies between §09 and §10. Re-finding it is a fresh search, not a re-read.
+- **The carousel frame's border**, under 1.2:1 for 24% of its length. n=9.
+- **The mobile scene's 1.16% pixel change on the first screen.** The hero's vantage is
+  bit-identical, but the field around it re-rolled.
+- **Whether the field reads thin.** `t2Seeds` and `nebulaPoints` are spread across the whole
+  path, so both dilute per segment by `8/(M-1)` — **−27% at twelve stops.** Judged by eye
+  against the before-and-after screenshots and it does not read thin; that is an opinion and
+  it is recorded as one. If it ever does, the fix is to make both per-segment, and it costs
+  frame budget linearly on a mobile tier tuned at nine.
 
 ## 40. §07 is one column for four projects — `decided`, decision 2
 
@@ -2469,7 +2563,8 @@ figure-to-caption gaps and three caption sizes; §06's card kickers mixing subje
 
 **What the audit says to protect**, measured rather than asserted: the halo (body text holds
 **10.79:1 at p95** on the pixels it actually sits on, at the worst of six animated frames, on every
-stop — **nothing on the site fails a text-contrast rule**); the mobile halo trim; the dock veil; all
+stop — **nothing on the site fails a text-contrast rule**; re-taken at twelve stops on 2026-09-06
+and it holds, worst stop **10.60:1**, see "Decision 2 — the re-measurement"); the mobile halo trim; the dock veil; all
 **25** focus rings; the timeline on a phone, *"the single best-executed component on the site at any
 viewport"*; the §02 figure sequence; the two-rule 2px radius system; the per-frame carousel crops;
 the §05 before/after. **And one addition from the vision pass: the scene's near trunks — the only

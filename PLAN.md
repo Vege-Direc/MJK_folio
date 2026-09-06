@@ -121,7 +121,7 @@ imbalance is the problem, not the total word count.
 | "CTA" off the conversion screen | A marketing word for the card, printed above the card |
 | Contact links above the cards | Every outbound path on the site was off the bottom of a phone screen |
 | Scene arrives once | Two hard cuts with a 1,506ms frozen task between them |
-| Far network dropped on phones | 3.4% of its nodes ever visible, for a third of the scene's wire payload |
+| Far network dropped on phones | 3.4% of its nodes ever visible, for a third of the scene's wire payload (n=9; the coverage figures were not re-taken at twelve stops) |
 
 ---
 
@@ -183,12 +183,26 @@ on desktop and 27.8 on a phone and does not reproduce the 92.2 scale. That does 
 the fix wrong — the pullback is structural and is now asserted by a test that the last stop
 is `contact` — but **do not quote 92.2 against a different instrument.**
 
+**Re-checked at twelve stops, 2026-09-06.** Three project stops were inserted before
+`contact`, so the terminal rule moved from `V[8]` to `V[11]` and had to be confirmed to have
+followed. Whole-frame mean luminance at each stop's own top, desktop, same instrument
+throughout: **`contact` 24.5 against `rd350` 38.8**, and `contact` is the fourth-darkest of
+the twelve frames, where it was the third-darkest of nine. The pullback followed. It is not
+a pale frame and it is not the brightest; the brightest are `rd350`, `asanjo` and `jewelai`,
+which are the three stops carrying photographs.
+
 ### 4.6 One judgement for MJK's eye
 
 Removing the far network changed exactly one frame visibly: `contact` at 375, whole-frame
 luminance 127.6 to 92.2. The measurement says what goes is a flat brightening haze over
 an already-pale frame rather than structure, and that the stop holds more depth without
 it. That is the one call worth overruling on sight.
+
+**Both numbers in that paragraph are n=9 and neither has been re-taken.** `mulberry32(0x5eed
+^ M)` seeds the whole secondary field, so the twelve-stop spine re-rolled every filament,
+midground cluster and dust mote the comparison was made against. The judgement may well
+still hold — it is about a haze rather than about a specific pixel — but it is a
+measurement of a scene that no longer exists and must not be quoted as a current one.
 
 ---
 
