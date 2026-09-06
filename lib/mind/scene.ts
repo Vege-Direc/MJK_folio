@@ -2540,6 +2540,20 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
       flyTo,
       pulse(stopIndex?: number){
         const i = stopIndex == null ? currentStop : Math.round(stopIndex);
+        /*
+         * The guard below drops an out-of-range index without a word, and that silence
+         * is half of §2.3: a routed answer landing on a stop the camera path does not
+         * have would fire no light and leave no trace of why. Index 0 is deliberately
+         * not pulsed — hero is authored-only and can never be a route target — so only
+         * an index outside 0..M-1 is worth saying anything about.
+         *
+         * A warning rather than a throw: this runs inside the `mjk:route` listener, and
+         * an exception there would take the chat's answer down with it. Development
+         * only, so production keeps its silence and pays nothing.
+         */
+        if (process.env.NODE_ENV !== 'production' && (i < 0 || i >= M)) {
+          console.warn('[mind] pulse(%d) is outside the %d-stop camera path; no light fired', i, M);
+        }
         if (scheduleTrigger && i >= 1 && i < M) scheduleTrigger(i);
       },
       setReducedMotion,

@@ -19,6 +19,23 @@ import { getMind } from '@/lib/mind/controller';
  * `data-stop` on <html> is the lit-stop marker. It is computed from scroll rather than
  * from the scene's arrival callback so that a machine with no WebGL still gets it.
  */
+/**
+ * The alarm §2.3 did not have, and the only place all three numbers meet.
+ *
+ * `count` arrives from `app/page.tsx` as `STOPS.length`, the sections come from the DOM
+ * the same file rendered, and `stopCount()` is the length of the camera path
+ * `MindCanvas` handed the scene. Three independent paths out of one stop table, and
+ * nothing used to compare them: when the scene was hard-coded to nine and `STOPS` grew,
+ * this component would have mapped every section onto an eight-segment camera path and
+ * been wrong for the whole back half of the page without raising anything.
+ *
+ * Development only. `process.env.NODE_ENV` is a build-time constant here, so the whole
+ * block is eliminated from the production bundle and cannot take the site down for a
+ * visitor — a disagreement in production is still better served by a slightly wrong
+ * camera than by a blank page.
+ */
+const DEV = process.env.NODE_ENV !== 'production';
+
 export default function ScrollProgress({ count }: { count: number }) {
   useEffect(() => {
     if (count < 2) return;
@@ -36,8 +53,17 @@ export default function ScrollProgress({ count }: { count: number }) {
     let marks: number[] = [];
     let sections: HTMLElement[] = [];
 
+    /** Set once the scene has been checked, so one disagreement is not one throw per frame. */
+    let checkedMind: ReturnType<typeof getMind> = null;
+
     function measure() {
       sections = Array.from(document.querySelectorAll<HTMLElement>('section[data-stop]'));
+      if (DEV && sections.length !== count) {
+        throw new Error(
+          `[mind] ${sections.length} sections carry data-stop but content/stops.ts has ${count}. ` +
+            'The scroll mapping is measured against these sections, so the two must agree.',
+        );
+      }
       const maxScroll = Math.max(1, root.scrollHeight - window.innerHeight);
       marks = sections.map((el) => el.offsetTop);
       /*
@@ -89,7 +115,25 @@ export default function ScrollProgress({ count }: { count: number }) {
     function apply() {
       queued = false;
       const u = progress();
-      getMind()?.setProgress(u);
+      const mind = getMind();
+      mind?.setProgress(u);
+
+      /*
+       * Asked once per scene instance, not once per frame. The scene mounts from an
+       * idle callback and then a dynamic import, so it is not there when this effect
+       * runs and there is no single later moment to ask — but asking every frame would
+       * turn one disagreement into one uncaught exception per frame.
+       */
+      if (DEV && mind && mind !== checkedMind) {
+        checkedMind = mind;
+        if (mind.stopCount() !== count) {
+          throw new Error(
+            `[mind] the camera path has ${mind.stopCount()} vantages and content/stops.ts has ` +
+              `${count} stops. MindCanvas builds the path from STOPS.length, so this means ` +
+              'something else is passing MindOptions.waypoints.',
+          );
+        }
+      }
 
       const stop = Math.min(count - 1, Math.max(0, Math.round(u * (count - 1))));
       if (stop !== lastStop) {
