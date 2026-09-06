@@ -16,7 +16,7 @@ how this project has already retracted four numbers.
 |---|---|---|
 | 1 | **Reorder the spine: work above story.** `hero, now, work, asanjo, jewelai, mrunn, origin, engineering, pivot, apac, rd350, contact` | First proof moves from screenful **9.1 to 2.3** |
 | 2 | **§07 becomes an index**; JewelAI, Asanjo and MruNN get stops; JewelAI and Asanjo get routes | 17 of 19 work memories are currently never drawn |
-| 3 | **Do not fork the scroll. Ship navigation** — a hero anchor and a section index | A shortcut edge would read as a duplicated mesh; `/#work` already works and nothing says so |
+| 3 | **Navbar WITHDRAWN.** The hero sentence becomes the anchor; §07 is the index; `§ NN` labels self-anchor; **add `pushState` to `goToStop`** | Chat moves the viewport but produces no address. The one move that makes the chat *navigate* rather than be replaced |
 | 4 | **The scroll carries existence AND evidence.** Withhold biography depth and work depth only | Never withhold a project, artefact, role, year or title |
 | 5 | **Ship the hero sentence now** — promote the imperative, drop "scroll first, ask second" | One string. The site's own copy trains the behaviour we are fighting |
 | 6 | **Build eager scene loading first.** Then decide the gate | Without it the gate lifts onto an empty canvas at 4.6s on Fast 3G |
