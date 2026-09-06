@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { setMind } from '@/lib/mind/controller';
+import { isFlying } from '@/lib/flight';
 import { motionReduced, subscribeMotion } from '@/lib/motion';
 import { STOPS } from '@/content/stops';
 import { CFG, detectTier } from '@/lib/mind/config';
@@ -69,9 +70,28 @@ export default function MindCanvas() {
      * put `data-stop` and `data-active` out of step. The scene has one authority over
      * where it is, and it is the document.
      */
+    /*
+     * And the second answer, which is about route rather than speed.
+     *
+     * `goToStop` starts the page flight and then fires this event, so by the time we are
+     * here a tween is already running toward that stop and `handle.getStop()` still holds
+     * the stop the reader was at — the two ends of the journey, which nothing else on the
+     * site has in one place. The scene decides whether they straddle its collateral; if
+     * they do, the camera leaves the axon at the fork and rejoins at the merge, for the
+     * length of the flight only.
+     *
+     * `isFlying()` is the guard and it is not decoration. This same event fires when the
+     * reader has asked for a stop that is not in the document (`goToStop` skips the flight
+     * and the dock shows the answer inline) and when reduced motion turns the flight into
+     * an instant jump. Neither is a flight, and arming a detour in either case would leave
+     * one running with nothing to come back and switch it off — `cancelFlight` is the only
+     * caller of `endLane`, and it only runs when there was something to cancel.
+     */
     const onRoute = (e: Event) => {
       const detail = (e as CustomEvent<{ stopId?: string; index?: number }>).detail;
-      if (typeof detail?.index === 'number') handle?.pulse(detail.index);
+      if (typeof detail?.index !== 'number' || !handle) return;
+      handle.pulse(detail.index);
+      if (isFlying()) handle.beginLane(handle.getStop(), detail.index);
     };
 
     async function start() {

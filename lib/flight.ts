@@ -22,6 +22,7 @@
  */
 
 import { STOPS } from '@/content/stops';
+import { getMind } from '@/lib/mind/controller';
 
 /**
  * The ceiling on a flight, and it scales with the page rather than sitting at a literal.
@@ -118,6 +119,10 @@ export function cancelFlight(): void {
   detach?.();
   detach = null;
   document.documentElement.removeAttribute('data-flying');
+  // One call site for both endings — the arrival at the bottom of `step`, and the wheel,
+  // touch or key that takes the flight away from the reader's hands. The scene eases the
+  // camera back onto the axon from wherever it had got to; see `beginLane`.
+  getMind()?.endLane();
 }
 
 /**
@@ -129,6 +134,18 @@ export function cancelFlight(): void {
  * immediate jump. A tween whose every frame is itself being tweened by the browser is
  * not a tween.
  */
+/**
+ * Whether a tween is running right now.
+ *
+ * Exists so that a caller which learns about a flight from somewhere else — `MindCanvas`
+ * hears `mjk:route` after `goToStop` has already started one — can tell a real flight from
+ * a reduced-motion jump or a routed answer whose stop is not in the document. Both of
+ * those reach the same listener and neither is a flight.
+ */
+export function isFlying(): boolean {
+  return active !== null;
+}
+
 export function flyTo(top: number, onArrive?: () => void): void {
   cancelFlight();
 

@@ -101,6 +101,15 @@ export type MindHandle = {
   flyTo(stopIndex: number, seconds?: number): Promise<void>;
   /** Fire a signal from a stop's node. Defaults to the stop the camera is at. */
   pulse(stopIndex?: number): void;
+  /**
+   * A page flight is under way from one stop to another. If it crosses the whole of the
+   * collateral's span the camera takes the collateral for the length of the flight, so
+   * the visitor visibly leaves the main axon and rejoins it. No-op under reduced motion,
+   * and a no-op for any flight that does not cross the fork.
+   */
+  beginLane(fromStop: number, toStop: number): void;
+  /** The flight is over — arrived, or cancelled by the reader. Unwinds the detour. */
+  endLane(): void;
   setReducedMotion(on: boolean): void;
   resize(w: number, h: number): void;
   setPaused(paused: boolean): void;
@@ -166,6 +175,8 @@ function inertHandle(stops: number): MindHandle {
     setProgress() {},
     flyTo: () => Promise.resolve(),
     pulse() {},
+    beginLane() {},
+    endLane() {},
     setReducedMotion() {},
     resize() {},
     setPaused() {},
@@ -1671,10 +1682,56 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
     for (let i = 0; i < M - 1; i++){
       camCurves.push(makeCurve(V[i], V[i + 1], i * 2 + 1));
     }
+    /**
+     * The camera's copy of the collateral: the same curve, the same seed, one segment of
+     * the path long instead of one waypoint pair long.
+     *
+     * It is `makeCurve(V[from], V[to], seed)` for the same reason `camCurves` is
+     * `makeCurve(V[i], V[i+1], …)` — offsets depend on (dir, len, seed) only, so with both
+     * vantages on the plain `+1.4` rule this is the drawn collateral shifted up by 1.4 and
+     * the camera flies ALONG the visible branch rather than near it. `hasCollateral`
+     * enforces the interior-endpoint precondition that makes that true.
+     *
+     * Both ends are shared with the trunk EXACTLY: `laneCurve.getPoint(0) === V[from]`,
+     * and `sampleSeg` is uniform per segment so `sampleSeg(from/(M-1))` is `V[from]` too.
+     * That is what makes the swap C0-continuous at both ends for any blend value — the
+     * two arguments to the lerp are the same point there — while leaving the 30.2-degree
+     * tangent break at the fork, which is the whole visible event.
+     */
+    const laneCurve = collateralCurve
+      ? makeCurve(V[COLLATERAL.from], V[COLLATERAL.to], COLLATERAL.seed)
+      : null;
+    /** 0 = on the trunk, 1 = on the collateral. Eased, never stepped. */
+    let laneMix = 0;
+    /** Where it is heading: 1 while a qualifying flight runs, 0 otherwise. */
+    let laneWant = 0;
+    /**
+     * Attack and release, in seconds. The attack is how long the camera takes to move onto
+     * the branch once a flight has armed it; the release is the unwind when the reader
+     * cancels mid-flight by scrolling, which is the one that had to be picked on a number.
+     *
+     * The blend is `mix += (want - mix)(1 - exp(-dt/tau))`, so on release the displacement
+     * is `d·exp(-t/tau)` and the peak speed is `d/tau` at the instant of the cancel. The
+     * two paths are at most **2.986 world units** apart (at 73% along the span, measured
+     * over 1,000 samples of the shipped blend), and the flight itself crosses this span's
+     * 34.42 drawn units in ~510ms — **67 units/second**. So:
+     *
+     *   tau 0.14s -> 21.3 units/s peak, 32% of the flight's own speed, 95% done in 0.42s
+     *   tau 0.22s -> 13.6 units/s peak, 20% of it,                     95% done in 0.66s
+     *
+     * 0.22 is the choice. The reader who cancels wants control back, and the cost of the
+     * gentler curve is that the camera is still settling a quarter-second longer; the cost
+     * of the faster one is a sideways lurch at a third of flight speed on a page that has
+     * just stopped flying. Neither is a snap, and this is the one to move if it feels
+     * wrong — the arithmetic above is all that is behind it.
+     */
+    const LANE_ATTACK = 0.18;
+    const LANE_RELEASE = 0.22;
     // Spine node curves (S) — same per-segment CatmullRom as the axons/camera path
     // (shared seed) so a gaze target sampled on these tracks the travel direction.
     const spineCurves = nodeConnCurves.map(c => c.curve);
     const _pos = new THREE.Vector3();
+    const _lane = new THREE.Vector3();
     /**
      * Scratch for the three per-frame pulse loops. `getPointAt`/`getTangentAt` allocate a
      * fresh Vector3 per call when handed no target, and between the ambient, triggered and
@@ -1858,6 +1915,72 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
         cancelFlight();
       }
       return true;
+    }
+
+    /**
+     * Take the collateral for the length of this flight, if this flight is one the
+     * collateral is for.
+     *
+     * The arming test is that the flight crosses the WHOLE span, in either direction.
+     * Requiring the whole span is what makes the ending free: the two curves share their
+     * endpoints exactly, so a flight that finishes outside the span finishes at a point
+     * where the detour is worth nothing and `endLane` has nothing to undo. A flight that
+     * stopped halfway along the branch would have to be unwound in front of a reader who
+     * had already arrived, which is a movement nobody asked for.
+     *
+     * Reduced motion is refused here as well as in `lib/flight.ts` — which under that
+     * preference jumps instantly and never calls this at all. Two independent guards,
+     * because the reduced path holds an exact measured promise (7.88% of pixels changing
+     * per frame becomes 0.01%) and a camera detour that starts by itself is the precise
+     * shape of thing that promise forbids.
+     */
+    function beginLane(fromStop: number, toStop: number) {
+      if (reduced || !laneCurve) return;
+      const lo = Math.min(fromStop, toStop);
+      const hi = Math.max(fromStop, toStop);
+      if (!(lo <= COLLATERAL.from && hi >= COLLATERAL.to)) return;
+      laneWant = 1;
+    }
+
+    function endLane() {
+      laneWant = 0;
+    }
+
+    /**
+     * Where the camera is this frame, which is the trunk unless a flight has armed the
+     * branch and the camera is inside its span.
+     *
+     * `laneT` is the position along the collateral, 0 at its fork and 1 at its merge. The
+     * gate is strict at both ends and it has to be: at `laneT <= 0` the lane's clamped
+     * point would be `V[from]` while the trunk is still short of it, so blending there
+     * would drag the camera forward. Inside the span no window is needed, because
+     * `laneCurve(0)` and `trunk(from/(M-1))` are the same point and so are the two at the
+     * far end — the blend is continuous at both ends for every value of `laneMix`.
+     */
+    function cameraAt(u: number, target: THREE.Vector3) {
+      sampleSeg(u, camCurves, V, target);
+      if (!laneCurve || laneMix <= 0.001) return target;
+      const laneT = (u * (M - 1) - COLLATERAL.from) / (COLLATERAL.to - COLLATERAL.from);
+      if (laneT <= 0 || laneT >= 1) return target;
+      laneCurve.getPoint(laneT, _lane);
+      return target.lerp(_lane, laneMix);
+    }
+
+    /**
+     * How much of the gaze belongs to the branch, and why this one needs windows when the
+     * position does not.
+     *
+     * The gaze leads the position by `u + 0.05`, so it enters and leaves the span before
+     * the camera does and the two curves do NOT agree at the moment it crosses either
+     * boundary. Measured: without a window the target steps about a world unit at four
+     * units' distance as `laneT` crosses zero — a 14-degree flick. So the gaze eases onto
+     * the branch across its first 12% and hands itself back to the trunk across its last
+     * 15%, which also means the camera is already looking at where it rejoins before it
+     * rejoins.
+     */
+    function laneGazeWeight(laneT: number) {
+      if (!laneCurve || laneMix <= 0.001) return 0;
+      return laneMix * smoothstep(0, 0.12, laneT) * (1 - smoothstep(0.85, 1, laneT));
     }
 
     /**
@@ -2077,9 +2200,36 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
         nodeMat.uniforms.uExciteAmt.value = 0.8 * (1 - CALM.exciteCut * motionEased);
       }
 
-      sampleSeg(u, camCurves, V, _pos);
+      /*
+       * The collateral, eased rather than switched, and pinned off under reduced motion
+       * for the same reason `motionEased` is pinned to zero above: that path carries an
+       * exact measured promise and a promise held to within a tenth of a percent is a
+       * different promise. `laneWant` is cleared with it so a flight armed a frame before
+       * the preference changed cannot re-engage the moment it changes back.
+       */
+      if (reduced) {
+        laneMix = 0;
+        laneWant = 0;
+      } else if (dt > 0) {
+        const tau = laneWant > laneMix ? LANE_ATTACK : LANE_RELEASE;
+        laneMix += (laneWant - laneMix) * (1 - Math.exp(-dt / tau));
+      }
+
+      cameraAt(u, _pos);
       camera.position.copy(_pos);
       lookTarget(clamp(u + 0.05, 0, 1), _look);
+      if (collateralCurve) {
+        const laneT = (u * (M - 1) - COLLATERAL.from) / (COLLATERAL.to - COLLATERAL.from);
+        const gaze = laneGazeWeight(laneT);
+        if (gaze > 0.001) {
+          // The same 0.05 of the whole path the trunk gaze leads by, expressed in this
+          // span's own parameter — so the camera looks as far ahead down the branch as it
+          // would have looked down the axon.
+          const ahead = clamp(laneT + (0.05 * (M - 1)) / (COLLATERAL.to - COLLATERAL.from), 0, 1);
+          collateralCurve.getPoint(ahead, _lane);
+          _look.lerp(_lane, gaze);
+        }
+      }
       camera.lookAt(_look);
 
       // Slide the reading light to the side this stop puts its words on. Eased between
@@ -2511,6 +2661,11 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
        * Clearing is one pass over two arrays and removes the whole question.
        */
       if (reduced) {
+        // Off on the spot, not on the next frame. The animate loop pins these too, but a
+        // reader pressing the motion control mid-flight should not get one more frame of
+        // camera detour out of it.
+        laneMix = 0;
+        laneWant = 0;
         exciteCharge.fill(0);
         exciteArr.fill(0);
         aExciteAttr.needsUpdate = true;
@@ -2626,6 +2781,8 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
         }
         if (scheduleTrigger && i >= 1 && i < M) scheduleTrigger(i);
       },
+      beginLane,
+      endLane,
       setReducedMotion,
       resize,
       setPaused,
