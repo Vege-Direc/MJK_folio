@@ -97,9 +97,39 @@ function isYear(raw: string, value: number): boolean {
   return /^\d{4}$/.test(raw.trim().replace(/[.,;:!?)\]}"'’”]+$/u, '')) && value >= 1950 && value <= 2100;
 }
 
+/**
+ * One step over the rest of an elided series: a separator, an optional "and"/"or", and
+ * then another NUMBER.
+ *
+ * MEASURED, 2026-09-06, and it is the whole reason this exists. An elided series states
+ * its noun once, at the end -- "five, ten or fifteen seconds" is three durations and one
+ * "seconds". Without this step only the last item found a unit, so `extractQuantities`
+ * read that phrase as {5, no unit}, {10, no unit}, {15, "seconds"}. `content/memories.yaml`
+ * writes the same fact UNELIDED ("five seconds, ten seconds or fifteen seconds long"), so
+ * all three carry a unit on the licence side, and `unitsAgree` treats absent-against-
+ * present as a disagreement on purpose. Two true numbers were therefore reported as
+ * `unlicensed-quantity`, salvage redacted them, and the live site printed
+ * "Clips run , or fifteen seconds".
+ *
+ * The step is deliberately narrow: what follows the separator has to be another number.
+ * "I ran three, and delivered five projects" does not match, because "delivered" is not a
+ * number -- so "three" stays unitless there, which is right, it counted something the
+ * sentence never named. An UNELIDED series does not match either ("five seconds, ten..."
+ * puts a noun immediately after the number), so nothing about the corpus side moves.
+ */
+const SERIES_STEP = new RegExp(String.raw`^(?:\s*,\s*|\s+)(?:(?:and|or)\s+)?(?:${N})\b`, 'i');
+
 /** The noun a number counted: up to three words, stopping at a preposition or a comma. */
 function unitAt(text: string, from: number): string | undefined {
-  const tail = text.slice(from).replace(/^[\s+]+/, '');
+  let rest = text.slice(from);
+  // Bounded rather than `while`: every step consumes at least one character, but a
+  // sentence is not a place to trust that argument with an unbounded loop.
+  for (let step = 0; step < 8; step++) {
+    const skip = SERIES_STEP.exec(rest);
+    if (!skip) break;
+    rest = rest.slice(skip[0].length);
+  }
+  const tail = rest.replace(/^[\s+]+/, '');
   const tokens: string[] = [];
   for (const raw of tail.split(' ')) {
     const word = raw.replace(/[^a-z0-9'-]+$/, '');
