@@ -2108,14 +2108,14 @@ has complained about since the beginning.
 
 **54c — two corrections, and the first would have caused a real error.** MJK: *"Asanjo theme we
 built is not live yet, that's why I gave you preview and offered to screen record it to show here
-if required. The name is Asanjo - can't use Siddhi, I created the folder Siddhi since the client's
-POC name is Siddhi."*
+if required. The name is Asanjo - can't use [the client contact's name], I created the
+folder after the client's point of contact."*
 
 1. **`asanjokutch.org` is live and returns 200 — but the design it serves is not his.** His build is
    the unpublished preview theme. **So the site must not link the live storefront as his work**,
    which is exactly what the "a live URL a visitor can check in another tab" recommendation would
    have done. **That recommendation is withdrawn as written.**
-2. **"Siddhi" is a person — the client's point of contact — not the company. It must not appear
+2. **The folder name is a person** — the client's point of contact — not the company. It must not appear
    anywhere.** The folder name misled me and I nearly asked to publish a private individual's name.
 
 **What this costs, honestly: the strongest single argument for the Asanjo work was that a visitor
@@ -2501,7 +2501,7 @@ table; they are repeated here so this file is not misread as still waiting.
 | 13 | ~~Does the lead-capture decision change?~~ | **WITHDRAWN 2026-09-05** — mine to withdraw. The requirement is that the site must not fabricate and must not sound like a machine; the promise to follow up was my reading of his example, not his requirement. See 51b |
 | 14 | **The remaining Asanjo facts.** Per site — the storefront and the apparel imagery — his role (built it, designed it, themed it, ran the media, or all of it), the dates, the stack, any outcome he will stand behind, and **which theme is his** | **PART-ANSWERED by 54c**: Shopify 2.0, 309 commits, 31 Mar – 26 Jun 2026, imagery first then the storefront rebuild, scroll-scrubbed video hero. **Still needed: the outcome, and the corpus memories.** `claims.test.ts` binds until they exist |
 
-**Two names that must never appear:** "Siddhi" is the client's point of contact, a private
+**Two names that must never appear:** the client's point of contact is a private
 individual — the folder name misled me and I nearly asked to publish it. And no client may be named
 anywhere except Asanjo.
 
