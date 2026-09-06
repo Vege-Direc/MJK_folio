@@ -21,6 +21,32 @@
  * which the native API does not expose, and cutting the raster cost while it runs.
  */
 
+import { STOPS } from '@/content/stops';
+
+/**
+ * The ceiling on a flight, and it scales with the page rather than sitting at a literal.
+ *
+ * 820ms was written when the page was nine stops long and it is already saturated
+ * there: the hero -> contact flight is 7,821px and asks `duration()` for 948ms, so the
+ * clamp is what runs. That matters because a saturated clamp makes peak velocity scale
+ * linearly with the number of stops — the same 820ms would have to cover a longer page,
+ * and the eight-stop flight already peaks at 274 px/frame against the ~141 px/frame
+ * this file's header ties to visible tearing. 1.94x over at nine stops; 2.67x at twelve.
+ *
+ * `820 * (n - 1) / 8` holds today's over-threshold peak instead of making it worse: it
+ * is 820 exactly at nine stops (measured as a bit pattern, not read off the page), and
+ * 1,128ms at twelve. The cost is a longer hijack on the rarest flight, and this file's
+ * header already argues the visitor at the far end of it is waiting on an answer.
+ *
+ * Derived from `STOPS` rather than hard-coded for the same reason `scene.ts` no longer
+ * hard-codes nine waypoints: a literal here is the next thing to drift in silence.
+ *
+ * The arithmetic is this file's own two recorded data points (844px/370ms -> peak 65,
+ * and 7,821px/820ms -> peak 274, both giving k ~ 1.71x mean). It has NOT been
+ * re-measured in a browser.
+ */
+const MAX_MS = (820 * (STOPS.length - 1)) / 8;
+
 /** Shared with every other caller that has to respect the preference. */
 export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -36,7 +62,7 @@ export function prefersReducedMotion(): boolean {
  * longest, most impatient flight the slowest one.
  */
 function duration(distance: number, viewport: number): number {
-  return Math.min(820, Math.max(340, 300 + 70 * (distance / Math.max(viewport, 1))));
+  return Math.min(MAX_MS, Math.max(340, 300 + 70 * (distance / Math.max(viewport, 1))));
 }
 
 /**
