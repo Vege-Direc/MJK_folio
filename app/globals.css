@@ -555,7 +555,7 @@ html[data-flying] {
 
 /*
  * 11px at 0.22em in a mono face fragments a short label into loose glyphs —
- * "§ 0 4 — A P A C" reads as a serial number rather than a section marker. Slightly
+ * "§ 0 3 — N o w" reads as a serial number rather than a section marker. Slightly
  * larger, tracked less, weighted more.
  */
 .section-kicker {

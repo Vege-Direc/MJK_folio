@@ -48,7 +48,7 @@
  *
  * The `§ NN` kickers are addresses in that walk, not dates. DESIGN.md's defence of them
  * is spatial — "a gallery room number" — and the reorder makes the address reading the
- * only one available, because `§ 02 — APAC` arriving three rooms before
+ * only one available, because `§ 02 — The career` arriving three rooms before
  * `§ 05 — Engineering` cannot be mistaken for a timeline.
  *
  * `index` duplicates array position and must agree with it. Two assertions in
@@ -103,13 +103,21 @@ export const STOPS = [
      * one stop — every employer, every account — so it is the recruiter's entire case,
      * and it used to arrive fifth, behind two screens of biography. It arrives third now.
      *
-     * The kicker still says APAC. Arriving this early the acronym names a region before
-     * the reader knows what happened in it, and the title is carrying that bridge alone;
-     * a rename is on the table and is MJK's to make, not this change's.
+     * The kicker used to say APAC, and the move is what broke it. At §04 the reader had
+     * already been told he started over as a media trainee, so a region acronym landed
+     * with a frame around it. At §02, straight after a childhood story about wanting to
+     * fly fighter jets, APAC names WHERE before the reader has been told WHAT — and the
+     * title was carrying that bridge alone.
+     *
+     * "The career" names what the stop IS: the rail, sixteen memories, every employer.
+     * `career-overview` is a memory on this stop literally titled "The career, in order",
+     * and one of the four chips beneath it asks that same question. The id stays `apac`
+     * — routing, the corpus `stopId` fields and the routing table all key on it, and none
+     * of them has ever read a kicker.
      */
     id: 'apac',
     index: 2,
-    kicker: '§ 02 — APAC',
+    kicker: '§ 02 — The career',
     compose: 'timeline',
     align: 'left',
     title: { strong: 'A decade in paid media', muted: 'across India and Southeast Asia.' },

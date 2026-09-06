@@ -55,7 +55,8 @@ No argument, no exception, act on them:
 
 **The eyebrow ban, for the § section labels.** Impeccable bans a label above a heading
 outright and says no brief earns it back. That ban is aimed at the decorative eyebrow —
-`PLATFORM` floating above `Built for scale`, carrying nothing. `§ 02 — APAC` is not that.
+`PLATFORM` floating above `Built for scale`, carrying nothing. `§ 02 — The career` is not
+that.
 It is an address in a navigable space: the scroll is a camera path through nine named
 locations, and a question routes an answer *to one of them*, so the visitor has to know
 where they just landed. It is a chapter heading, closer to a gallery room number than to
