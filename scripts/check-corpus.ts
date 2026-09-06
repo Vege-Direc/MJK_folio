@@ -556,9 +556,19 @@ for (const { memory, index } of valid) {
  * The single worst offender was the work stop: 19 memories across four projects, of which
  * TWO reached the page, because its column drew one figure and two cards and the figure
  * had to choose which project it belonged to. Splitting it into an index and three project
- * stops took the total from 17 of 54 to 30 of 55 in one change. What is left is a corpus
+ * stops took the total from 17 of 54 to 29 of 55 in one change. What is left is a corpus
  * backlog rather than a structural fault -- the story stops draw no cards at all, which is
  * a separate argument about what a `plain` stop is for.
+ *
+ * ONE MEMORY IS DELIBERATELY NOT DRAWN AND THE FLOOR IS 29 RATHER THAN 30 BECAUSE OF IT.
+ * The index was screenshotted at 1280x720 drawing all seven of `work`'s card-eligible
+ * memories: 691px of tiles into a 577px column, under a `.panel` that destroys the excess
+ * rather than scrolling it, so the chapter tiles lost their tops and the last card was cut
+ * under the dock. The seventh is `build-overview`, whose first sentence is word for word
+ * the first sentence of §04's own authored paragraph -- the card was printing the
+ * section's opening line back at the reader from 500px away. Its prose is still in the
+ * HTML of `/`; what it no longer has is an element addressed by its own id, which is what
+ * this count reads. See `components/stops/draw-rule.ts`.
  *
  * WHAT "APPEARS" MEANS, and the definition is the whole of the design. The cheap version is
  * "the id is in the HTML somewhere", and it is worthless: fifty-four `<div data-memory=""
@@ -647,7 +657,7 @@ const undrawn = allMemories.filter((m) => !drawn.has(m.id));
  * Raise the floor when the drawn count goes up. That is the only maintenance this needs, and
  * it is the point: the number can only travel one way.
  */
-const RULE_24_FLOOR = 30;
+const RULE_24_FLOOR = 29;
 
 const stopSectionSource = readFileSync(join(ROOT, 'components', 'stops', 'StopSection.tsx'), 'utf-8');
 const modelDrifted = MODEL_ASSUMPTIONS.filter((a) => !a.pattern.test(stopSectionSource));

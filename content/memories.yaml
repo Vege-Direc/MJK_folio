@@ -638,6 +638,24 @@
     deliberately small — a gentle turntable, a highlight travelling across metal — because big moves are
     exactly where a generated piece stops being the piece. Three video models sit behind one interface and the pipeline falls
     through them in order when one refuses the job.
+# Above `photoshoot-how-it-works` on purpose. §05 draws its first two `projects` memories as
+# cards, and the stop's own paragraph already carries the how -- five agents, the validator,
+# what fails the critic being kept -- while nothing anywhere on the page carries the ledger.
+# It is also 23px shorter as a card, because its title fits one line at 1280x720, and that
+# section had six pixels of the photographs being destroyed by `overflow: hidden`.
+- id: photoshoot-numbers
+  section: projects
+  stopId: asanjo
+  title: The photoshoot pipeline's own ledger
+  tags: [ai, agents, apparel, volume, cost, measurement, prompt-memory]
+  body: >
+    The pipeline keeps its own ledger, so I do not have to estimate. It logged 107 runs, attempted 249
+    jobs, and produced 125 accepted images across seven product categories — sarees, shawls, dupattas,
+    dress materials, accessories, art and homeware. 55 attempts failed the critic and were kept rather
+    than deleted, which is the part that made the thing improve: the memory file holds 129 logged product
+    runs, and every new prompt is written with the past winners and the past failures in front of it, the
+    winners being anything the critic scored 8 points or better and the failures carrying the exact
+    complaint that sank them. The whole body of work cost 27 dollars in model calls.
 - id: photoshoot-how-it-works
   section: projects
   stopId: asanjo
@@ -657,19 +675,6 @@
     face is pinned to a single reference so the same woman appears through the whole catalogue, and the
     instruction on the product photograph is blunt: replicate every colour, print, pattern, embroidery
     and layout from this image exactly, because this is the actual thing being sold.
-- id: photoshoot-numbers
-  section: projects
-  stopId: asanjo
-  title: The photoshoot pipeline's own ledger
-  tags: [ai, agents, apparel, volume, cost, measurement, prompt-memory]
-  body: >
-    The pipeline keeps its own ledger, so I do not have to estimate. It logged 107 runs, attempted 249
-    jobs, and produced 125 accepted images across seven product categories — sarees, shawls, dupattas,
-    dress materials, accessories, art and homeware. 55 attempts failed the critic and were kept rather
-    than deleted, which is the part that made the thing improve: the memory file holds 129 logged product
-    runs, and every new prompt is written with the past winners and the past failures in front of it, the
-    winners being anything the critic scored 8 points or better and the failures carrying the exact
-    complaint that sank them. The whole body of work cost 27 dollars in model calls.
 - id: jewelai-infrastructure
   section: projects
   stopId: jewelai

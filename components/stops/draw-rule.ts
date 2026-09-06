@@ -38,12 +38,29 @@ export const MAX_CARDS = 4;
 export const PROOF_CARDS = 2;
 
 /**
- * The index has NO figure, so its whole column is the tile grid: a row of chapter tiles
- * over a two-column card grid. Eight is a ceiling rather than a count -- `work` has seven
- * card-eligible memories today and every one of them is drawn, which is the entire point
- * of the stop. If `work` ever grows past eight, the ninth is the one that needs an argument.
+ * The index has NO figure, so its whole column is the tile grid: a row of three chapter
+ * tiles over a two-column card grid. Six is measured, and the first number tried was seven
+ * -- every card-eligible memory `work` owns.
+ *
+ * Seven came to 691px. Screenshotted at 1280x720 the media column has about 577px, and
+ * `.panel` is `overflow: hidden` above 900px, so the excess is not scrolled, it is
+ * destroyed: the three chapter tiles lost their hairlines and their eyebrows off the top
+ * of the column and the last card was cut in half under the dock. Six is 3 rows instead
+ * of 4.
+ *
+ * THE SEVENTH IS `build-overview`, AND IT IS THE RIGHT ONE TO LOSE. Its first sentence is
+ * "The things I have shipped, rather than the jobs I have held" -- which is, word for word,
+ * the first sentence of §04's own authored paragraph, printed 500px to the left of it. The
+ * card was not carrying a fact the page was missing; it was printing the section's own
+ * opening line back at the reader. Corpus order puts it last on this stop, so the cut
+ * lands there by itself, and moving a memory up in `content/memories.yaml` is how an
+ * author changes which six these are.
+ *
+ * Its prose is still in the HTML of `/`, in the body of this stop. What it is not, any
+ * more, is under its own memory id -- which is what `check-corpus`'s rule-24 count reads,
+ * so the count is 29 rather than 30 and the floor says so.
  */
-export const INDEX_CARDS = 8;
+export const INDEX_CARDS = 6;
 
 /**
  * The three projects that have a stop of their own, and the memory whose title and first
