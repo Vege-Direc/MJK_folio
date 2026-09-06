@@ -164,11 +164,24 @@ moves, in order of confidence:
 3. `contact` is still 1,194px against a 630px readable band. The links now come first, so
    the section works on a phone even though it does not fit on one screen.
 
-### 4.5 The §08 light
+### 4.5 The §08 light — ~~specified~~ **BUILT, and this entry was stale**
 
-The contact stop's camera parks a bloom behind both columns, so a side-weighted reading
-light has nothing to weight toward and the whole frame reads pale. It is the one screen
-that looks like a different website. A waypoint move, not a shader change.
+The contact stop's camera parked a bloom behind both columns, so a side-weighted reading
+light had nothing to weight toward and the whole frame read pale. It was the one screen
+that looked like a different website. A waypoint move, not a shader change.
+
+**It shipped in `9ccb970`**, and `lib/mind/waypoints.ts:57-73` carries the reasoning: the
+last vantage is pulled nine units back along its own segment — one segment's worth — so the
+terminal soma is seen from the distance the other eight are, with `lookAt` still on it.
+Sitting in "not yet built" while the code shipped is the same class of error as §6.2's
+claim that LinkedIn was absent, and it was found the same way — by an agent reading the
+code rather than the document.
+
+**One honest caveat on its number.** The 127.6 → 92.2 whole-frame luminance recorded for
+that fix is convention-dependent: a later instrument, measuring the same stop, reads 22.3
+on desktop and 27.8 on a phone and does not reproduce the 92.2 scale. That does not make
+the fix wrong — the pullback is structural and is now asserted by a test that the last stop
+is `contact` — but **do not quote 92.2 against a different instrument.**
 
 ### 4.6 One judgement for MJK's eye
 

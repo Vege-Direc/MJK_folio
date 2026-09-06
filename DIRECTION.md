@@ -14,7 +14,7 @@ how this project has already retracted four numbers.
 
 | # | Do this | Why, in one line |
 |---|---|---|
-| 1 | **Reorder — APPROVED, and shipping at NINE stops first.** `hero, origin, apac, now, work, engineering, pivot, rd350, contact` | A strict prefix of the twelve-stop target, so the migration later just inserts `asanjo, jewelai, mrunn` after `work`. **`M` stays 9, so the field seed never changes and nothing is re-measured.** `work` index 7 → 4, `apac` 4 → 2 |
+| 1 | ~~Reorder~~ **DONE — `e01fcf6`, `c31f182`, `4e61a52`, `33050f9`.** `hero, origin, apac, now, work, engineering, pivot, rd350, contact`, with `§ 02 — The career` | `work` index 7 → 4, `apac` 4 → 2. Copy byte-identical except one `pivot` clause. Halo worst cell **9.96:1** against a 4.5 floor; four of twelve moved measurements went *up* |
 | 1b | The twelve-stop target it grows into | `hero, origin, apac, now, work, asanjo, jewelai, mrunn, engineering, pivot, rd350, contact` — MJK's own cut, reproducing his short flow for **100% of visitors with no question asked** |
 | 2 | **§07 becomes an index**; JewelAI, Asanjo and MruNN get stops; JewelAI and Asanjo get routes | 17 of 19 work memories are currently never drawn |
 | 3 | **Navbar WITHDRAWN.** The hero sentence becomes the anchor; §07 is the index; `§ NN` labels self-anchor; **add `pushState` to `goToStop`** | Chat moves the viewport but produces no address. The one move that makes the chat *navigate* rather than be replaced |
