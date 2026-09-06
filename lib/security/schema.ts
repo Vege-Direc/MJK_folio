@@ -57,6 +57,29 @@ export const askBodySchema = z.object({
    */
   viewing: z.enum(STOP_IDS as unknown as [StopId, ...StopId[]]).optional(),
   previousStopId: z.enum(STOP_IDS as unknown as [StopId, ...StopId[]]).optional(),
+  /**
+   * Which control the visitor used: a card in the page, a suggested chip, or the dock's
+   * own field. The one number nobody has published for any site (`DIRECTION.md` decision
+   * 11), and the only thing that can say whether the card-as-question mechanism works.
+   *
+   * It is here rather than inferred on the server because the server genuinely cannot
+   * know: a card and the dock send byte-identical bodies. Three literals is the smallest
+   * possible way for the client to say it.
+   *
+   * IT CANNOT BECOME A TRACKING VECTOR, and the reason is structural rather than a
+   * promise. It is a closed enum, so the widest thing a client can say here is one of
+   * three; it never reaches the model, the page or a log line, only
+   * `lib/instrument/counters.ts`, which increments one of three integers with it. There is
+   * no per-visitor record anywhere on this server for it to be attached to -- nothing is
+   * stored against a visitor at all -- so there is nothing it could enrich even if
+   * somebody wanted it to. A client that lies about it corrupts the owner's own count of
+   * his own controls and leaks nothing, which is the correct failure mode for a field
+   * whose entire purpose is to inform a decision about the page's design.
+   *
+   * Absent on an older client, and absent is a fourth answer the report shows as
+   * `unknown` rather than quietly folding into `typed`.
+   */
+  origin: z.enum(['card', 'chip', 'typed']).optional(),
 });
 
 export type AskHistoryTurn = z.infer<typeof historyTurnSchema>;
