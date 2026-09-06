@@ -19,7 +19,7 @@ import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
  * ring occupies 34-41% of the frame WIDTH and only 15-16% of its HEIGHT. Uncropped, in the
  * 98px tile this layout gives it on a desktop, the ring would render 37px wide and 16px
  * tall — a speck, and no evidence of anything. Cropped square on each frame's own ring
- * centre it is 62-74% of the tile. A crop is not a squeeze: §05's before-and-after already
+ * centre it is 62-74% of the tile. A crop is not a squeeze: §07's before-and-after already
  * crops both photographs to a common 4:3, and the fault TASKS item 1 records was a 1.36
  * ASPECT DISTORTION, which nothing here does. Every crop is square and each frame keeps
  * enough windowsill to still read as a phone snap on a windowsill.

@@ -21,7 +21,7 @@ function showsCards(stopId: string | undefined): boolean {
 
 /**
  * The ordinary answer kicker is `§ ANSWER · <STOP>`, assembled from the stop's own
- * kicker. Docked inside that stop, directly beneath `§ 05 — Aside`, it is the same
+ * kicker. Docked inside that stop, directly beneath `§ 06 — Pivot`, it is the same
  * word twice and a second eyebrow stacked on the first — noise, not orientation.
  *
  * So the docked answer does not draw it, with one exception: a refusal carries

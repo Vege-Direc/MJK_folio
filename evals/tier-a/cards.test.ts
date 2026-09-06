@@ -41,7 +41,7 @@ describe('a card is a question that has not been asked yet', () => {
 
   it('puts the card’s own memory first', () => {
     /*
-     * Rank 0, not merely present. The pressed card becomes `cites[0]`, and §07's figure and
+     * Rank 0, not merely present. The pressed card becomes `cites[0]`, and §04's figure and
      * the answer's dek both read the first cite — so a card whose memory came back second
      * would produce an answer about something else beside a picture of something else again.
      */

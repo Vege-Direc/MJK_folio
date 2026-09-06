@@ -7,7 +7,7 @@ import { cardQuestion } from '@/lib/card-question';
 /**
  * A card is a question that has not been asked yet.
  *
- * MJK, looking at §06: "some sections have information cutting off prematurely and user
+ * MJK, looking at §03: "some sections have information cutting off prematurely and user
  * can't expand to see more either... poor user experience right? We need to show what user
  * can explore." And underneath it, the larger question: "how do we guide them towards chat
  * based behaviour instead of just scroll based typical website behavior?"
@@ -20,7 +20,7 @@ import { cardQuestion } from '@/lib/card-question';
  * excused by the mechanism, it is RESOLVED by it, 700px apart on the same screen.
  *
  * It is also the only teaching moment on the page that costs nothing. Every mechanism that
- * added height failed: §06 has −18.1px of slack at 1280x720 and §07 has −74.5px, into an
+ * added height failed: §03 has −18.1px of slack at 1280x720 and §04 has −74.5px, into an
  * `overflow: hidden` that destroys rather than scrolls, and the hero has exactly 0.0px at
  * 390x664. This adds no element and no pixel.
  *
@@ -30,7 +30,7 @@ import { cardQuestion } from '@/lib/card-question';
  * *alongside* the answer and never removes it. It gives the card a standard `aria-expanded`
  * disclosure contract instead of an invented one. And it sidesteps a measured defect: asking
  * the identical question twice leaves `showOriginal` unreset and runs no swap transition,
- * because `ChatProvider` compares question strings to notice a new question — §06 reached
+ * because `ChatProvider` compares question strings to notice a new question — §03 reached
  * 1518px with the authored paragraph stacked under a 1,434-character answer. A toggle never
  * sends the second one, so the comparison is never asked to tell two identical strings apart.
  *

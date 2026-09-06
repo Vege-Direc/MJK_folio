@@ -141,7 +141,7 @@ describe('visitor-facing copy never explains the machine', () => {
   it('asks every stop’s questions of the stop they belong to', () => {
     /*
      * A suggestion is a promise that pressing it goes somewhere useful. These are authored
-     * per section, so a chip on §04 that flies the visitor to §07 is a broken promise made
+     * per section, so a chip on §02 that flies the visitor to §04 is a broken promise made
      * by the page itself -- and it is the kind that only shows up when someone presses it.
      *
      * `viewing` is set because the chip is in the dock and the visitor is on that stop, which

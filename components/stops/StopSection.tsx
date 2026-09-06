@@ -68,7 +68,7 @@ const CARD_CHARS = 88;
  * the card.
  *
  * Raising the clamp to three lines was measured and rejected: it clears every desktop cut
- * but costs §07 43px, which fits at 1440 and 1920 and overflows a 1280x720 band that has
+ * but costs §04 43px, which fits at 1440 and 1920 and overflows a 1280x720 band that has
  * 15px of slack — a defect traded for a defect. And it still leaves three of six cut on a
  * phone, where the column is narrowest. Cutting on a word boundary here costs 0px at every
  * viewport and is the only version that fixes the phone too.
@@ -236,7 +236,7 @@ function media(stop: Stop): ReactNode {
     case 'figure':
       return <MJK101Figure />;
     /*
-     * §07 is the section a sceptic reads, and until now it answered them with four cards
+     * §04 is the section a sceptic reads, and until now it answered them with four cards
      * of prose. A review put it plainly: no link, screenshot, repo or demo for any of the
      * work. So the column leads with a photograph the pipeline actually made from a
      * photograph a supplier actually sent, and the card list drops to two — which also
@@ -245,7 +245,7 @@ function media(stop: Stop): ReactNode {
      */
     /*
      * The photograph is now the DEFAULT state of that column rather than its only one.
-     * §07 carries eighteen memories, seven of them JewelAI's, and there is no room to add
+     * §04 carries eighteen memories, seven of them JewelAI's, and there is no room to add
      * a second figure: the column has 653px at 1440x900 and this already spends 647 of
      * them, under a `.panel` that is `overflow: hidden`. So `WorkFigure` swaps the box's
      * contents on the first memory a streamed answer cited, and `ApparelPair` is handed

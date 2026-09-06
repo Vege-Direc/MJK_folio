@@ -103,8 +103,8 @@ export default function SuggestedPrompts({
    * Adjusted during render rather than in an effect, the same bargain `ChatProvider` strikes
    * for `showOriginal`: an effect would render one frame of the new section showing the old
    * section's suggestion at whatever index it had reached. Resetting the index matters
-   * because the sets are the same length but not the same strings — index 2 of §04 is not
-   * index 2 of §07 — and resetting the two-pass budget matters because the budget is about
+   * because the sets are the same length but not the same strings — index 2 of §02 is not
+   * index 2 of §04 — and resetting the two-pass budget matters because the budget is about
    * having seen every suggestion, and these are suggestions nobody has seen yet.
    */
   const [lastStop, setLastStop] = useState(stop);

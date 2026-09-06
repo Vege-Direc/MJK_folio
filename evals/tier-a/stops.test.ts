@@ -27,10 +27,10 @@ const RENDERABLE_COMPOSE: readonly ComposeKind[] = [
   'carousel',
   'contact',
   'timeline',
-  // Added after launch and the only kind not in `reference/preview.html`: §02's general
+  // Added after launch and the only kind not in `reference/preview.html`: §05's general
   // arrangement of the MJK-101. See `components/stops/MJK101Figure.tsx`.
   'figure',
-  // §07's before-and-after pair, over a shortened card list.
+  // §04's before-and-after pair, over a shortened card list.
   'proof',
 ];
 
@@ -113,7 +113,7 @@ describe('STOPS', () => {
  * ways a hard-coded list cannot. A period that stops parsing sorts to year 0 and the
  * entry quietly leads the career; a memory that loses its period vanishes off the page.
  */
-describe('the §04 timeline', () => {
+describe('the §02 timeline', () => {
   const entries = timelineEntries();
 
   it('is what the apac stop composes', () => {

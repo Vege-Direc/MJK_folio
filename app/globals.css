@@ -465,9 +465,10 @@ html[data-flying] {
  *
  * `align-self: stretch` gives the column the full width; an auto margin on the cross axis
  * CANCELS that stretch in flexbox, so these two stops went back to shrink-to-fit and their
- * left edge landed wherever the longest line happened to end — 880px against §02's 72px at
- * 1440, and 1582 against 1465 at 2560. Four consecutive screens, four unchosen margins,
- * which is the exact defect the comment above says was fixed.
+ * left edge landed wherever the longest line happened to end — 880px against §05's 72px at
+ * 1440, and 1582 against 1465 at 2560. Four screens — consecutive under the stop order of
+ * the day — four unchosen margins, which is the exact defect the comment above says was
+ * fixed.
  *
  * Pushing the TEXT inside a stretched column does the same job without unstretching it.
  */
@@ -477,7 +478,7 @@ html[data-flying] {
    *
    * An auto cross-axis margin does cancel `align-self: stretch`, so the box fell back to
    * shrink-to-fit and its left edge landed wherever the longest line ended — 880px against
-   * §02's 72px at 1440. Right-aligning the TEXT inside a stretched box fixes the left edge
+   * §05's 72px at 1440. Right-aligning the TEXT inside a stretched box fixes the left edge
    * and breaks the right one instead, which is a ragged left margin and worse.
    *
    * A stated width restores what stretch was giving: the box is the container's width,
@@ -618,7 +619,7 @@ html[data-flying] {
   max-width: 44ch;
 }
 
-/* ── §02's general arrangement ────────────────────────────────────── */
+/* ── §05's general arrangement ────────────────────────────────────── */
 
 .fig-ga {
   display: flex;
@@ -1037,9 +1038,11 @@ html[data-flying] {
  * so the camera flew to the next section while the reader sat still.
  *
  * Measured, baseline: 5 of 7 runs drifted 431-554px after the flight had already landed,
- * and in every one of those `data-stop` went 7 -> 8 with no input. It is invisible as a
- * jump because it arrives one pixel per frame (worst single-frame move: 1px), which is
- * exactly why nobody caught it by looking.
+ * and in every one of those `data-stop` advanced one section with no input — measured on
+ * the `work` -> `contact` boundary, which the stop reorder has since separated by three
+ * screens; the failure is positional and belongs to whichever pair is adjacent. It is
+ * invisible as a jump because it arrives one pixel per frame (worst single-frame move:
+ * 1px), which is exactly why nobody caught it by looking.
  *
  * With this rule, 4 of 4 runs held 0px, on answers of 1,482-2,445 characters — longer
  * than the ones that drifted. The page ends where the flight aimed it (scrollY 6362
@@ -1396,7 +1399,7 @@ html[data-flying] .answer-layer-in {
 /* ── timeline ──────────────────────────────────────────────────────────────── */
 
 /**
- * The dated rail on §04, drawn as one vertical spine rather than ten horizontal rules.
+ * The dated rail on §02, drawn as one vertical spine rather than ten horizontal rules.
  *
  * The first version read as a table, and it read as a table because it was drawn as one:
  * ten full-bleed hairlines across a 581px column is 5,810px of rule ink, which is
@@ -2172,12 +2175,12 @@ html[data-flying] .answer-layer-in {
   color: var(--color-accent);
 }
 
-/* ── §07's before and after ─────────────────────────────────────── */
+/* ── §04's before and after ─────────────────────────────────────── */
 
 /*
  * Four pairs, one at a time, in a box whose height never changes.
  *
- * WHY A STEPPER AND NOT A STACK. §07's media column is a 623px band at 1440x900 —
+ * WHY A STEPPER AND NOT A STACK. §04's media column is a 623px band at 1440x900 —
  * `100svh - 8vh - (--dock-h 173 + 32)` — and `.panel` is `overflow: hidden`, so anything
  * past the band is destroyed rather than scrolled. One pair plus two cards already
  * measured ~646px there, which is why a 1280x720 laptop loses 188px off this section on
@@ -2228,7 +2231,7 @@ html[data-flying] .answer-layer-in {
    *
    * The `min()` shape is right and stays: the frame may never outgrow its own column, and
    * `100cqw` reads that column directly. What was wrong is the height coefficient. At 2560
-   * the band is 1149.8px and §07's column was using 605 of it — 545px of empty vertical
+   * the band is 1149.8px and §04's column was using 605 of it — 545px of empty vertical
    * space in the section with the smallest photographs. So the first term becomes the
    * larger of 31svh and whatever the band actually has left after the rest of the column,
    * and `100cqw` still stops it from outgrowing the width. Below ~1500px `31svh` wins and
@@ -2421,10 +2424,10 @@ html[data-flying] .answer-layer-in {
 
 /*
  * The swap, phone only. Two chips in one button, `.ba-tag` verbatim — the same control
- * §05 already ships for two photographs that cannot be registered, and for the same
+ * §07 already ships for two photographs that cannot be registered, and for the same
  * reason: there is nothing between the two states to scrub through.
  *
- * It sits UNDER the frame rather than over it, which is where §05 puts it. §05's chips
+ * It sits UNDER the frame rather than over it, which is where §07 puts it. §07's chips
  * can lie on the photograph because the top of both frames is background; here every
  * pixel of both frames is either printed cloth or the invented room, and the whole point
  * of the figure is that a visitor can check the cloth.
@@ -2513,21 +2516,21 @@ html[data-flying] .answer-layer-in {
   }
 }
 
-/* ── §07's JewelAI states ─────────────────────────────────────── */
+/* ── §04's JewelAI states ─────────────────────────────────────── */
 
 /*
- * WHY THESE SHARE §07's BOX INSTEAD OF BEING ADDED TO IT.
+ * WHY THESE SHARE §04's BOX INSTEAD OF BEING ADDED TO IT.
  *
  * Measured on the built page, not estimated. `.section-inner` pads
  * `8vh 5vw calc(var(--dock-h) + 32px)`, and at 1440x900 `--dock-h` resolves to 143px, so
- * the media column has 900 - 72 - 175 = 653px of height. §07 already spends 647 of those
+ * the media column has 900 - 72 - 175 = 653px of height. §04 already spends 647 of those
  * 653 on the apparel pair (383px) plus two cards (242px) plus the pair's 22px margin.
  * Above 900px `.panel` is `overflow: hidden`, so a figure ADDED to that column would not
  * scroll out of sight, it would be destroyed. These are therefore STATES of the column,
  * each sized to the 383px the pair occupies, and only one is ever in the DOM.
  *
  * Below 900px `.panel` is `height: auto; overflow: visible`, so the phone box is soft.
- * The states are still held close to the pair's 289px there, because §07 is already
+ * The states are still held close to the pair's 289px there, because §04 is already
  * 1,119px on a 390x664 phone and is on the "Open, not started" list for exactly that.
  */
 
@@ -2738,7 +2741,7 @@ html[data-flying] .answer-layer-in {
   text-wrap: pretty;
 }
 
-/* ── §07's gates ──────────────────────────────────────────────── */
+/* ── §04's gates ──────────────────────────────────────────────── */
 
 .jg {
   display: flex;
@@ -3506,7 +3509,7 @@ html[data-flying] .answer-layer-in {
  * which peaks at 589.5px on a 1460px viewport and falls from there. Measured, exact to
  * 0.1px at every width: 581.4px at 1440, 556.7 at 1920, 526.3 at 2560. A 2560 monitor has
  * 3.1x the pixel area of a 1440 laptop and draws the photographs 9.5% NARROWER. A 430px
- * phone draws §07's supplier frame 51% larger than a 2560 desktop does.
+ * phone draws §04's supplier frame 51% larger than a 2560 desktop does.
  *
  * The `min(5vw, 73px)` and the 4.5rem gap ceiling above are half the fix and cost nothing
  * anywhere: 73px is what 5vw already is at 1460, and the gap's old 6rem ceiling was never
@@ -3560,7 +3563,7 @@ html[data-flying] .answer-layer-in {
   /*
    * The RD 350's ceiling, here rather than on `.carousel` itself, so that 1440x900 keeps
    * the hero it has. 560px is the width of the three portrait frames — the narrowest
-   * sources in the set — so at this cap nothing in §05 is upscaled at DPR 1.
+   * sources in the set — so at this cap nothing in §07 is upscaled at DPR 1.
    */
   .carousel {
     max-width: 560px;
@@ -3576,7 +3579,7 @@ html[data-flying] .answer-layer-in {
    * on the figure that carries the strongest technical claim in the corpus.
    *
    * 600px, not more: it puts the output tile at 420px and the whole flow at about 479.5px,
-   * for a §07 total of 743.3 in an 818.6px band at 1920 — 75.3px spare. 680px leaves 15.3,
+   * for a §04 total of 743.3 in an 818.6px band at 1920 — 75.3px spare. 680px leaves 15.3,
    * which is the same fuse that was removed once already and should not be re-lit.
    */
   .jp {

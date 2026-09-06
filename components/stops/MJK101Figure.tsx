@@ -6,7 +6,7 @@ import { buildDust, runDust, type Dust } from './dust';
 import { ENGINE, FIG_VIEWBOX, MJK101_INNER, MJK101_PATH } from './mjk101';
 
 /**
- * §02's figure: a two-stroke engine that becomes the aircraft he designed.
+ * §05's figure: a two-stroke engine that becomes the aircraft he designed.
  *
  * WHY IT EXISTS. The stop is titled "Mechanical, then aerospace." and carried three
  * sentences over empty scene. It then carried a screenshot of the Visual Basic engine

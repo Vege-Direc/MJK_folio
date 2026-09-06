@@ -25,9 +25,9 @@ export const suggestedPrompts = [
  *
  * The dock offered the same four questions on all nine stops, on a site whose whole
  * architecture is that a question belongs to a section. The cards address the memories that
- * are drawn; these address the ones that are not, and on §07 that is seventeen of nineteen —
+ * are drawn; these address the ones that are not, and on §04 that is seventeen of nineteen —
  * the outreach engine, Artha, the awards, the numbers, and four of the seven JewelAI
- * memories. There is nowhere to draw them: §07's media column has 35.2px of slack at
+ * memories. There is nowhere to draw them: §04's media column has 35.2px of slack at
  * 1440x900 and −74.5px at 1280x720, into an `overflow: hidden` that destroys. The chip row is
  * height the page has already paid for — 32.9px at 1440x900, 41px on a phone, on every screen
  * at every scroll position.

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * §07's proof: four supplier photographs and the four catalogue frames the pipeline made
+ * §04's proof: four supplier photographs and the four catalogue frames the pipeline made
  * from them, one pair at a time.
  *
  * WHY FOUR AND NOT ONE. The section shipped with a single pair and the owner's reading of
@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * garments in four invented rooms is the smallest number that shows the art direction
  * holding rather than one lucky frame.
  *
- * WHY NOT FIFTEEN, AND WHY NOT EVEN TWO ON SCREEN AT ONCE. §07 is an index across four
+ * WHY NOT FIFTEEN, AND WHY NOT EVEN TWO ON SCREEN AT ONCE. §04 is an index across four
  * projects; fifteen frames of one apparel client turns it into a case study of that
  * client. And the arithmetic forbids stacking anyway: the media column is a 623px band at
  * 1440x900, `.panel` is `overflow: hidden`, and one pair plus two cards is already ~646px
@@ -171,7 +171,7 @@ export default function ApparelPair() {
    * waited for a network round trip.
    *
    * `BeforeAfter.tsx` states the opposite as fact — "Clipped, the raster still decodes" —
-   * and its `.ba-stock` image is `loading="lazy"` behind the same clip, so §05 has the
+   * and its `.ba-stock` image is `loading="lazy"` behind the same clip, so §07 has the
    * same fault. It is not fixed here; it is one line and it belongs to that component.
    *
    * The fix is to promote the SHOWING PAIR's two frames to `eager` once the figure is
@@ -194,8 +194,8 @@ export default function ApparelPair() {
           io.disconnect();
         }
       },
-      // Far enough ahead that the frames are decoded before §07 is read, and near enough
-      // that a visitor who never reaches §07 never pays for them.
+      // Far enough ahead that the frames are decoded before §04 is read, and near enough
+      // that a visitor who never reaches §04 never pays for them.
       { rootMargin: '600px' },
     );
     io.observe(node);

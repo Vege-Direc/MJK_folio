@@ -6,18 +6,18 @@ import JewelEvidence from './JewelEvidence';
 import JewelGates from './JewelGates';
 
 /**
- * §07's media column, as one box with three states rather than a stack of figures.
+ * §04's media column, as one box with three states rather than a stack of figures.
  *
  * WHY IT IS A STATE MACHINE AND NOT A STACK. Measured on the built page at 1440x900: the
- * media column has 653px of height, and §07 already spends 647 of them on the apparel pair
+ * media column has 653px of height, and §04 already spends 647 of them on the apparel pair
  * plus two cards. Above 900px `.panel` is `overflow: hidden`, so anything ADDED to that
  * column is not scrolled out of reach, it is destroyed — silently, and whichever thing
  * happens to be last. So a JewelAI figure could only ever be a state of the box. That is
  * also the cheaper answer: neither JewelAI state is in the DOM until it is chosen, so the
  * three reference crops, the 1024px still and the 225kB clip cost nothing at rest.
  *
- * WHY `cites[0]` AND NOT `includes`. §02's figure asks `cites.includes('mjk-101')`, and
- * that is right there because exactly one memory on that stop is about the aircraft. §07
+ * WHY `cites[0]` AND NOT `includes`. §05's figure asks `cites.includes('mjk-101')`, and
+ * that is right there because exactly one memory on that stop is about the aircraft. §04
  * carries eighteen memories of which seven are JewelAI's, and retrieval licenses an answer
  * against several at once, so `includes` over a set that large would fire on almost any
  * question that touched this stop and the apparel pair would effectively never show. The
@@ -26,7 +26,7 @@ import JewelGates from './JewelGates';
  * no say in it, which is the rule the whole architecture rests on.
  *
  * WHAT THE DEFAULT IS, AND THE ONE THING WORTH MJK'S EYE. The default is the apparel pair,
- * so nothing about §07 changes for a visitor who never asks. Worth noticing though: §07's
+ * so nothing about §04 changes for a visitor who never asks. Worth noticing though: §04's
  * authored paragraph is now entirely about JewelAI — "it asks for three to five
  * photographs of one piece... and sends the whole set with every image it generates" — and
  * the picture printed beside it at rest is the apparel work, which that paragraph no
@@ -94,8 +94,8 @@ export default function WorkFigure({ pair }: { pair: ReactNode }) {
   const envelope = answer?.envelope;
 
   /*
-   * Gated on the stop as well as the citation. An answer that landed on §06 must not
-   * quietly rearrange §07 behind the visitor's back — that is the failure `TASKS.md` item
+   * Gated on the stop as well as the citation. An answer that landed on §03 must not
+   * quietly rearrange §04 behind the visitor's back — that is the failure `TASKS.md` item
    * 21 records in the other direction, where the figure and the answer disagreed.
    */
   const state = envelope?.stopId === 'work' ? figureFor(envelope.cites) : undefined;
@@ -109,7 +109,7 @@ export default function WorkFigure({ pair }: { pair: ReactNode }) {
    * MJK asked what the plan was for JewelAI and whether it needed a section of its own.
    * The honest answer to the first half is that a visitor who scrolled all nine sections
    * and never typed saw NOTHING of it — the assets were in place, both figures worked, and
-   * neither was reachable without knowing to type the name. Meanwhile §07's authored
+   * neither was reachable without knowing to type the name. Meanwhile §04's authored
    * paragraph opens with the words "JewelAI Studio" and every clause of it is JewelAI,
    * beside a photograph of a kaftan the paragraph does not mention. And a motorcycle hobby
    * has the largest media treatment on the site.

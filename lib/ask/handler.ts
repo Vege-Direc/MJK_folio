@@ -74,7 +74,7 @@ const json = (body: unknown, status: number) =>
     headers: { 'content-type': 'application/json' },
   });
 
-/** `§ 07 — Selected work` -> `SELECTED WORK`. The hero has no dash; fall back to its id. */
+/** `§ 04 — Selected work` -> `SELECTED WORK`. The hero has no dash; fall back to its id. */
 function stopLabel(stopId: StopId): string {
   const kicker = stopById(stopId).kicker;
   const afterDash = kicker.split('—')[1]?.trim();

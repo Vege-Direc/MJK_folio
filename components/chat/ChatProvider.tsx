@@ -235,7 +235,7 @@ function settleOnAnswer(stopId: StopId): void {
  * The answer docks below the section's own paragraph, so landing on the section's top
  * edge only shows the answer if the section fits in one screen. On a phone five of the
  * nine do not, and a review of the live site caught the consequence: asked "have you
- * shipped anything I can look at?", the page flew to §07 and the answer arrived below the
+ * shipped anything I can look at?", the page flew to §04 and the answer arrived below the
  * fold, with only the static cards on screen. Ask, watch the page move, see nothing. It is
  * the worst possible outcome for the one interaction the site exists for.
  *
@@ -245,7 +245,7 @@ function settleOnAnswer(stopId: StopId): void {
  *
  * "Exactly far enough" is the correction, and it was a real bug in between. Aiming the
  * answer at a fixed fraction of the band instead measured a 214px overshoot on a 1440
- * desktop, which put §07's title and kicker off the top of the screen: `.content-zone` is
+ * desktop, which put §04's title and kicker off the top of the screen: `.content-zone` is
  * vertically centred there, so the answer container already sits near the middle and
  * pulling it higher scrolls past the heading for no gain. Every desktop section now
  * lands exactly where it did before this function existed.

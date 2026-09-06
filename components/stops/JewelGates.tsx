@@ -12,7 +12,7 @@
  *
  * WHY IT IS THIS CHART AND NOT A PIPELINE. A left-to-right row of stations is the diagram
  * MJK asked for and it is the wrong one, for the reason `PLAN.md` §4.1 records about the
- * §02 unit chart that was built, judged and withdrawn: it draws a sentence the prose
+ * §05 unit chart that was built, judged and withdrawn: it draws a sentence the prose
  * already contains. Prose serialises a sequence perfectly well — "a classifier, then a
  * creative director, then a prompt writer" needs no picture. What prose is bad at, and a
  * drawing is good at, is BRANCHING: three different places one lane is allowed to leave
