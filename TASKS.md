@@ -1,11 +1,22 @@
 # Task list
 
-**Consolidated 2026-09-06.** This file had drifted back into an append-only log — task 47 had
-three headings, 44 had four, 50 and 51 had three each, and tasks 49 to 52 still read
-`researching` at their original headings while their verdicts sat a thousand lines below. It
-is now **one entry per task, grouped by state**, with every measurement and every retraction
-carried across. Where an earlier finding was overturned, both are here and the correction sits
-next to what it corrects — this project's most valuable content is its record of being wrong.
+**Consolidated 2026-09-06, twice.** The first pass fixed the shape: this file had drifted back
+into an append-only log — task 47 had three headings, 44 had four, 50 and 51 had three each,
+and tasks 49 to 52 still read `researching` at their original headings while their verdicts sat
+a thousand lines below. It is now **one entry per task, grouped by state**, with every
+measurement and every retraction carried across.
+
+The second pass fixed the numbers, and it found the same class of defect the first pass had
+just written a rule about. **Three figures were being quoted as current that were true only on
+the day they were taken** — the routing table was 64 questions and is **77**, the card gate
+covered 43 and covers **44**, the corpus was 54 memories and is **55** — and **three separate
+summaries in this repo were stating counts their own tables contradicted.** The rule that comes
+out of it is in "The rules this session paid for" below, and it is short: **a count in prose
+above a table it is not derived from is an unsourced number with its source sitting underneath
+it. Recount before quoting.**
+
+Where an earlier finding was overturned, both are here and the correction sits next to what it
+corrects — this project's most valuable content is its record of being wrong.
 
 Authority, so nothing is decided twice:
 
@@ -55,23 +66,23 @@ kept and both are labelled.
 | 35 | Design consistency, affordance and mobile | `done` in part; see 38 and 39 | Shipped |
 | 36 | How the answers are written | `done` — `382c8a8` | Shipped |
 | 37 | JewelAI: what a visitor actually sees | `done` — the plan is decision 2 | Shipped |
-| 38 | Four sections show only prose above the fold | **`doing`** — agent L1 | In flight |
+| 38 | Four sections show only prose above the fold | `done` — `71d612c` | Shipped |
 | 39 | The rest of the design audit | `open` | Open |
 | 40 | §07 is one column for four projects | `decided` — decision 2 | Decided |
 | 41 | JewelAI as three photographs → image → video | `decided` — confirmed by 53 | Decided |
 | 42 | The two websites he built | `spec'd`; one recommendation withdrawn by 54c | Decided |
 | 43 | Animated workflow diagrams | `decided` — decision 10 | Decided |
-| 44 / 44b / 44c | The opening portrait, then the intro gate | `decided` — **build it**, contract specified | Decided |
+| 44 / 44b / 44c | The opening portrait, then the intro gate | **`shipped` against a placeholder head**, `f01c7f3`…`648275c`; the real photograph is in flight | Decided |
 | 45 | The MruNN ERP demo video | `blocked` on the asset; not blocking anything | Blocked |
 | 45b | MruNN has no clients yet | `answered` — it changed the architecture | Answered |
-| 46 | How many stops the site should have | `spec'd` — twelve, and it stops there | Decided |
+| 46 | How many stops the site should have | `done` — **twelve, built**; decision 16 held the line at twelve | Decided |
 | 47 | The scene lags on a phone | `done` — 8 + 2 commits | Shipped |
 | 47b | The scroll end mis-mapped on mobile | `done` — `499b4d2` | Shipped |
 | 47c | "Lagging at some points" | `done` — `a4372f7`, `b8433be` | Shipped |
 | 48 | The mobile scene reads empty | `done` — mobile now outdraws desktop at two stops | Shipped |
 | 49 | Is the story the one people want? | `done` — the reorder shipped | Shipped / Research |
 | 50 | A branch after step 1 | branch **not** built; the reorder replaced it | Decided |
-| 50 REOPENED | The collateral, vetoed on a wrong measurement | **`doing`** — agent L2 | In flight |
+| 50 REOPENED | The collateral, vetoed on a wrong measurement | `done` — `39ffcd1`, `f101480`, `9d2ac1d` | Decided |
 | 51 | Key information on scroll, the rest by asking | `spec'd` → decisions 4, 7, 12 | Decided |
 | 51b | "I'll get back to you" | `unblocked` — a voice question | Answered |
 | 52 | Two audiences wanting opposite things | `spec'd` — segment content, never the entry | Decided |
@@ -79,11 +90,15 @@ kept and both are labelled.
 | 54 / 54b / 54c | Asanjo | `answered`, then **corrected**: the theme is not live | Answered |
 | 55 | "Isn't chat the nav?" | `spec'd` — decision 3, navbar withdrawn | Decided |
 | 56 | An LLM intent gateway before routing | `spec'd` — **no**, and the fault is one stage later | Decided |
-| 57 | The site itself as a piece of work | `open` — needs corpus memories first | Open |
+| 57 | The site itself as a piece of work | `spec'd` — ten memories drafted, **none approved**; 18 questions for MJK; decision 17 | Open |
 | — | Increment 0, the three silent traps | `done` — `9d7a500`, `35c872c`, `933e3ba` | Shipped |
 | — | Decision 1, the reorder at nine stops | `done` — `e01fcf6`…`7cfcb16` | Shipped |
-| — | Decision 7 + 12, voice and the rule-24 gate | **`doing`** — agent M1 | In flight |
-| — | Decision 11, the ask-rate instrument | **`doing`** — agent M2 | In flight |
+| — | Decision 7 + 12, voice and the rule-24 gate | `done` — `97c7752`, `4a5e084`, `76d3425`, `8e63f97` | Shipped |
+| — | Decision 11, the ask-rate instrument | `done` — `b77edcb`…`decb406`, `80e034b` | Shipped |
+| — | Decision 1b / 2, the twelve-stop spine and the §04 index | `done` — `1fd2ca4`, `195663c`, `b5659c4`, `30552e6`, `50c7d2e`. **The two routes are not built** | Decided |
+| — | Decision 16, no thirteenth stop | `decided` — the claim goes in §03 prose; the diagram's home is a route | Decided |
+| — | Decision 17, the case study demonstrates rather than describes | `decided` | Open › 57 |
+| — | The card affordance, `?ask=`, the answer tail, the real portrait | **`doing`** — agents R1, R2, Q1 | In flight |
 
 ---
 
@@ -489,6 +504,59 @@ the right question sees nothing of JewelAI at all.** That is a real gap for the 
 technical claim in the corpus — **seven of §07's eighteen memories are JewelAI's**, more
 material than any other project has. The plan is `DIRECTION.md` decision 2: JewelAI gets its own
 stop and a route.
+
+## 38. Four sections show only prose above the fold — `done`, `71d612c`
+
+The design audit's Tier 1 finding, and the one thing on this list that costs MJK work. **At
+390x664 the readable band is 517px, and in the four sections that have something to show it was
+spent entirely on prose:**
+
+| § | panel | above the fold | what is lost |
+|---|---|---|---|
+| 02 engineering | 1067 | kicker, title, 8-line body | the whole aircraft figure and Replay |
+| 04 apac | 1386 | title, body, one era label | **every timeline row** — the best component on the site |
+| 05 rd350 | 1077 | kicker, title, 9-line body | **every photograph** — the only photography on the site |
+| 07 work | 1266 | one frame, cut by the dock | the result, the arrow, the caption, the pager |
+
+A prospect who opens §05 on a phone, reads the title and thumbs on **never sees that he rebuilt a
+motorcycle.**
+
+**The mechanism, found while measuring something else.** `app/globals.css:3256-3265` sets
+`order: 1` on `.content-zone` at the mobile breakpoint — **prose first, media second, on every
+stop, on every phone.** That single rule is what puts the aircraft, the timeline rows and the RD
+350 photographs below the fold. The desktop already alternates via `.media-zone.left` / `.right`,
+**so the machinery exists and is simply not used on mobile.**
+
+**So this may be cheaper than it is recorded as being: the lever is one declaration, not a
+rebuild.** It is still a per-section judgement, and **the flip has not been tested — screenshot it
+before believing it.** Any new stops should be media-first on mobile from the start, with an
+authored body of **2 to 4 lines, not 8**.
+
+> **CORRECTION to how this task was first framed: it is a fold problem, not a content problem.**
+> Scrolled 380–430px, the phone shows the full timeline, the complete MJK-101 figure with its specs
+> and Replay, the whole JewelAI figure with every label, and the RD 350 before/after with its
+> carousel — **all four good, two excellent.** §07 reads broken **at the fold**, which is exactly
+> where a routed answer and a shared link put a visitor. Still real, but it is a first-screen defect
+> per stop rather than a composition failure.
+
+**After the reorder it is worse in position, not in magnitude:** `apac` is now the third stop and
+still **1,386px tall, spilling 869px past the dock — 63% of the section below the fold at its own
+top.**
+
+**SHIPPED, and not by the obvious move.** `71d612c`: the rail goes **after the title and before
+the paragraph**, not first. **The obvious fix — flipping `order` so media comes first — was
+built, screenshotted and rejected: it deletes the kicker, the title AND the body from the first
+screen**, which trades one section's evidence for another's identity. Before: **0 timeline rows
+above the fold.** After: **both era captions and three full rows.** The mechanism named above —
+`globals.css`'s `order: 1` on `.content-zone` at the mobile breakpoint — was the right diagnosis
+and the wrong prescription.
+
+**One consequence to carry, because a source comment now disagrees with the build.**
+`content/stops.ts` still says the career rail is "below the fold at 390x664" and that exactly
+three stops are media-first. **Both halves are false.** `apac` is media-first at 390x664 (rail
+top 265, paragraph top 987) through a dedicated `.panel[data-compose='timeline']` order block at
+`globals.css:3500-3531` — **a fourth media-first stop implemented outside `mediaFirstOf`.**
+Recorded as R28; the fix belongs to whoever owns that file.
 
 ## 47 and 48. The phone lagged, and the phone looked empty — `done`, ten commits
 
@@ -1504,7 +1572,10 @@ the routing table. The ranking does not transfer.)
   segment of about **10.5 units** at any n. **The flight gets longer, not faster.**
 - **`V[8]` is the exception.** The 9-unit pullback that took §08's whole-frame luminance from
   **127.6 to 92.2** is attached to **the last node, not to `contact`**. Append before contact and
-  it follows correctly. **Append after contact and §08 silently reverts to the pale frame.**
+  it follows correctly. **Append after contact and the last stop silently reverts to the pale
+  frame.** *(The pair is a retracted scale — see rule 7 and `SPEC-architecture.md` §2.2. The trap
+  is real and the guarantee is now a test asserting the last stop is `contact`; do not quote the
+  luminance figures.)*
 - **`mulberry32(0x5eed ^ M)` seeds the entire secondary field, the sub-branches, the midground and
   the dust — a different stream for every stop count.** The nine somas stay put; everything around
   them re-rolls. **Every screenshot-derived number in `PLAN.md` and `TASKS.md` is invalidated by
@@ -1997,7 +2068,9 @@ deleting the causes of asking.**
 ### Rule 24 is already being violated, and it becomes a build gate — decision 12
 
 **54 memories. 8 `AskCard`s**, each rendering only `firstSentence(m.body)`. **Roughly 36 memory
-bodies appear in no HTML at all.**
+bodies appear in no HTML at all.** *(Measured at nine stops. The gate that came out of it counted
+**17 of 54**; at twelve stops it is **29 of 55**, floor 29 — the count moved, the finding did
+not.)*
 
 Two consequences worse than "hard to index":
 
@@ -2170,7 +2243,8 @@ target, deliberately… it keeps working with JavaScript off."* **The repo wrote
 plain content anchor and spent it on the input instead of on the work.**
 
 **Chat as retrieval is excellent and is the real asset** — **54 memories against 8 rendered cards,
-~36 bodies in no HTML at all**, reachable only by asking and genuinely better asked than scanned.
+~36 bodies in no HTML at all** *(at nine stops; 55 memories and 29 drawn at twelve)*, reachable
+only by asking and genuinely better asked than scanned.
 
 **Chat as proof is what MJK is protecting, and he should.** The differentiator is not "question in,
 prose out" — that *is* a grounded-RAG widget. It is the guarantees: routing decided before the model
@@ -2280,10 +2354,18 @@ feasibility study rather than a defence.
 MJK's instinct that something is wrong is nonetheless correct — the fault is one stage later than
 he thought, and a gateway would replace the half that works.**
 
+> **EVERY DENOMINATOR IN THIS SECTION IS DATED 2026-09-06, EARLY.** The study ran against a
+> **64-row** routing table, a **43**-card gate and a **54**-memory corpus. Those are **77**,
+> **44** and **55** today. So the headline reads **48/64 _as it stood_** and **40/43 _as it
+> stood_** — they are results about that table, not statements about this one. **Do not quote
+> them as current figures, and do not re-derive a percentage from them against today's table.**
+> Nothing in the conclusion turns on the change: the gateway missed a sixth of a table it was
+> given in full, and the table has since grown by thirteen rows it has never seen.
+
 ### Accuracy, measured
 
 Gateway given the strongest fair prompt: all eight stops with authored copy plus all 54 memory
-titles, temperature 0, one token out, validated against the enum.
+titles *as the corpus then stood*, temperature 0, one token out, validated against the enum.
 
 | design | table 64 | buyer 20 | off-topic 8 | cards 43 | **held-out 34** | ALL |
 |---|---|---|---|---|---|---|
@@ -2293,8 +2375,8 @@ titles, temperature 0, one token out, validated against the enum.
 | BM25 + LLM rescue on refusal | **100%** | **100%** | **100%** | **100%** | 82.4% | 96.4% |
 | **BM25 + embedding rescue** | **100%** | **100%** | **100%** | **100%** | **85.3%** | **97.0%** |
 
-**48/64 on the routing table. It does not clear `MIN_ACCURACY`, and it fails `cards.test.ts`
-outright at 40/43** — a gate with no tolerance at all.
+**48/64 on the routing table _as it stood_. It does not clear `MIN_ACCURACY`, and it fails
+`cards.test.ts` outright at 40/43 _as it stood_** — a gate with no tolerance at all.
 
 **But he is right that BM25 has a hole: 67.6% on fresh questions.** Head to head across 169: **46
 disagreements, BM25 right on 26, the model right on 8** — and the model's eight wins are exactly the
@@ -2353,8 +2435,9 @@ the definition of an enum-constrained structured output.
 With a generative gateway: a new secret invisible to fork PRs; one run of 169 questions is **21% of
 the production day's 800-request budget**; **~12 minutes added per run at 20 rpm**; and at the
 measured **8.5%** failure rate, **5.4 of 64 rows are lost to transport before a single semantic
-error, against a six-row tolerance.** `cards.test.ts` is all-or-nothing over 43 — at 0.99 per-call
-success, **P(pass) = 0.65**.
+error, against a six-row tolerance.** `cards.test.ts` was all-or-nothing over 43 — at 0.99
+per-call success, **P(pass) = 0.65**. At today's 44 cards and 77 rows the arithmetic is worse,
+not better; the shape of the argument is what carries, not the exponent.
 
 A cached-fixture mode works and verifies the wrong thing: **one model's opinion on one day.**
 
@@ -2366,8 +2449,8 @@ one embedding call answers a single boolean — and BM25's own `stopId` stays th
 **97.0% overall, 100% on all four committed gates, held-out 68% → 85%.** The latency falls on about
 **11%** of questions, and **`data-route` still goes out at 10ms, because the gate decides whether to
 answer, not where to fly.** Nothing outside the corpus ever names a stop, under either reading of the
-rule. The 54 corpus vectors are a pure function of `memories.yaml`, committable, so **every existing
-CI gate survives.** Verified that OpenRouter serves embeddings on this key, at about **$0.0000002 per
+rule. The corpus vectors — 54 then, 55 now — are a pure function of `memories.yaml`, committable,
+so **every existing CI gate survives.** Verified that OpenRouter serves embeddings on this key, at about **$0.0000002 per
 rescued question**, and it does not consume the free-model daily budget.
 
 Measured band, restricted to BM25's refusals after `WORK_REQUEST`: **answerable 0.328–0.431,
@@ -2382,7 +2465,8 @@ changed **zero rows**. The win is entirely in the refusals, not in the ties.
 the argument. What makes it not a chatbot is the model's **lack** of authority, and a gateway would
 hand it the first decision in the pipeline.
 
-**"A RAG wrapper is fine at this corpus size"** — mostly right. **54 memories, 7,325 tokens**, and
+**"A RAG wrapper is fine at this corpus size"** — mostly right. **54 memories, 7,325 tokens**
+at the time of measuring, **55 today**, and
 BM25 at **p95 0.8ms** is the correct instrument. Where "fine" stops is the **68%** on fresh questions
 — and **seven of eleven misses are refusals of answerable questions**.
 
@@ -2395,8 +2479,10 @@ tracks. **A cheap eval to write, and it needs no gateway.**
 **Would a gateway impress a buyer of agent systems? No — the reverse.** "LLM classifies intent,
 second LLM answers" is the diagram in every RAG tutorial, and a router is invisible on the page
 whether it is BM25 or a model. **The rare, hard claim is the current one: sub-millisecond
-deterministic routing gated at 64/64 and 43/43, with a free unreliable model given authority over
-nothing a visitor sees.**
+deterministic routing gated at 100% of the table and 100% of the cards** — 64/64 and 43/43 on the
+day this was measured, **77 rows and 44 cards today** — **with a free unreliable model given
+authority over nothing a visitor sees.** The claim is the *shape*, which does not go stale; the
+figures under it do, every push.
 
 > **The "grounded-RAG widget" criticism is fair only in that none of this is VISIBLE. Every decision
 > hiding it is right for a visitor and wrong for an evaluator, and the site does not distinguish the
@@ -2427,55 +2513,26 @@ percentages are not real traffic.
 
 # In flight
 
-Five agents are working right now. Nothing below is finished; do not read a status into it, and
-do not take these files without checking their own `## STATUS` blocks in the session scratchpad
-under `research/`.
+Nothing below is finished; do not read a status into it, and do not take these files without
+checking their own `## STATUS` blocks in the session scratchpad under `research/`.
 
 | Agent | Task | What it is doing | Files it holds |
 |---|---|---|---|
-| **L1** | **38** | The career rail below the fold on a phone | `app/globals.css`, `content/stops.ts`, `components/stops/*` |
-| **L2** | **50 REOPENED** | The collateral: a second visible lane the camera actually uses — spec then build | `lib/mind/`, `lib/flight.ts` |
-| **M1** | **decisions 7 and 12** | The voice of not knowing; rule 24 as a build gate | `lib/fallback.ts`, `content/system-prompt.md`, `scripts/check-corpus.ts` |
-| **M2** | **decision 11** | The ask-rate instrument over the Redis counter that already runs | `lib/security/limits.ts`, `app/api/` |
-| **M3** | — | This consolidation | `TASKS.md` |
+| **Q1** | **44** | The real photograph into the intro gate portrait, replacing the placeholder head | `scripts/make-portrait.ts`, `lib/mind/`, `components/mind/`, `app/layout.tsx` |
+| **R1** | — | Make `.mini-card` read as a pressable question — the affordance, not the mechanism | `app/globals.css`, `components/stops/*` |
+| **R2** | — | `?ask=<memory-id>` and the answer tail: the lowest-coverage neighbour as the next question | `lib/ask/*`, `components/chat/*`, `evals/` |
+| **R3** | — | This consolidation | `TASKS.md`, `DIRECTION.md`, `PLAN.md`, `README.md`, `SPEC-architecture.md` |
 
-## 38. Four sections show only prose above the fold — `doing`, agent L1
+**Finished this round, and their evidence is filed below rather than here:** L1 (38), L2
+(50 REOPENED), M1 (decisions 7 and 12), M2 (decision 11), M3 (the first consolidation),
+N1–N3 (answer defects, the twelve-stop re-measurement, the intro), P1 and P2 (the two panels),
+Q2 (interaction), Q3 (the thirteenth stop), Q4 (task 57's corpus draft).
 
-The design audit's Tier 1 finding, and the one thing on this list that costs MJK work. **At
-390x664 the readable band is 517px, and in the four sections that have something to show it was
-spent entirely on prose:**
-
-| § | panel | above the fold | what is lost |
-|---|---|---|---|
-| 02 engineering | 1067 | kicker, title, 8-line body | the whole aircraft figure and Replay |
-| 04 apac | 1386 | title, body, one era label | **every timeline row** — the best component on the site |
-| 05 rd350 | 1077 | kicker, title, 9-line body | **every photograph** — the only photography on the site |
-| 07 work | 1266 | one frame, cut by the dock | the result, the arrow, the caption, the pager |
-
-A prospect who opens §05 on a phone, reads the title and thumbs on **never sees that he rebuilt a
-motorcycle.**
-
-**The mechanism, found while measuring something else.** `app/globals.css:3256-3265` sets
-`order: 1` on `.content-zone` at the mobile breakpoint — **prose first, media second, on every
-stop, on every phone.** That single rule is what puts the aircraft, the timeline rows and the RD
-350 photographs below the fold. The desktop already alternates via `.media-zone.left` / `.right`,
-**so the machinery exists and is simply not used on mobile.**
-
-**So this may be cheaper than it is recorded as being: the lever is one declaration, not a
-rebuild.** It is still a per-section judgement, and **the flip has not been tested — screenshot it
-before believing it.** Any new stops should be media-first on mobile from the start, with an
-authored body of **2 to 4 lines, not 8**.
-
-> **CORRECTION to how this task was first framed: it is a fold problem, not a content problem.**
-> Scrolled 380–430px, the phone shows the full timeline, the complete MJK-101 figure with its specs
-> and Replay, the whole JewelAI figure with every label, and the RD 350 before/after with its
-> carousel — **all four good, two excellent.** §07 reads broken **at the fold**, which is exactly
-> where a routed answer and a shared link put a visitor. Still real, but it is a first-screen defect
-> per stop rather than a composition failure.
-
-**After the reorder it is worse in position, not in magnitude:** `apac` is now the third stop and
-still **1,386px tall, spilling 869px past the dock — 63% of the section below the fold at its own
-top.**
+**The rule that made this survivable.** Agents were killed by session limits at least six times
+this session. **Every one that had written a `## STATUS` checkpoint resumed from it with no lost
+work. The one that had not lost everything.** The checkpoint is the first action, before any
+reading, and it carries the numbers being relied on so a resumed run can verify nothing was
+lost — see rule 9 in "The rules this session paid for".
 
 ---
 
@@ -2488,7 +2545,7 @@ table; they are repeated here so this file is not misread as still waiting.
 |---|---|---|
 | 1 | **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame edge, and that is the photograph rather than the crop — `1.png` is the only left-side profile and the photographer stood too close | **ANSWERED 2026-09-06: "fine as they are."** Closed — stop waiting for a wider frame |
 | 2 | **The contact address.** A hotmail address and a pseudonymous GitHub handle are still the human contact for a Singapore AI consultancy | **ANSWERED: keep** |
-| 3 | **Links to the work.** JewelAI, MruNN-ERP and TallyBridge have no link, screenshot, repo or demo | **PART-ANSWERED: TallyBridge is public on GitHub**, a library he is still working on — find the URL and link it. JewelAI and MruNN still have none |
+| 3 | **Links to the work.** JewelAI, MruNN-ERP and TallyBridge have no link, screenshot, repo or demo | **CLOSED for TallyBridge — linked in `5bd17ec`.** JewelAI and MruNN still have none. Asanjo gets a screen recording rather than a link, deliberately: the live storefront is not his design |
 | 4 | **The Paxel report.** It borrows Y Combinator's name for authority, and its numbers are volume rather than outcomes | **ANSWERED: keep** |
 | 5 | **Whether to store visitors' questions** — lead capture | **ANSWERED: not needed.** Decision 7 removed the reason for it |
 | 6 | **Fonts.** Fraunces with Inter is flagged as a saturated pairing | **ANSWERED: left to me.** Still open as a design question in `DESIGN.md` |
@@ -2570,7 +2627,7 @@ viewport"*; the §02 figure sequence; the two-rule 2px radius system; the per-fr
 the §05 before/after. **And one addition from the vision pass: the scene's near trunks — the only
 part of the mobile scene that was still working before tasks 47/48.**
 
-## 57. The site itself as a piece of work — `open`, and it is the most checkable thing here
+## 57. The site itself as a piece of work — `spec'd`, and nothing in it is approved
 
 MJK: *"under work you can even have another section to talk about the website build itself which is
 also a showcase of what I can do right? this whole website including the neuron animation was built
@@ -2593,6 +2650,15 @@ the model is not allowed to choose the layout, that every number is checked agai
 corpus, and that a refusal is built from that corpus rather than from the model.** That is a
 capability claim with the evidence running underneath it. Task 56's closing paragraph is its honest
 brief.
+
+**Where it now stands.** Ten memories are drafted and **none are approved**; eighteen questions
+for MJK are written, of which the one that matters most cannot be answered by anyone else —
+*what did this build teach you that you now charge for?* Two placements are costed: `stopId:
+work` ships today because §04 is already an index, or a dedicated `site` stop, which touches
+`content/stops.ts`, `lib/mind/waypoints.ts`, the routing table, `stops.test.ts` and the reach
+floor. See "Task 57's corpus draft" under Research verdicts, and `DIRECTION.md` decision 17 —
+**which says the section demonstrates rather than describes**, and therefore that the ten
+memories are its licence and not its content.
 
 ## Font subsetting — `spec'd`, not taken
 
@@ -2626,6 +2692,20 @@ real find that library produced: **~35 kB off the critical path.**
   uncovered by it, and a growing media column is the same mechanism that was **measured moving the
   camera 431–554px.** Any new §07 figure state must be zero-delta by construction; **the property is
   a belt, not the defence.**
+- **The dock veil's fix moved the collision 44px, it did not remove it.** `aaec984` insets the
+  veil 44px above the dock's top edge so its feather has somewhere to go; verified, mean luma of
+  the dock's own top 44px **25.80 → 15.26 at 390x664** and **21.29 → 16.98 at 1440x900** — the
+  same rule, unconditional, so **desktop is not unchanged and saying it is would be false.**
+  `pointer-events: none` holds and there is no interaction regression. **But section bottom
+  padding still derives from `--dock-h` alone**, so at §11's own top on a phone the email address
+  renders at roughly half strength inside the feather. Derive the bottom clearance from
+  `--dock-h + 44`, or publish a `--veil-h`.
+- **The machinery fails contrast where the prose does not.** Card and dek type on `work`, `mrunn`
+  and `apac` runs 10–39% of its ink under 4.5:1, worst pixel **1.31** on the `mrunn` card title at
+  390x664. The halo protects `.section-body` and was never applied to the drawn tiles. See the
+  panel verdicts.
+- **`components/stops/JewelGates.tsx` is dead** (`knip`). `PLAN.md` §4.7 prices bringing it back:
+  **134px short at 1280x720** and rule-24 reach **29 → 27 against a floor of 29**.
 - **`detectTier` keys on pointer type and core count.** Written up, not changed — see the correction
   under tasks 47/48. Only a 2-in-1 in tablet mode takes the mobile path at desktop size, and the
   cost of being wrong collapsed when the mobile tier started outdrawing desktop at two stops.
@@ -2728,10 +2808,10 @@ memories are addressed by chips rather than cards.
 
 # The retraction ledger
 
-**Twenty-three entries below, and the summary that used to sit here said "four".** It was written
+**Twenty-nine entries below, and the summary that used to sit here said "four".** It was written
 when there were four and never updated as the table grew, which is the same defect this ledger
-exists to record — a stated figure drifting from the evidence under it. Count the rows, not the
-sentence. Most are corrections to my own claims rather than borrowed numbers. These are
+exists to record — a stated figure drifting from the evidence under it. **It has since happened
+twice more**, both in `DIRECTION.md`, and R25 records it. Count the rows, not the sentence. Most are corrections to my own claims rather than borrowed numbers. These are
 the most important entries in this file. Each correction also sits next to what it corrects in the
 task entry above; this table is the index.
 
@@ -2760,29 +2840,133 @@ task entry above; this table is the index.
 | R21 | **"The corpus does not license it" may be functioning as an excuse** (mine, recorded as assumption 8) | **The suspicion was wrong.** The advocate found **no evidence of a true, relevant fact withheld as an excuse**; `PLAN.md` §6.5 shows facts gated *pending* corpus entry, never silently dropped | The advocate |
 | R22 | **"Six HTTP 400 'Reasoning is mandatory' errors"** (retracted by the agent that found them) | They came from its own raw-REST harness; **through the project's real path 8/8 succeeded.** n=8 is too small to say the production path never hits it. The model lottery and `"User Safety: safe"` reproduce on both paths and stand | Task 56 |
 | R23 | **"Severe hero-title overflow at 390px"** (retracted by the advocate before reporting) | **A tooling artefact** — the CLI screenshot mode does not emulate the mobile viewport meta. Verified through CDP device emulation, with real `innerWidth`/`scrollWidth` matching and the font size matching the CSS clamp exactly | The advocate |
+| R24 | **"The routing table is 64 questions; the card gate covers 43; the corpus is 54 memories"** (mine, and repeated in briefs) | **77, 44 and 55**, measured 2026-09-06 by `route:eval`, by counting the four cardable sections, and by `grep -c "^- id:"`. All three were true when taken on 2026-09-05 and were then quoted as present-tense facts in this file, in `SPEC-architecture.md` twice, and in a sibling's brief. **§56's result is `48/64` _as it stood_, not a figure about today's table** | Task 56; `SPEC` §2.5 and §8.4 |
+| R25 | **"`DIRECTION.md`'s retraction ledger has thirteen rows"** (mine) | **Twelve.** The count included the table's own header row. It is the **second** wrong count in that one sentence — it said "four" before — and the **third** summary in this repo caught contradicting its own table, after this ledger's own header and `DIRECTION.md`'s "four retractions". **A count in prose above a table it is not derived from is an unsourced number with its source sitting underneath it** | `DIRECTION.md` header |
+| R26 | **"A pressable question beats a text box by one to two orders of magnitude"** (mine, in a brief) | **~4x to ~30x.** MIMICS-Click is **17.18%** (71,188 of 414,362) and MIMICS-ClickExplore **52.95%** (89,441 of 168,921) — but ClickExplore deliberately oversamples queries where multiple panes were shown, so it is the ceiling of a biased sample; and Google's People Also Ask measures the same mechanism at **~3%** (Backlinko via Ahrefs, method unstated). Against spontaneous typing at **0.5–0.84%** that is 3.6x to 34x. **And every one of those measures people who had already typed a query.** The mechanism is far better attested than any multiplier | Q2; the interaction verdicts |
+| R27 | **"The worst single glyph pixel anywhere is 9.00"** (recorded in `f4dccc8`) | **False at two scopes.** **8.04** inside `.section-body` at `origin`, and **1.31** if "anywhere" means the page's text — the `mrunn` card title at 390x664, which is the worst pixel on the site. The finding it belonged to replicates: direction and magnitude hold, with a systematic +0.5 from an aggregate definition. **It is the word "anywhere" that is wrong**, and it is wrong because authored prose was measured and the machinery was not | P2; task 39 |
+| R28 | **"The career rail is below the fold at 390x664, and exactly three stops are media-first"** (`content/stops.ts`, a source comment) | **Both halves false.** `71d612c` put the rail above the paragraph; and `apac` is media-first at 390x664 (rail top 265, paragraph top 987) through a dedicated `.panel[data-compose='timeline']` order block at `globals.css:3500-3531` — **a fourth media-first stop implemented outside `mediaFirstOf`.** A comment that describes a build the build no longer matches | Task 38 |
+| R29 | **"The dock veil is transparent — `background-color: rgba(0,0,0,0)`"** (a panel's own diagnosis) | **Wrong, and the commit that fixed the defect says so.** The veil was not transparent; **its own box was exactly the dock**, so the 44px feather meant to soften the section above had nowhere to go and the prompt chip sat **19px inside its own gradient**. `aaec984` insets it 44px above the dock's top edge. Verified: mean 8-bit luma of the dock's top 44px **25.80 → 15.26 at 390x664**, and — **say this rather than claiming desktop is untouched** — **21.29 → 16.98 at 1440x900**, same rule, unconditional. **One cost remains**: the collision moved up 44px, it did not go away, and section bottom padding still derives from `--dock-h` alone, so at §11's own top the email address renders at roughly half strength inside the feather. Fix: derive bottom clearance from `--dock-h + 44`, or publish a `--veil-h` | The standing list |
 
-**Two patterns worth naming, because both are structural rather than unlucky.**
+**Three patterns come out of these twenty-nine, all structural rather than unlucky** —
+*instrument and moment* (R12, R14, R16, R19, R20, R23), *numbers propagating through briefs*
+(R1, R2), and *a summary drifting from its own table* (R24, R25). They are stated once, with
+what they cost and what they now require, in the section immediately below. **They are not
+repeated here.**
 
-1. **Instrument and moment.** R12, R14, R16, R19, R20 and R23 are all measurements taken with the
-   wrong instrument or at the wrong moment. **Requiring every measurement to state its instrument
-   and its moment makes both visible at write time instead of in hindsight**, for one line per
-   measurement. That is now a rule of the method.
-2. **Numbers reaching agents through my briefs.** R1 and R2 both spread because I handed them to
-   sibling agents. **Every round must import one fact from outside the swarm** — a repo measurement,
-   a primary source actually read, or MJK.
+---
+
+# The rules this session paid for
+
+Nine lessons, each bought with something. They were scattered across commit messages, which is
+where a lesson goes to be forgotten, so they are collected here once with the measurement that
+produced them. **Nothing in this section is an opinion about how to work; every line has a cost
+attached and most have a commit.**
+
+**1. Verify against the thing you think you are measuring.**
+A four-hour-old server on port 3000 answered every request with HTTP 200 and HTML that rendered
+perfectly — every section, the canvas, the dock — while **every hashed chunk it referenced
+returned 500**. No client JavaScript ran, `data-stop` was never written, `--dock-h` was empty,
+and nothing on the page said so. It was reported as "`next dev` never hydrates", **it was
+neither a dev-server bug nor in this repository, and it cost four hours.** `npm run serve:check`
+exists because of it, and `dev` is pinned to 3001 so `start` on 3000 cannot shadow it. The cause
+is still **not established** — the obvious theory, that a rebuild strands a running `next start`,
+was tested and is wrong; it re-reads `.next` and self-heals. **The check detects the condition
+without claiming to diagnose it**, which is the honest shape for a check whose cause is unknown.
+`e4b57b0`.
+
+**2. A guard that deletes true content is worse than no guard.**
+Twice, and the second was worse because it printed. First: a four-digit year with a comma after
+it was read as a count, and the sentence carrying MJK's bachelors degree was removed from answers
+about his education. Second: `unitAt` stopped at the first comma, so it could not hear an **elided
+series** — English states the noun once, at the end — and the page printed **"Clips run , or
+fifteen seconds"**: two true numbers cut out of a true sentence with the punctuation left
+standing. Both were silent deletions of licensed fact. The fix left **26/26 grounding fixtures
+unchanged**, which is the bar: a guard change that moves a fixture is a different change.
+`46f4ca6`, `d193ecb`.
+
+**3. An unrecognised control is not a control.**
+`.mini-card` is a `<button aria-expanded>` that renders as content — **29 of them**, each a
+pressable question, none of which announces itself. The prompt chips are the same defect:
+computed background `rgba(0,0,0,0)`, `border: 0px none`, in body-text colour, beside a bordered
+Send button. The external evidence is two studies that say the same thing thirty years apart:
+NN/g measured enriched site-search suggestions used **7 times out of 60 — 11.7%** — with
+"mistaken for ads" among its four stated causes, and Benway & Lane 1998 (n=72) found **24%
+noticed non-ad banners**. **Every argument this site makes for pressable questions depends on the
+visitor recognising one.** Fix the affordance, not the mechanism.
+
+**4. Numbers propagate, and the coordinator is the vector.**
+R1 and R2 both spread because they were handed to sibling agents in briefs written by the person
+who had not checked them. The `5–15%` figure reached **three sibling reports and two places in
+this file** before anyone asked where it came from. A swarm briefed from one head does not
+produce independent agreement; it produces one opinion, repeated. **Every round must import one
+fact from outside the swarm** — a repo measurement, a primary source actually read, or MJK.
+
+**5. A summary drifts from its own table.**
+Three times in this repo, all of them about its own retraction counts. This ledger's header said
+"four numbers were retracted" above **23** rows. `DIRECTION.md` said "four retractions" above
+**12**, was corrected to "thirteen", and **that was wrong too** — it had counted the table's own
+header. **A count written in prose above a table it is not derived from is an unsourced number
+with its source sitting one line underneath it.** Recount before quoting; never carry a count
+forward from a previous draft. R24 and R25.
+
+**6. "It costs nothing to render" is a measurement, not an intuition.**
+The text halo was asserted to be free and was responsible for a **100ms p95 on mobile**. The
+budget rule that came out of it is stated in `PLAN.md` §2 and is worth memorising because it is
+counter-intuitive: **blur radius squared times area is what costs, and geometry is free** —
+measured at 375×812 with a figure in every stop at 4× CPU throttle, baseline p95 24.6ms, static
+SVG 24.9ms (inside noise), a looping `stroke-dashoffset` 25.5ms with the worst frame going 66ms
+to 92ms and framerate down 11%.
+
+**7. Every measurement states its instrument and its moment.**
+Six of the twenty-nine retractions — R12, R14, R16, R19, R20, R23 — are measurements taken with
+the wrong instrument or at the wrong moment, and **both of the judge panel's own retractions were
+of this class**: a focus measurement taken 160ms into a smooth scroll, and a contrast reading
+taken with the brightest pixel in a box. One line per measurement makes both visible at write
+time instead of in hindsight. **The corollary is what keeps costing:** a number recorded without
+its instrument gets copied. `127.6 → 92.2` was quoted flat, with no caveat, in **nine places**
+across this repo — including `PLAN.md`'s own §4.6, twelve lines below §4.5's retraction of it.
+The four in the documents were caveated on 2026-09-06; **five are still in source comments and
+one test** — `content/stops.ts`, `evals/tier-a/stops.test.ts`, `lib/mind/config.ts` and
+`lib/mind/waypoints.ts` — and belong to whoever owns those files. The pullback itself is sound
+and is now guaranteed by a test asserting the last stop is `contact`, which is a better
+guarantee than any luminance figure.
+
+**8. Disjoint files are not disjoint commits.**
+The git index is shared between every agent in the worktree. An agent editing files no sibling had
+touched **swept a sibling's staged work into its own commit**, because `git add` and `git commit`
+operate on the index, not on the agent's intent. **Always `git commit -F <msgfile> -- <paths>`**,
+with explicit paths — never `-a`, never a bare `git commit` after someone else may have staged.
+
+**9. The checkpoint file is what survives.**
+Agents were killed by session limits **at least six times** this session. **Every agent that had
+written a `## STATUS` block resumed from its checkpoint with no lost work. The one that had not
+lost everything.** So the checkpoint is the **first** action, before any reading — and it carries
+the numbers the run is relying on, so a resumed run can verify nothing was lost rather than
+trusting that it was not. The reports under `research/` are that protocol's output, and they are
+the reason this file can cite measurements taken by processes that no longer exist.
+
+**And one editing rule, which lives in `PLAN.md` §7 because that is where someone about to change
+a file will read it:** no `node -e`, no `perl -0pi -e`. Both have corrupted this repository by
+turning `\n` into a literal newline inside a string.
 
 ---
 
 # Research verdicts — the evidence behind the decisions
 
-Eleven agents across 2026-09-05 and 06. The full reports are in the session scratchpad under
-`research/`: `A-embedding.md`, `B-animated-flowcharts.md`, `C-architecture.md`, `D-intro.md`,
-`E-mobile-webgl.md`, `F-vision.md`, `G1-audiences.md`, `G2-branch.md`, `G3-thesis.md`,
-`G4-intro2.md`, `G5-loop-method.md`, `H-advocate.md`, `J1-lanes.md`, `J2-nav.md`,
-`J3-intent-gateway.md`, `K1-increment0.md`, `K2-reorder-audit.md`, `K3-reorder-impl.md`.
+**Thirty-five checkpoint reports, A through R**, in the session scratchpad under `research/` —
+`ls` it rather than trusting this count, which is the sort of number this file has been wrong
+about three times. The research rounds, in order: **A–H** (embedding, animated flowcharts,
+architecture, the intro, mobile WebGL, vision, the five G-series lenses, the advocate); **J–K**
+(lanes, nav, the intent gateway, increment 0, the reorder audit and its implementation); **L–M**
+(task 38, the fork, the voice gate, the instrument, the first consolidation); **N** (answer
+defects, the twelve-stop re-measurement, the intro); **P** (the two panels — human lenses and
+craft lenses); **Q** (the portrait, interaction, the thirteenth stop, task 57's corpus draft);
+**R** (card affordance, the answer URL and tail, this consolidation).
 
-**The checkpoint protocol earned its place.** The first four agents were each killed twice by
-process exits and both times resumed from their own checkpoint files with no lost work.
+**The checkpoint protocol earned its place, twice over.** The first four agents were each killed
+twice by process exits and both times resumed from their own checkpoint files with no lost work;
+across the whole session at least six agents were killed and every one that had a checkpoint
+resumed from it. See rule 9 above.
 
 The verdicts themselves are recorded against the tasks they decide, above. What follows is the
 evidence that does not belong to one task.
@@ -3112,6 +3296,298 @@ origin — card, chip, or typed. Nobody has published that split for any site.**
 MruNN-ERP anywhere in the corpus; any A/B or real-visitor data cited by the swarm for any decision;
 and any case where "the corpus does not license it" permanently blocked a true fact rather than gating
 it pending entry.
+
+## The two panels on the twelve-stop build — `done`, P1 and P2
+
+Two panels, six lenses, run against the same production standalone build and never averaged.
+**Instrument, stated once for everything below:** `npm run build`, then the standalone recipe —
+`npx next start` **fails on this repo** under `output: 'standalone'`; what works is
+`cp -r .next/static .next/standalone/.next/static`, `cp -r public .next/standalone/public`,
+then `PORT=<n> node server.js` from `.next/standalone`. `serve:check` clean on both servers
+before anything was measured. Playwright Chromium under SwiftShader, DPR 1,
+`prefers-reduced-motion: reduce` so the scene is static (verified: ≤0.14% of pixels change over
+400ms). **No frame-time number was taken on either**, because headless here has no GPU.
+
+### The geometry, and it is unusually clean
+
+| | 1440x900 | 390x664 |
+|---|---|---|
+| document | **10,800px = exactly 12 × 900.** Every stop is exactly one screenful | 13,058px = 19.67 screenfuls; stops run 664–1,691px |
+| `--dock-h` | **143px = 15.9% of the viewport**, identical at 1280x720, 1440x900 and 1920x1080, and identical across all twelve stops | **147px = 22.1%**, identical across all twelve |
+| chips | 4 on one row at every desktop width — §05's four-chip wrap is fixed | 1 below 768px |
+| `resume.pdf` | y=10,076 = **93.3% of scroll** | y=12,315 = screenful 18.55 = **94.3%** |
+| LinkedIn | y=10,180 = **94.3%** | y=12,460 = **95.4%** |
+
+**The first photograph of shipped work is at screenful 8.34 on a phone.** The two outbound links
+a recruiter wants are in the last 6% of the document. Both were scored as the currency the panel
+is most overdrawn on, and the recruiter lens scored the résumé placement **1** of 4.
+
+### Corpus reach without typing — the number rule 24 exists to move
+
+Instrument: fetch the server HTML, strip tags, test each of the 55 memory bodies' first and last
+50 characters against the stripped text.
+
+**12 memories present in full** (ten of them §02 timeline panels, server-rendered open) ·
+**19 partial**, cut at the card's 88 characters · **24 absent entirely**. **26,501 corpus
+characters, ~6,555 present = 24.7%.** Absent includes `career-overview`, `photoshoot-how-it-works`
+(1,213 chars), `engineering-what-stuck` (1,579), `jewelai-gates` (1,111), `jewelai-infrastructure`
+(957), `rd350-the-build` (988), `who-i-am` (546), `pivot-how-it-happened` (557).
+
+The mechanism is `components/stops/draw-rule.ts:143` — a card publishes `firstSentence(body)` hard
+cut to **88 characters** with a literal `…`, and the remainder never reaches the DOM. Its own
+comment argues the cut is a promise. **That promise is exactly what the non-asker lens exists to
+falsify, and it scored the mechanism 0 of 4.**
+
+### Contrast: the prose passes everywhere, the machinery does not
+
+**Authored prose has zero failing elements** at either viewport — `.section-body`, display and
+kickers all pass. The halo does its job. What fails is the drawn machinery, worst first, as a
+share of a glyph mask's ink under 4.5:1:
+
+| stop | element | % of ink under 4.5:1 | worst pixel |
+|---|---|---|---|
+| work | 18px "External assessment" | **39.08%** | 1.82 |
+| mrunn | 18px card title, 390x664 | 20.17% | **1.31 — the worst pixel on the site** |
+| work | 14px TallyBridge dek | 15.67% | 1.64 |
+| mrunn | 14px "An ERP you talk to:", 390x664 | 14.35% | — |
+| apac | 18px "Omnicom Group", 390x664 | 14.08% | 2.40 |
+| mrunn | 14px "built for Indian SMBs", 1440x900 | 12.15% | — |
+| apac | 17px "Krunch Labs" | 10.81% | — |
+
+That 1.31 is what retracted "the worst single glyph pixel anywhere is 9.00" (R27).
+
+### What the corpus is doing per stop, and where the hole is
+
+**55 memories, 44 cardable.** Per stop: `apac` 16, `work` 7, `jewelai` 7, `now` 5, `origin` 4,
+`asanjo` 4, `engineering` 4, `mrunn` 2, `pivot` 2, `rd350` 2, `contact` 2, `hero` 0.
+**MruNN got a whole stop for two memories.** Rule-24 reach **29 of 55** against a floor of 29:
+`origin` 0 of 4, `pivot` 0 of 2, `rd350` 0 of 2, `apac` 7 of 16.
+
+**Vertical slack, which is what decides whether anything can be added:** `jewelai` **11px** at
+1280x720, 160px at 1440x900, 286px at 1920x1080; `mrunn` 46 / 184 / 432. §07 is the one place on
+the spine with room, and it is the wrong tenant for another project's diagram.
+
+**Content sitting under the dock at each stop's own top** — the position a routed flight lands on
+— at 390x664: `asanjo` 9 elements, `apac` 6, `now` 4, `work` 4, `contact` 4 (including the email
+address), `jewelai` 3, `rd350` 3, `mrunn` 1. At 1280x720: `hero` 1, `jewelai` 1.
+
+**Two composition findings worth more than their size.** `jewelai`'s three reference photographs
+render **50x50 px at 390x664** (80x76 at 1440) — that is the evidence for the site's strongest
+technical claim. And `asanjo` at 390x664 shows **only the generated catalogue frame** at the
+stop's own top; the supplier photograph, the arrow and the labels are below or under the dock, so
+a headline that promises IN → OUT lands on a frame showing only OUT.
+
+### Hygiene, tooling and one panel correcting itself
+
+- 17 test files, **390 tests, all pass.** Build exit 0. `serve:check` clean.
+- `knip`: **`components/stops/JewelGates.tsx` is an unused file.** Confirmed dead. See
+  `PLAN.md` §4.7 for what it costs to un-dead it.
+- **A private individual's name was present in this file four times and in `DIRECTION.md` once** —
+  the prohibition on publishing it had been written *by quoting it*. Not in `content/`, not
+  served (the Dockerfile copies `public`, `.next` and `content` only) — **but this repository is
+  public on GitHub, so a push would have published it.** Removed in `7eb4bff`. **Write a
+  prohibition without the thing it prohibits.**
+- The intro gate's guard is **better than the brief that specified it**:
+  `INTRO_NEEDS_FORCING = PORTRAIT.placeholder` compiles `if (true && !f) return;` into the
+  pre-paint decision script, so the synthetic head cannot reach a visitor without `?intro=1`. The
+  `console.warn` in `IntroGate.tsx` is the second belt, not the guard.
+- **A panel correcting its own first read, which is the behaviour the method is for.** §08's
+  figure was nearly logged as an unreadable dot cloud; it is a `stroke-dashoffset` draw-on,
+  **judged at ~1.6s.** At settle it is a clean single-stroke airliner with WINGSPAN 110 FT /
+  LENGTH 97 FT / RANGE 4112 NM, a REPLAY control and a second two-stroke-twin phase.
+
+## Getting an answer without typing — `done`, Q2, and it produced two builds
+
+**The question:** what makes someone ask, and what can carry an answer without a keyboard.
+**The finding that governs the rest:** every ask-provoking mechanism is itself content on the
+page, and this page has no room — repo-measured slack **§03 −18.1px at 1280x720, §04 −74.5px,
+hero 0.0px at 390x664**, with `.panel { overflow: hidden }` above 900px **destroying** the excess
+rather than scrolling it. So the operational line is not "more interactivity" but:
+
+> **FREE** — convert an existing element into a control; put an affordance inside an element's
+> existing box; give an existing element a URL; change a string.
+> **COSTED**, only against a measured pixel budget — anything that adds a row, list or panel.
+> **FORBIDDEN** — anything laid over the scene or the words. That kills popups, tooltips,
+> overlays and modals, and `DESIGN.md` has already rejected a scrim twice.
+
+**The paradox dissolves in rule 24's own words**, which the repo had already written without
+noticing: existence and evidence on the page — title plus first sentence, under the memory's own
+id — and *composition* in the answer. So **more interactivity means the same content made
+addressable, not more content.** `AskCard` already proves it: zero elements, zero pixels, 29
+paragraphs converted into 29 questions.
+
+**The evidence, with its caveats attached** (see R26 for what was retracted from it):
+
+| claim | strength |
+|---|---|
+| A pressable question beats a text box | **VERIFIED, magnitude softened to ~4x–30x.** MIMICS-Click **17.18%** (71,188/414,362); MIMICS-ClickExplore **52.95%** (89,441/168,921, an exploration set that oversamples multi-pane queries); Google PAA **~3%** (method unstated); spontaneous typing **0.5–0.84%**. **All of MIMICS measures people who had already typed a query** |
+| Norms plus affordances raise question-asking | arXiv 2601.16040 (Jan 2026 preprint, n=2,282, synthetic platform): posts containing a question **52% control → 74.7% norms → 79% norms+affordances**, odds ratios 5.6x and 7.7x. **Magnitude does not transfer**; the shape does — the two levers are a cheap control and a signal that asking is what happens here. **This site has the first in quantity and almost none of the second** |
+| An unnoticed control is not a control | NN/g **7 of 60 = 11.7%**; Benway & Lane 1998 n=72, **24% noticed non-ad banners**. The dock is 147px of a 664px phone, in the exact position browsers have trained people to ignore |
+| Hover/focus reveals | **REJECTED.** Wikipedia Page Previews is the only exemplar with published A/B data and it cuts navigation — **pageviews fell 3.0% de-wiki, 4.7% en-wiki** after rollout. A popup over the scene is a scrim by another name, and hover-only is High severity against a 390x664 target |
+
+**Honest nulls, stated rather than filled in:** placeholder wording → ask rate (nothing);
+`Cmd-K` badges → input usage (nothing); follow-up suggestions → second-question rate (nothing —
+Perplexity, ChatGPT and Bing all ship it and none publish); showing a previous answer →
+next-question rate (nothing).
+
+**Rejected numbers, all the same shape as the retracted 5–15%:** "personalised chatbot greetings
+drive 25–30% higher engagement" (vendor blog, no method); "30–50% of ecommerce visitors use site
+search" (five vendors citing each other and an unlinked Forrester — and it **contradicts** this
+project's own 0.5% GA4-demo-store anchor); "searchers convert at 4.63% vs 2.77%" (same chain, and
+it is selection bias).
+
+**The answer tail, and nine tenths of it was already built.** `envelope.cards` is up to three
+memories from the landed stop, chosen deterministically at t≈15ms, drawn only when
+`compose === 'plain'` as inert `<li>`s that **already carry `id={card-<memory-id>}`**. But those
+are the *top-cited* neighbours — the memories the model most likely used — so offering one as
+"next" offers a question just answered, which is the same echo bug `AnswerBlock` has already
+fixed twice. **The selector that picks the right one also already exists:** `dekFor()` scores
+every licensed memory by **coverage** — the fraction of the finished answer's sentences it
+accounts for, with `DEK_BAR = 0.5` — on the finished text, at the moment the envelope is
+rewritten. Point it at the other end of its range:
+
+> **The tail is the retrieved memory on this stop with the LOWEST coverage in the finished
+> answer** — the neighbour the retriever surfaced and the answer did not draw on — broken by
+> retrieval rank. **One question, not three.** Inside the answer, last line, the answer's own
+> muted type. `plain` stops only, because everywhere else the un-used neighbour is already a
+> pressable card. **Falsifier: the `depth` counter (asks ≥ 2). If depth does not move, the tail
+> is decoration and it comes out.**
+
+The model's output is an *input* to that scoring; the scoring and the selection stay the server's.
+The model still has no layout authority.
+
+**Ranked, by (evidence × leverage) / (pixels + risk), and the first three are in flight:**
+**(1)** make the shipped card *look* pressable — CSS only, and the whole MIMICS argument depends
+on it; falsifier: the `origin=card` share does not rise. **(2)** `?ask=<memory-id>` — answers
+become forwardable, and the card becomes an anchor, which is the cheapest possible version of (1);
+**constrain to known memory ids, never free text** — a URL that injects arbitrary text into a
+prompt is the same hazard `lib/security/schema.ts` exists to refuse, from outside. **(3)** the
+answer tail. **(4)** placeholder from description to demonstration — "Ask the mind." names the
+machinery and `DESIGN.md` says the machinery recedes; **static, not rotating**, because
+`SuggestedPrompts` records two objections to a rotating placeholder and both still hold.
+**(5)** one hotspot on `MJK101Figure`. **(6)** chips send in one action as cards do.
+**(7)** draw the ~25 undrawn memories — **not an interaction change; it is the *supply* of
+pressable questions**, and it is the SEO fix, the JS-off fix and the ask mechanism at once.
+**(8)** node-click on the three.js mind — the most differentiated thing available and the most
+expensive; only after 1–3 have produced a number.
+
+**Rejected with reasons:** scroll-triggered answers (an answer that arrives because you scrolled
+is content, and it destroys the one signal the answer surface carries — plus it corrupts
+asks/views in the instrument); "what others asked" (it is the only mechanism that carries a
+*norm* rather than a vocabulary, **and** it reverses a privacy policy this project has already
+had to correct twice; `counters.ts` stores no visitor string by design — get the norm from copy);
+a `Cmd-K` badge (chrome, duplicates Send, zero evidence); an FAQ accordion (the cards already are
+inline disclosure); three or four related questions (height, and engagement concentrates on the
+first).
+
+**One place the line falls the other way, and it is a "do not".** The `plain` story stops draw no
+cards and they are the most beautiful part of the page. A card row there would buy four pressable
+questions each at the cost of the exact thing `DESIGN.md` protects. **Do not.** Their questions
+live in the chips, on height already paid for.
+
+## The thirteenth stop, priced and refused — `done`, Q3; the decision is `DIRECTION.md` 16
+
+MJK: could the workflow chart be a section on how we build systems, as its own node?
+
+**The corpus licenses the claim and not the drawing, and those are different things.**
+**Sixteen clauses across nine memories on six stops** support a "how I build" paragraph, four of
+them the same fact at four altitudes — **the engagement can be refused** (`contact-how-it-starts`),
+**the agent can be halted** (`how-i-work-with-agents`), **the pipeline can refuse to run**
+(`jewelai-gates`), **the data change can be blocked pending a human** (`mrunn-approval-gate`).
+Nothing on the site puts those four together and together they are a genuinely good claim.
+**But there is no memory that describes his method as a method across projects**; the
+generalisation is inferable from the set and asserted nowhere, so a thirteenth stop built today
+would have an honest body and an **invented** figure.
+
+**The shape is what differs, and that settles it.** Exits on the lane: **JewelAI 3** (halt and ask
+a person, refuse outright, one bounded retry), **Asanjo 2** (a spend gate, a scored critic at
+**7 of 10**, exactly one more attempt, 55 failures kept), **MruNN 1** (a human sign-off).
+Generalise and you delete every column that differs — and every column that differs is a
+consequence. What is left is `check → generate → judge → out`: **four noun phrases in boxes**,
+which is word for word the reason task 23's first answer was rejected and the reason `PLAN.md`
+§4.1 withdrew the unit chart. The three-way comparison **is** a good figure — nine rows by three
+columns with the interesting content in the holes — but it is a page, not a screenful, and its
+third column has one filled cell.
+
+**What a thirteenth stop costs, measured:**
+
+| cost | evidence |
+|---|---|
+| **Seed re-roll** | `scene.ts:373` `mulberry32(0x5eed ^ M)`; `M = waypoints.length`. Every filament, midground cluster and dust mote re-rolls, invalidating every screenshot-derived number in all four documents — **which a panel had re-taken the day before**. The *spine* `S[0..11]` is bit-identical at n=12 and n=13; only the secondary field moves, so "the whole scene moves" would be wrong |
+| **Three hard test failures** | `stops.test.ts:56` `toHaveLength(12)`; `:66` `toEqual([0…11])`; `waypoints.test.ts:132` `(820*(STOPS.length-1))/8 === 1127.5` → 1230 |
+| **Alternation regression** | Thirteen is odd, so `contact` lands on index 12 — **the same rail as `hero`**, which is the exact defect the twelve-stop migration removed |
+| **Kicker renumber** | Eight `§ NN` strings in two places each, asserted by the kicker/index agreement test |
+| **Attention** | A media-first project-shaped stop is ~1,150–1,250px: **+9% document height**, pushing `resume.pdf` and LinkedIn — already at 94.3% and 95.4% of scroll — further down |
+| **Not a blocker** | far network at n=13 is camera z ≈ −136, inside the comfortable-to-14 range; `flight.ts`'s clamp derives from `STOPS.length` and only a test constant changes |
+
+**And the killer nobody had named: the stop would have no corpus.** `lib/retrieve.ts:827` votes
+by `hit.memory.stopId`, and `check-corpus.ts:523` requires every memory to carry **exactly one**
+`stopId`. **A stop with no memories can never win a vote.** So it must be fed by *moving*
+memories, and every candidate is load-bearing: moving `how-i-work-with-agents` off `now` costs
+§03 its best capability memory and two routing rows; `jewelai-gates` off `jewelai` unlicenses
+§06's own body; `photoshoot-how-it-works` off `asanjo` unlicenses §05's; `mrunn-approval-gate`
+off `mrunn` drops that stop to **one** memory. **So it is not blocked on design. It is blocked on
+MJK writing two to four new memories about his method, in his own voice** — which is a real and
+achievable path, and the honest thing to tell him.
+
+**And it reopens a standing decision.** Task 46: *"the extension point is a tile, not a chapter."*
+A method stop is a chapter. Granting this one grants the next one.
+
+**Verdict, ranked.** (1) **A route** — `DIRECTION.md` decision 2 already says `/work/jewelai`;
+zero stops, zero re-roll, zero renumber, unbounded height, rule 24 satisfied by construction, and
+all three diagrams fit with MruNN as one honest row instead of a hole. **This is what the owner
+is asking for, at a tenth of the price he offered to pay.** (2) **`JewelGates` into §06**, under
+the three conditions and the two costs in `PLAN.md` §4.7. (3) **The claim into §03 `now`'s
+paragraph** — the cheapest true win here is one licensed clause, *"I treat delivery as a gated
+system"*, which is third-party attested and currently visible only as an 88-character card cut.
+(4) A figure state on §04's index — **no**: no room, and task 24 deleted the figure state machine
+precisely because one box arbitrating between four projects meant each could only be shown by
+hiding the others. (5) Its own stop — **no, on today's corpus.**
+
+**One correction the agent made to its own first read**, kept because it is the interesting part:
+it initially scored the four-altitudes observation as the shape that rescues a general diagram.
+**It is not** — four independent binaries stacked is a list with icons on it, not a branch. It
+survives as the best *sentence* in the report, which is where it belongs.
+
+## Task 57's corpus draft — `done`, Q4; nothing in it is approved
+
+**Ten memories drafted, eighteen questions for MJK, and a per-item provenance table** saying
+whose record each claim is. The drafts live in the scratchpad and **must not be merged into
+`content/memories.yaml` until MJK has read the line and said yes.** Every number in them was
+re-taken on 2026-09-06 rather than copied — which is how R24 was found.
+
+**The two structural cautions are worth more than the drafts.**
+
+**First, provenance.** He typed 63 messages in the session and queued 42 more; almost everything
+else in it was written by an agent. **A memory in the first person that an agent wrote is a
+fabrication with good intentions.** So each draft is flagged HIS or MINE, and the strongest
+material is consistently the part that is *his*: *"it shouldn't make up stuff and it shouldn't
+act like a machine to the user"* is better provenance for the guard than any description of the
+guard. The fallback that apologised for itself — serving his own account of the cockpit at nine
+years old under a heading calling it a substitute for something better — is **his finding**, and
+`lib/fallback.ts` records that he found it.
+
+**Second, and this is the brief for the whole task:** ten memories of prose about the machinery
+**describe** the machinery, which is what every RAG demo does. Task 56's closing line already
+said it — *"none of this is VISIBLE. Every decision hiding it is right for a visitor and wrong
+for an evaluator, and the site does not distinguish the two."* **The version that works shows the
+mechanism operating** — the route the question took, the memories that licensed the answer, what
+the guard did to it. **The corpus entries are the licence for the words. They are not the case
+study.** That is `DIRECTION.md` decision 17.
+
+**Two live hazards in the drafts, both about numbers that move.** Any body quoting 390 tests, 77
+routing questions or 29-of-55 reach **goes stale silently on the next push**; either drop the
+count or wire `check-corpus`'s output to a test that fails when the corpus text disagrees with
+it. And `cards.test.ts` is **all-or-nothing over every cardable memory**, so ten new titles at
+once will go red on a collision — **add them in twos and threes and run `npm test` between.**
+
+**What was deliberately not drafted, and why:** a "built with a swarm, a judging panel and loop
+engineering" memory (his own vocabulary, but `how-i-work-with-agents` is third-party-measured by
+Paxel and a self-reported second version would weaken it); any commit or line count for this
+build (`paxel-numbers` already carries third-party volume figures, and a self-reported one
+invites the comparison); "eleven agents ran research across two days" (a process fact about the
+agent, not an outcome for him); and a "this is not a chatbot" line (task 56: true and verifiable,
+but it does not carry the argument, and asserting it is the register he asked us to avoid).
 
 ## Corrections to `PLAN.md`, found while measuring something else
 
