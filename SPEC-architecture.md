@@ -23,6 +23,31 @@ Read §2 before writing any code. Six of its eight traps fail **silently**.
 > Note also that the third project stop is **`asanjo`**, not `apparel` — the apparel imagery
 > and the Shopify storefront are one engagement for one named client.
 >
+> **THE MIGRATION SHIPPED, 2026-09-06.** `1fd2ca4`, `195663c`, `b5659c4`, `30552e6`,
+> `50c7d2e`. §1.2's table below is the *plan*; this is the *build*, and it differs in the id
+> column and in every kicker:
+>
+> | i | id | kicker | i | id | kicker |
+> |---|---|---|---|---|---|
+> | 0 | `hero` | `MATHEW JOHN KONDEKERIL · SINGAPORE` | 6 | `jewelai` | `§ 06 — JewelAI Studio` |
+> | 1 | `origin` | `§ 01 — Origin` | 7 | `mrunn` | `§ 07 — MruNN-ERP` |
+> | 2 | `apac` | `§ 02 — The career` | 8 | `engineering` | `§ 08 — Engineering` |
+> | 3 | `now` | `§ 03 — Now` | 9 | `pivot` | `§ 09 — Pivot` |
+> | 4 | `work` | `§ 04 — Selected work` | 10 | `rd350` | `§ 10 — The RD 350` |
+> | 5 | `asanjo` | `§ 05 — Asanjo` | 11 | `contact` | `§ 11 — Brief me` |
+>
+> So **the index is §04, not §07**, and **the three project stops are §05, §06 and §07**.
+> Wherever this file says "§07 the index", "§08 JewelAI", "§09 the photoshoot pipeline",
+> "§10 MruNN" or "§11 contact", read the table above. **The two routes were not built.**
+>
+> **EVERY ROUTING AND CARD DENOMINATOR IN THIS FILE IS DATED 2026-09-05.** The table was
+> **64 rows** and the card gate covered **43** cardable memories of a **54**-memory corpus. It is
+> **77 rows / 164 authored aliases**, **44** cards and **55** memories today (`route:eval`,
+> `grep -c "^- id:"`, 2026-09-06). Every `n=64` and `n=43` arithmetic below — six misses, six
+> hedges, `5/64`, `40/43` — is the arithmetic of that day and is correct for it. **Re-run the
+> script before quoting any of it as a fact about the repository now.** Three of these figures
+> were quoted stale across three documents at once; `TASKS.md` R24 is the record.
+>
 > **Everything else in this file stands**: the traps in §2, the increment order in §3, the
 > routing-vote measurement in §2.5, and the gap list in §5. Only the sequence of stop ids has
 > moved.
@@ -41,8 +66,11 @@ Read §2 before writing any code. Six of its eight traps fail **silently**.
 | 8 | What is NOT verified | done |
 | 9 | How the measurements in this spec were taken | done |
 
-This file is assembled from `spec-parts/*.md` in the same directory (`cat spec-parts/*.md >
-SPEC-architecture.md`). Edit the parts, not this file.
+~~This file is assembled from `spec-parts/*.md` (`cat spec-parts/*.md > SPEC-architecture.md`).
+Edit the parts, not this file.~~ **`spec-parts/` does not exist** — not on disk, not in
+`git ls-files`. It was a scratchpad directory that was never committed, so the instruction
+sends anyone who follows it to edit files that are not there, or to regenerate this one from
+nothing. **Edit this file directly.**
 
 ---
 
@@ -160,7 +188,7 @@ Quick index, with what happens if you miss it:
 | # | trap | fails how | cost of missing it |
 |---|---|---|---|
 | 2.1 | `mulberry32(0x5eed ^ M)` re-rolls the whole field | silent | every screenshot number in `PLAN.md` / `TASKS.md` is quietly false |
-| 2.2 | `V[8]`'s pullback is on the LAST NODE | silent | §11 reverts to the pale frame; luminance 92.2 → 127.6 |
+| 2.2 | `V[8]`'s pullback is on the LAST NODE | silent | the last stop reverts to the pale frame. **The 92.2 → 127.6 pair does not reproduce — see §2.2** |
 | 2.3 | `scene.ts:162` hard-codes `buildWaypoints(9)` | silent | 12 sections mapped onto 8 camera segments; no pulse past stop 8 |
 | 2.4 | `lib/flight.ts`'s 820ms clamp is saturated | silent | the longest flight tears at 2.67x the stated threshold |
 | 2.5 | the routing vote splits four ways | **loud** (CI) | the highest-risk item. Measured in detail below |
@@ -200,7 +228,7 @@ measurements of a scene that no longer exists. Do not carry them forward; re-tak
 
 | number | where it is quoted | what it measured |
 |---|---|---|
-| `contact` whole-frame luminance **127.6 → 92.2** | `waypoints.ts:57-73`, PLAN §4.5, C-arch §3.1 | the terminal-pullback fix. **Re-measure on §11, not §08** |
+| `contact` whole-frame luminance **127.6 → 92.2** | `waypoints.ts:57-73`, PLAN §4.5, C-arch §3.1 | the terminal-pullback fix. **Re-measured, and the scale does not reproduce** — see §2.2 |
 | far-node frustum coverage **3.4% / 10.6% / 15.5% / 37.8%** | PLAN | how much of `far-network.json` is on screen per tier |
 | **10.79:1 p95 halo contrast** on the pixels body text sits on, worst of six animated frames | TASKS 39 "what to protect" | the single strongest accessibility claim on the site. It is a claim about the *scene behind the glyphs*, and the scene changed |
 | bright-pixel coverage **−71% median / −50% worst frame** at 1440x900; **−58% median, −24% mean luminance** on a phone | TASKS 29 | the near-falloff fix |
@@ -237,9 +265,19 @@ on first request: every frame empty at 2.5s, all eight decoded at 9s.
 
 The condition is `i === n - 1`. It is positional. It has never known the word `contact`.
 
-That pullback is the fix that took the last screen's whole-frame luminance from 127.6 to
-92.2 and stopped it reading as a different website — the one screen a visitor is asked to act
-on.
+That pullback is the fix that stopped the last screen reading as a different website — the
+one screen a visitor is asked to act on.
+
+**The number it was recorded with is retracted as a scale, not as a direction.** The
+`127.6 → 92.2` pair was taken on an instrument nobody has been able to reproduce; a later
+instrument reads the same stop at **22.3 desktop / 27.8 phone**, and the twelve-stop re-take
+reads **`contact` 24.5 against `rd350` 38.8**, fourth-darkest of twelve. The pullback
+followed the stop when it moved from `V[8]` to `V[11]`, and a test now asserts that the last
+stop is `contact` — which is a better guarantee than any luminance figure. **Do not quote
+92.2 against a different instrument.** It is quoted flat, with no caveat, in nine places
+across this repo, including three in this file and one in `PLAN.md` twelve lines below
+`PLAN.md`'s own caveat. That is how a retracted number survives: not by being defended, but
+by being copied.
 
 **The rule, and it is absolute:**
 
@@ -342,9 +380,12 @@ ways and both the winner and the share change.
 
 ### What CI actually gates — and it is not what the research said
 
-Three assertions in `evals/tier-a/routing.test.ts`, over a table of **64 rows** (the research
-said 72 and 11 `work` rows; the file has **64 rows and 10** `work` rows — count them before
-quoting either number):
+Three assertions in `evals/tier-a/routing.test.ts`, over a table of **64 rows as counted on
+2026-09-05** (the research said 72 and 11 `work` rows; the file had **64 rows and 10** `work`
+rows — count them before quoting either number). **It is 77 rows and 164 authored aliases
+today**; every `n=64` arithmetic below is the arithmetic of that day, and the ratios it
+computes — six misses, six hedges — scale with the table. Re-run `npm run route:eval`, which
+prints the count on its first line, before quoting any of it:
 
 1. `accuracy >= MIN_ACCURACY (0.9)` — at n=64 that allows **6 misses**.
 2. **`hedged / 64 <= 0.1`** — correctly-routed-but-unconfident. At n=64 that allows **6
@@ -362,7 +403,8 @@ suite fails on a different assertion entirely.
 
 `MIN_ACCURACY` allows six misses. These allow none.
 
-4. **`evals/tier-a/cards.test.ts`** — for every one of the 43 cardable memories,
+4. **`evals/tier-a/cards.test.ts`** — for every one of the 43 cardable memories *as the
+   corpus stood* (**44 today, of 55**),
    `retrieve(cardQuestion(m.title), { viewing: m.stopId }).stopId` must equal `m.stopId`,
    **and** `hits[0].memory.id` must equal `m.id`. A card is a control; the test asserts the
    promise it makes. Empty-array assertion, no tolerance.
@@ -713,8 +755,9 @@ that is expected.
 - `stops.test.ts` — four assertions, all mechanical.
 - `routing.test.ts` — measured at **64/64 accuracy and 5/64 hedged (cap 6)** with three
   re-expectations, and **5/76 (cap 7.6)** once the twelve new rows are added. §2.5.
-- `cards.test.ts` — measured green on all 43 cards under the full split. **Run it; it is the
-  gate that decided the split.**
+- `cards.test.ts` — measured green on all 43 cards under the full split, at the corpus of
+  2026-09-05. **44 cards today.** **Run it; it is the gate that decided the split**, and it is
+  all-or-nothing, so a green from last week is not a green.
 - `voice.test.ts` — needs the new prompt sets or it fails on coverage and routing.
 - `claims.test.ts` — scans the three new bodies. §4 is written to pass it; verify rather than
   assume, because the `MAGNITUDE` scan is blunt on purpose.
@@ -1678,9 +1721,12 @@ What that is good for and what it is not:
 
 Small, but they are the kind of thing that gets quoted:
 
-- `evals/tier-a/routing-table.ts` has **64 rows, of which 10 expect `work`** — not 72 and 11.
-  Counted in the file. It matters because `MIN_ACCURACY = 0.9` at 64 rows allows six misses,
-  and the hedge cap allows six hedges, and this spec spends five of them.
+- `evals/tier-a/routing-table.ts` had **64 rows, of which 10 expect `work`** — not 72 and 11.
+  Counted in the file on 2026-09-05. It mattered because `MIN_ACCURACY = 0.9` at 64 rows
+  allows six misses, and the hedge cap allows six hedges, and this spec spends five of them.
+  **The table is 77 rows today** (`route:eval`, 2026-09-06), so both allowances are larger and
+  the five hedges this spec spends are a smaller share. **The correction in this bullet is
+  itself now a dated count** — which is the whole lesson of the bullet, applied to itself.
 - The research's load-bearing grep list misses two files that **fail loudly** on a stop-count
   change: `scripts/check-corpus.ts:51` (`SECTIONS_FOR_STOP` is a
   `Record<Exclude<StopId,'hero'>, …>`, so `npm run typecheck` fails until the three new stops
