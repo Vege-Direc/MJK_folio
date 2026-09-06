@@ -1416,7 +1416,13 @@ html[data-flying] .answer-layer-in {
 .work-index {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  /*
+   * 18px, not the 22px a card row uses, and the difference is a measured 12px across the
+   * three intervals this column has. At 1280x720 the band is about 577px and the grid came
+   * in at 691 before the seventh card was dropped; every interval in here is spent twice,
+   * once between the chapter row and the cards and once between each pair of card rows.
+   */
+  gap: 18px;
   width: 100%;
 }
 
@@ -1449,7 +1455,7 @@ html[data-flying] .answer-layer-in {
 .wi-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  gap: 18px 22px;
 }
 
 /* ── timeline ──────────────────────────────────────────────────────────────── */
@@ -3438,6 +3444,72 @@ html[data-flying] .answer-layer-in {
   }
 
   .panel[data-compose='timeline'] .section-body-wrap {
+    order: 4;
+    /* The gap the container gave up, restored on the one edge that still wants it. */
+    margin-top: 26px;
+  }
+
+  /*
+   * ── The same move, opted into by stop: media above the paragraph ─────────────
+   *
+   * `.content-zone { order: 1 }` above puts prose first on every stop on every phone, and
+   * that one pair of declarations is why the aircraft, the career rail and the RD 350
+   * photographs are all below the fold at 390x664. The three project stops do not inherit
+   * it: they are the stops whose whole argument is a picture, and a visitor scrolling flat
+   * out has to meet the supplier-to-catalogue pair, the ring pipeline and the ERP cards
+   * rather than three paragraphs about them.
+   *
+   * THE NAIVE FLIP IS NOT WHAT THIS DOES, and that is the whole reason it is written this
+   * way. `[data-media-first] .content-zone { order: 2 }` is one declaration and it was
+   * screenshotted on §02: it shows the media and NO kicker, NO title and NO body, because
+   * the three of them are inside one box that moved as a unit. The § address is the one
+   * thing DESIGN.md defends the kicker for — "the visitor has to know where they just
+   * landed" — and a flip deletes it from the screen.
+   *
+   * So the four parts are ordered individually, exactly as the rail above them already
+   * proved: the address, then the title that says what this is, then the evidence, then
+   * the detail. `display: contents` is how the body gets past the media without a second
+   * DOM; the desktop is a two-column grid with `grid-template-rows: 100%` where a third
+   * child would open an implicit row, and dissolving the box only for the width at which
+   * it is a stacked column touches nothing above 900px.
+   *
+   * `.section-body-wrap` stays whole, and that is not tidiness. It carries the authored
+   * paragraph AND `#answer-<stop>`, and an answer replaces the paragraph in place — split
+   * them and SHOW ORIGINAL would restore a paragraph a screenful away from the answer that
+   * hid it. So a routed answer docks below the media on these three stops.
+   *
+   * Keyed on an attribute the stop opts into rather than on `data-compose`, because this
+   * is a composition judgement per section and not a property of a compose kind: `cards`
+   * is `mrunn`'s kind and also `now`'s, and `now` has not been screenshotted this way.
+   * Setting a fourth stop is one field in content/stops.ts plus one screenshot. Do not set
+   * one without the screenshot.
+   */
+  .panel[data-media-first] .section-inner {
+    /*
+     * Zero, and the intervals come back as the elements' own margins — the kicker's 14px
+     * and the title's 22px, which are the authored ones. Left at 26px the gap is added to
+     * both of those and costs 52px, which on §05 is a fifth of the photograph.
+     */
+    gap: 0;
+  }
+
+  .panel[data-media-first] .content-zone {
+    display: contents;
+  }
+
+  .panel[data-media-first] .section-kicker {
+    order: 1;
+  }
+
+  .panel[data-media-first] .section-title {
+    order: 2;
+  }
+
+  .panel[data-media-first] .media-zone {
+    order: 3;
+  }
+
+  .panel[data-media-first] .section-body-wrap {
     order: 4;
     /* The gap the container gave up, restored on the one edge that still wants it. */
     margin-top: 26px;
