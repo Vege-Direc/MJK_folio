@@ -21,12 +21,16 @@ how this project has already retracted four numbers.
 | 4 | **The scroll carries existence AND evidence.** Withhold biography depth and work depth only | Never withhold a project, artefact, role, year or title |
 | 5 | **Ship the hero sentence now** — promote the imperative, drop "scroll first, ask second" | One string. The site's own copy trains the behaviour we are fighting |
 | 6 | **Build eager scene loading first.** Then decide the gate | Without it the gate lifts onto an empty canvas at 4.6s on Fast 3G |
-| 7 | **Voice: "I do not know that one, and I am not going to guess."** Never a promise | A commitment is the one falsehood class the guard cannot check |
+| 7 | ~~Voice~~ **DONE — `97c7752`, `4a5e084`, `76d3425`.** *"I do not know that one, and I am not going to guess. It is better put to me directly."* | `topical:false` was serving THREE reasons with one rebuke — "do you know Rust?" got "Not my lane". Split. Plus a promise guard, proven by breaking it |
 | 8 | ~~Finish the phone~~ **DONE, 8 commits.** Bloom won the fork; composer stays | Hero **3.16% → 8.84%**, contact **6.10% → 23.35%**. Mobile now exceeds desktop at both |
 | 9 | **Asanjo as one engagement** — storefront and the catalogue imagery that fills it | The only named, checkable, end-to-end work on the site |
 | 10 | **Animate only the return edge and the token** in the workflow chart | +803 bytes, zero JS, zero dependencies |
 | 11 | ~~Expose the Redis ask-counter~~ **DONE — `b77edcb`, `9367f5d`, `9a543be`, `efb1ec5`, `369e22d`, `decb406`.** `GET /api/instrument`, plain text, `INSTRUMENT_TOKEN` | The instrument already existed and had never been read. It now counts views, asks, **card/chip/typed**, depth, stop and outcome — and on its first live run it caught itself rendering an unreachable store as a site nobody had visited |
-| 12 | **Make rule 24 a build gate** in `check-corpus.ts` | 54 memories, 8 cards, ~36 bodies in no HTML at all |
+| 12 | ~~Rule 24 as a build gate~~ **DONE — `8e63f97`, and it FAILS out loud.** 17 of 54 memories reach the HTML; §04 is 2 of 19 | Ships as a warning with a floor of 17 that errors on regression. Decision 2 is what closes it |
+
+| 13 | ~~The fork~~ **DONE — `39ffcd1`, `f101480`, `9d2ac1d`.** The axon forks at soma 2 and rejoins at soma 5; the camera takes it during a routed flight | Draw calls unchanged 22→22 / 18→18. Caught a contrast regression at the first radius: p05 fell to 4.30, under the 4.5 floor |
+| 14 | ~~Task 38, the career rail~~ **DONE — `71d612c`.** Rail after the title, paragraph below it | Was 0 rows above the fold; now both era captions and three full rows. The obvious fix — flipping the order — was screenshotted and rejected: it deletes the kicker, the title AND the body |
+| 15 | ~~The dev server~~ **DONE — `e4b57b0`.** It was never broken; a four-hour-old server on the next port was | `npm run serve:check`, and dev moves to 3001 so `start` on 3000 cannot shadow it |
 
 ## What would prove each wrong, and what undoing costs
 
