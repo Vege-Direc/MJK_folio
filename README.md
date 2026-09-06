@@ -2,6 +2,14 @@
 
 Personal site for Mathew John Kondekeril. Long-scroll editorial with a persistent chat dock that routes each answer into the stop it belongs to, over a WebGL "mind" the camera travels through as you scroll.
 
+**Twelve stops**, in this order and no other: `hero, origin, apac, now, work, asanjo,
+jewelai, mrunn, engineering, pivot, rd350, contact`. `contact` must stay last — the last
+waypoint is pulled back along its own segment, and a test asserts the stop that lands there.
+Twelve is terminal: the eighth thing MJK ships becomes a tile on §04's index, not a §12.
+
+Changing the *number* of stops re-rolls `mulberry32(0x5eed ^ M)` and invalidates every
+screenshot-derived number in this repo. Changing the *order* does not.
+
 **Tagline:** *"First I imagine it. Then I learn whatever it takes to build it."*
 
 ## Stack
@@ -14,7 +22,13 @@ Personal site for Mathew John Kondekeril. Long-scroll editorial with a persisten
 - Coolify (Docker deploy)
 
 ## Palette rule
-Cool inside the mind (cyan filaments, orange pulse — WebGL only). Warm outside (oat + amber — DOM only). They **never touch**.
+Cool inside the mind (cyan filaments, orange pulse — WebGL only). Warm outside (oat + amber — DOM only). They **never touch** in the DOM.
+
+**One amendment, made in the open rather than taken as a silent exception (`f916af3`).** The
+intro gate's portrait is cyan, because the gate is ruled part of the WebGL layer, where cyan
+is already native. It is not an exception to the rule; it is the rule applied to a surface
+that had not existed when the rule was written. A cyan mark anywhere in the DOM is still a
+defect.
 
 ## When a server lies to you
 
@@ -53,11 +67,11 @@ npm install && npm run dev
 ```
 app/           routing, layout, globals.css (the design layer), /api/ask + /api/health + /api/instrument, metadata routes
 proxy.ts       counts document requests, and nothing else — the denominator for the instrument
-components/    mind/ (canvas mount + scroll→progress), stops/ (the nine sections), chat/ (dock, provider, docked answer)
-content/       memories.yaml (the corpus), stops.ts (identity + layout + authored copy), system-prompt.md, site.ts
+components/    mind/ (canvas mount + scroll→progress, the intro gate), stops/ (the twelve sections), chat/ (dock, provider, docked answer)
+content/       memories.yaml (the corpus), stops.ts (identity + layout + authored copy), static-copy.ts (the per-stop prompt chips), system-prompt.md, site.ts
 evals/         tier-A tests — authored claims, retrieval + routing table, grounding fixtures, limits, the ask route, site
 lib/           mind/ (the three.js scene), ask/ (the answer path), retrieve, grounding/, security/, instrument/, fallback, provider, corpus/
-scripts/       check-corpus.ts (the gate prebuild and CI run), route-eval.ts, guard-eval.ts
+scripts/       check-corpus.ts (the gate prebuild and CI run), check-serving.ts (`serve:check`), route-eval.ts, guard-eval.ts, make-portrait.ts
 public/        far-network.json (tier-3 topology, fetched at runtime), media/rd350/, resume.pdf
 reference/     preview.html — the prototype the scene and layout were ported from; PORT_NOTES.md
 ```
@@ -65,16 +79,33 @@ reference/     preview.html — the prototype the scene and layout were ported f
 ## Content is code
 The site's "brain" is not the LLM — it's `content/memories.yaml`. Edit that file to change what the site knows about MJK. The system prompt in `content/system-prompt.md` sets voice + guardrails. `npm run corpus:check` refuses the build when the corpus is wrong. Every stop needs at least two memories; the checker says which are thin.
 
+**As of 2026-09-06: 55 memories, 44 of them cardable, and 29 of the 55 reach the rendered
+HTML** against a floor of 29 and a target of 55 — the rule-24 count, printed by
+`corpus:check` and deliberately unflattering. The routing table is **77 questions with 164
+authored aliases**, gated at `MIN_ACCURACY = 0.9`. **Re-run the scripts before quoting any
+of these; every one of them moves on the next push, and three of them were quoted stale in
+three documents at once.**
+
 ## How an answer happens
 ```
 t≈0     POST /api/ask  — validate {question, history}; admit (per-IP burst, per-IP day, global day)
-t≈5ms   retrieve()     — BM25 over content/memories.yaml → stopId, confidence, licensing memories
+t≈1ms   retrieve()     — BM25 over content/memories.yaml → stopId, confidence, licensing memories
+                         warm: p50 0.17ms, p95 0.80ms. 5ms is the pessimistic end, not the measurement
 t≈10ms  data-route     — the page scrolls to the stop; the scene follows scroll as it always does
 t≈15ms  data-envelope  — kicker, title, cards (by memory id), cites. The whole layout, deterministic.
 …       text           — the model streams prose, and only prose (reasoning disabled)
 end     guard()        — every number and proper noun checked against the retrieved memories
         verified · salvaged (bad sentences removed) · replaced (the memory text itself is shown)
 ```
+**The intro gate** runs before any of this — a particle portrait that assembles, holds, and is
+flown through — and it is skipped for reduced motion, a return visit, a hash deep link and
+JavaScript off, so it reaches a minority of visits and cannot be the delivery mechanism for
+anything the hero must say. **Today it reaches nobody without being asked for.** It ships
+behind a placeholder guard: `INTRO_NEEDS_FORCING = PORTRAIT.placeholder` compiles
+`if (true && !f) return;` into the pre-paint decision script, so while the portrait is a
+synthetic head the gate runs only with `?intro=1`. **It refuses to run on a face that is not
+his**, and that is the guard, not the `console.warn` beside it.
+
 Every refusal path (throttled, budget spent, off-topic, provider down) is HTTP 200 with an
 envelope built from corpus text. The model has no layout authority and no structured-output
 requirement; that is what makes free models safe here. `npm run route:eval` and
