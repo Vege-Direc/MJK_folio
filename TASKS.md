@@ -2698,6 +2698,144 @@ portfolio.
 
 ---
 
+# 47b. The scroll end was mis-mapped on mobile — `done`, MJK found it from outside
+
+His report: *"the scroll end is not mapped properly on mobile which I think is because mobile
+has a longer scroll when compared to desktop?"* Right, and the measurement narrowed it to one
+line.
+
+`ScrollProgress.measure()` overwrote the last stop's mark with `scrollHeight - innerHeight`
+instead of its own `offsetTop`:
+
+| | last `offsetTop` | `maxScroll` | tail | `u` at contact's top |
+|---|---|---|---|---|
+| 1440x900 | 7200 | 7200 | 0 | **1.0000** |
+| 390x664 | 7820 | 8299 | **479px** | **0.9635** |
+
+**The final segment ran 41% long, so the camera crossed it 29% slower and only reached the last
+vantage at the bottom of the document.** Stops 0–7 were exact on both viewports. Fixed with
+`Math.min(offsetTop, maxScroll)` in `499b4d2` — and **the `min` is load-bearing**, because when
+the last section is *shorter* than the viewport its top lies past the end of the scroll range,
+which is the one case the original line was right about.
+
+**Verified against the shipped code rather than a replica.** The agent's first probe
+reimplemented the old formula in-page, which would have proved nothing; it caught that itself.
+At y=7239 the two formulas disagree about the lit stop, 7 against 8, and the page reports 8.
+
+**Both secondary hypotheses I raised came back negative, and that is worth recording:**
+`data-stop` was not a second bug — `round(0.9635 x 8)` is already 8, so contact did light, just
+late. And `lib/flight.ts` agrees with the new mapping: `scroll-margin-top` resolves to 0 below
+900px, so flights land exactly on `offsetTop`. All nine stops now arrive at **0.00% error**,
+where stop 8 was 3.65% short.
+
+# 47c. "Lagging at some points" — measured, and it was not what it sounded like
+
+Whole-frame GPU time per stop at 390x664: **0.34, 0.35, 0.35, 0.37, 0.35, 0.36, 0.49, 0.34,
+0.34 ms. Flat.** So "at some points" is **not** per-stop fill variation, and the fix had to be
+global rather than aimed. Measuring first is what stopped this being optimised in the wrong
+place.
+
+**Adaptive quality shipped** (`a4372f7`): sheds bloom first, then resolution. Healthy holds 19
+draws at 585x996; throttled 20x it drops to 6 draws at 485x826; reduced motion untouched.
+
+**And the optimisation held back last round was taken** (`b8433be`): bloom's blend merged into
+the pass already reading the frame, pinned to exact `0.169.0`, guarded three ways — the version
+pin, a runtime fallback to the stock chain if the internals move, and a CI test asserting both.
+Equivalence measured under a frozen scene: **worst 0.03% across all nine stops on both
+viewports**, a twentieth of one 8-bit level.
+
+> **The frame that was 2.13 full-screen passes is now 1.13 at full quality and 0.57 at level 2.
+> Bloom is now cheaper than the composer chain was before this whole round began.**
+
+**Two mistakes, both caught by measurement rather than by care, and both had passed typecheck,
+tests and lint:** adaptive thresholds first computed relative to the fastest frame the display
+had ever produced, so one short delta at startup latched the reference near zero and degraded a
+healthy desktop; and the merged bloom first dropped the alpha term, losing a third of §01's lit
+coverage, because `AdditiveBlending` with `premultipliedAlpha: false` maps to
+`blendFunc(SRC_ALPHA, ONE)` and this scene accumulates alpha additively into a half-float target.
+
+Contrast gate held throughout: **10.28:1 mobile, 10.55:1 desktop**, against a 4.5 floor.
+
+**If lag survives this, the next instrument is Long Animation Frames on MJK's own handset.**
+Nothing in this entire investigation was measured on a phone, and
+`EXT_disjoint_timer_query_webgl2` is blocklisted on Android, so no JavaScript can close that gap
+from here.
+
+# 54c. Asanjo, corrected — the theme is NOT live, and the name is Asanjo
+
+MJK: *"Asanjo theme we built is not live yet, that's why I gave you preview and offered to
+screen record it to show here if required. The name is Asanjo - can't use Siddhi, I created the
+folder Siddhi since the client's POC name is Siddhi."*
+
+**Two corrections, and the first would have caused a real error.**
+
+1. **`asanjokutch.org` is live and returns 200 — but the design it serves is not his.** His
+   build is the unpublished preview theme. **So the site must not link the live storefront as
+   his work**, which is exactly what the "a live URL a visitor can check in another tab"
+   recommendation would have done. That recommendation is withdrawn as written.
+2. **"Siddhi" is a person — the client's point of contact — not the company.** It must not
+   appear anywhere. The folder name misled me and I nearly asked to publish a private
+   individual's name.
+
+**What this costs, honestly: the strongest single argument for the Asanjo work was that a
+visitor could verify it in another tab. That is gone until the theme is published.** The
+apparel imagery keeps its own evidence — four supplier/catalogue pairs on disk and a ledger in
+the corpus — so §09 is unaffected.
+
+**What replaces it:** a screen recording, which MJK has offered. Note that the build directory
+already contains full-page screencaptures dated 1 April 2026, so there may be usable stills
+without recording anything — **but they must be checked for the Shopify admin Draft bar**,
+which is burned into every frame captured from a preview URL.
+
+Still true and still usable: Shopify 2.0 theme, **309 commits, 31 March to 26 June 2026**, and a
+scroll-scrubbed video hero built from an AI-generated clip of a real product
+(`sections/hero-banner.liquid`, art-directed 16:9 desktop and 4:5 mobile).
+
+# 56. An LLM intent gateway before routing — `researching`
+
+MJK: *"we can even have one more call to an LLM to act as an intent gateway to understand the
+question and then decide where to route to and then we can make the subsequent llm call to
+actually answer the question itself right? this would be a more intelligent approach?"*
+
+It is a real idea and it collides with the one rule the architecture rests on — `README.md`:
+*"The model has no layout authority and no structured-output requirement; that is what makes
+free models safe here."* `PLAN.md` §5 lists "no structured output from the model" under
+**do not reopen**.
+
+**That entry was written before this question was asked, and it is his rule to reopen.** Out for
+a feasibility study rather than a defence. The deliverable that decides it is measurable:
+**does an LLM router actually beat BM25 on questions the routing table does not contain?**
+BM25 is already at 64/64 on the table, so the honest test is a fresh held-out set of ambiguous,
+badly-phrased and multi-intent questions. Also in scope: the latency budget (routing is ~5ms
+today and `data-route` reaches the client at ~10ms, so the page flies before the model speaks),
+what CI does with a non-deterministic router, and the hybrid where BM25 leads and the model is
+consulted only when the vote is weak — for which `ENGAGEMENT` is already the precedent.
+
+# 57. The site itself as a piece of work — `open`, and it is the most checkable thing here
+
+MJK: *"under work you can even have another section to talk about the website build itself which
+is also a showcase of what I can do right? this whole website including the neuron animation was
+built with the help of AI agents."*
+
+**He is right, and it is stronger than the other candidates for one reason: the visitor is
+standing inside the artefact while reading about it.** Every other project asks for trust; this
+one is being demonstrated at the moment it is described. It also answers the "is this a
+grounded-RAG widget" objection in the only way that can actually answer it — by showing the
+machinery rather than asserting it.
+
+What the corpus already licenses: `build-overview` names "a website that behaves like a mind"
+among the things he has built. **What it does not license is any of the interesting detail** —
+the deterministic router, the grounding guard, the corpus-as-brain design, the eval suite, the
+fact that it was built with AI agents. Those need memories before a word can be written.
+
+The care needed: a section about the site, on the site, is one step from being pleased with
+itself. The material that earns its place is the part a buyer of agent systems cannot get
+elsewhere — **that the model is not allowed to choose the layout, that every number is checked
+against a written corpus, and that a refusal is built from that corpus rather than from the
+model.** That is a capability claim with the evidence running underneath it.
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame

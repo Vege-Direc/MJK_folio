@@ -66,7 +66,7 @@ how this project has already retracted four numbers.
 
 | Question | Answer |
 |---|---|
-| Asanjo | **Named, and the arc is his own: imagery first, then contracted to rebuild the storefront.** Shopify 2.0 theme, 309 commits, 31 Mar – 26 Jun 2026, scroll-scrubbed video hero from an AI-generated clip of a real product. Outstanding: which theme is live, and whether "Siddhi" may be named |
+| Asanjo | **Named — and CORRECTED 2026-09-06.** Imagery first, then contracted to rebuild the storefront: Shopify 2.0 theme, 309 commits, 31 Mar – 26 Jun 2026, scroll-scrubbed video hero from an AI-generated clip of a real product. **But the theme is NOT live** — the design `asanjokutch.org` serves today is not his, so the site must not link it as his work. A screen recording replaces it. **"Siddhi" is the client's POC, a person, and must never appear** |
 | Paxel | **Keep** |
 | The intro gate | **Build it.** Duration is mine to choose — he proposed 3–5s and has since said 1–2s is fine "depending on how you build it" |
 | Portrait colour | **Cyan is authorised.** Better still, no exception is needed: rule the intro part of the WebGL layer, where cyan is already native |
