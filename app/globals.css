@@ -2620,7 +2620,35 @@ html[data-flying] .answer-layer-in {
    * column to align with and reads better on the full 581px: capped, it wrapped to three
    * lines and took the whole column past its budget.
    */
-  --jp-w: min(436px, 56svh);
+  /*
+   * 560px, and the svh cap is gone.
+   *
+   * It was `min(436px, 56svh)` for a two-station flow whose height was three abutting
+   * references stacking to three times the reference width — so at 436px the row was 276px
+   * tall and a 720px-high laptop needed the svh term to stop it clipping.
+   *
+   * Three stations changes that arithmetic in the figure's favour. 580px is the media
+   * column at 1440 less a hair, split `1fr / 3.2fr / 1.5fr` rather than `1fr / 3fr`, so the
+   * reference column is 79px rather than 92 and the row is 238px tall rather than 276.
+   * Wider AND shorter, which is what let a third station arrive without the two cards under
+   * it losing their space. The still is 254px against 276 — the one real cost, and it is
+   * still by some distance the largest object in the figure, which is right: it is the
+   * deliverable.
+   *
+   * The cap that binds below 1440 is the media column itself, which `width: 100%` on
+   * `.jp-flow` reads directly. A 1280x720 laptop measured the whole figure at 286px against
+   * a band of about 577, where the old svh term would have squeezed the references to 44px
+   * for nothing.
+   */
+  --jp-w: 580px;
+  /*
+   * On `.jp` rather than on `.jp-flow`, because the meta row has to repeat the flow's
+   * tracks exactly and a gap defined on one of them is not readable by the other.
+   *
+   * 18px, down from 20: there are four gutters now instead of two, so every pixel here is
+   * spent twice as often, and the arrows are what the gutters are for.
+   */
+  --jp-g: clamp(8px, 1.2vw, 18px);
   margin-bottom: 22px;
 }
 
@@ -2642,11 +2670,21 @@ html[data-flying] .answer-layer-in {
    * as the left end of one flow. At 20px the gap is 68px. The phone was right at 38px all
    * along, which is what said the desktop value was wrong rather than the ratio.
    */
-  --jp-g: clamp(10px, 1.4vw, 20px);
   display: grid;
-  grid-template-columns: 1fr auto 3fr;
+  /*
+   * Three stations and two arrows. The proportions are the claim: the references are the
+   * smallest because they are amateur phone snaps, the still is the largest because it is
+   * the deliverable, and the clip sits between the two because it is made from the still
+   * and inherits its fidelity rather than arguing for it again.
+   */
+  grid-template-columns: 1fr auto 3.2fr auto 1.5fr;
   column-gap: var(--jp-g);
-  align-items: start;
+  /*
+   * `center`, where it used to be `start`. With two stations the two columns were the same
+   * height by construction and `start` was `center`. With three they are 254px, 220px and
+   * 135px, and top-aligning them makes a staircase out of a flow.
+   */
+  align-items: center;
   width: 100%;
   max-width: var(--jp-w);
 }
@@ -2685,7 +2723,6 @@ html[data-flying] .answer-layer-in {
 
 .jp-out {
   position: relative;
-  align-self: start;
   min-width: 0;
   aspect-ratio: 1;
   box-shadow:
@@ -2694,11 +2731,75 @@ html[data-flying] .answer-layer-in {
 }
 
 .jp-out img,
-.jp-out video {
+.jp-clip video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/*
+ * Station three: the clip, and at rest it is a plate rather than a picture.
+ *
+ * The still IS frame 0 of the clip — mean absolute luma difference 3.37 of 255 — so a
+ * poster here would print the middle station's photograph a second time and say that the
+ * pipeline makes two of the same thing. `#08080c` with the same casing ring as the tiles
+ * beside it, a play mark and the duration, and the video mounts into it when it is asked
+ * for. The whole tile is the control, so the target is 135px square rather than a chip.
+ */
+.jp-clip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  background: #08080c;
+  border: 0;
+  cursor: pointer;
+  color: var(--color-accent);
+  box-shadow:
+    0 0 0 1px #6b6879,
+    0 0 0 3px #08080c;
+}
+
+.jp-clip video {
+  position: absolute;
+  inset: 0;
+}
+
+.jp-clip-mark {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.jp-clip-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/*
+ * Both spans stay readable once the video is under them: they sit on their own opaque
+ * plate rather than on the frame, for the reason the old overlay chip recorded — the
+ * accent over the lit moss and the wet slate measured 2.84:1 at the 95th percentile,
+ * under the 4.5:1 an 11px label needs, and on `#08080c` it is 11.34:1 everywhere.
+ */
+.jp-clip-mark,
+.jp-clip-label {
+  position: relative;
+  z-index: 1;
+  padding: 2px 6px;
+  background: #08080c;
+}
+
+.jp-clip:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
 /*
@@ -2729,57 +2830,20 @@ html[data-flying] .answer-layer-in {
 }
 
 /*
- * An opaque chip, and that is not the wash `DESIGN.md` forbids twice.
+/*
+ * Three labels across the flow's width, and it stayed a flex rather than becoming a copy
+ * of `.jp-flow`'s five tracks.
  *
- * That rule is about covering the WebGL scene to protect words from it. This sits on the
- * photograph it controls, and it has to: measured on `generated.jpg`, the accent over the
- * darkest quarter of the frame averages 5.95:1, but the 95th-percentile pixels in that
- * same quarter — the lit moss and the wet edge of the slate — take it to 2.84:1, under
- * the 4.5:1 an 11px label needs. On `#08080c` it is 11.34:1 everywhere, which turns a
- * measurement into a constant. The button covers the whole frame, so the target is 295px
- * square rather than the 60x19px the carousel's toggle measured before it was enlarged.
+ * The grid version was tried and measured: at 11px with 0.16em of tracking, "phone snaps ·
+ * one piece" needs about 200px and the reference column is 79. It wrapped to two lines and
+ * cost the figure 13px of height for a 24px gain in how precisely `GENERATED` sits over
+ * the still. A label that wraps is worse than a label that is a few pixels off centre.
  */
-.jp-play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: 9px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-
-.jp-play > span {
-  margin-right: 7px;
-}
-
-.jp-play::before {
-  content: '';
-  position: absolute;
-  inset: auto 9px 9px 9px;
-  height: 26px;
-  background: #08080c;
-  z-index: -1;
-}
-
-.jp-play:focus-visible {
-  outline: 1px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-/* Capped to the flow's width so `GENERATED` lands on the output tile's own right edge. */
 .jp-meta {
   display: flex;
-  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
+  align-items: baseline;
   width: 100%;
   max-width: var(--jp-w);
   font-family: var(--font-mono);
@@ -3534,9 +3598,9 @@ html[data-flying] .answer-layer-in {
   }
 
   /*
-   * No svh cap on a phone. Below 900px `.panel` is `height: auto; overflow: visible`, so
-   * height stopped being the binding constraint and width became it — and 56svh at a
-   * 664px-tall viewport is 372px, which would have squeezed a 351px column for no reason.
+   * The full column on a phone. Below 900px `.panel` is `height: auto; overflow: visible`,
+   * so height is not the binding constraint and width is — and a 560px cap on a 351px
+   * column is not a cap at all, it is a no-op that would read as one if left here.
    */
   .jp {
     --jp-w: none;
@@ -3802,17 +3866,19 @@ html[data-flying] .answer-layer-in {
   /*
    * The JewelAI figure was the one thing on the page that did not grow with the screen.
    *
-   * `--jp-w: min(436px, 56svh)` is a hard cap, so above 780px of height it is 436px at
-   * 1440, at 1920 and at 2560 alike — refs 92px square, output 276px square — while the
-   * apparel pair beside it in the same column grew to 407px and 495px photographs. That is
-   * MJK's "the images which really show off the work seem quite small", located precisely,
-   * on the figure that carries the strongest technical claim in the corpus.
+   * It was capped at 436px at 1440, at 1920 and at 2560 alike — references 92px square,
+   * output 276px square — while the apparel pair beside it in the same column grew to
+   * 407px and 495px photographs. That is MJK's "the images which really show off the work
+   * seem quite small", located precisely, on the figure that carries the strongest
+   * technical claim in the corpus.
    *
-   * 600px, not more: it puts the output tile at 420px and the whole flow at about 479.5px,
-   * for a §04 total of 743.3 in an 818.6px band at 1920 — 75.3px spare. 680px leaves 15.3,
-   * which is the same fuse that was removed once already and should not be re-lit.
+   * 680px, not more, and the number moved with the third station: the same width now
+   * splits five ways rather than three, so 680 puts the still at about 348px and the whole
+   * flow at about 402 — comfortably inside the 818.6px band this breakpoint measured at
+   * 1920. The rule that produced the old 600 still holds: leave more than 15px of slack,
+   * because that fuse has been lit once already.
    */
   .jp {
-    --jp-w: 600px;
+    --jp-w: 680px;
   }
 }

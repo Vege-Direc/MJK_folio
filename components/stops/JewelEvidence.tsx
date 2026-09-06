@@ -24,13 +24,32 @@ import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
  * ASPECT DISTORTION, which nothing here does. Every crop is square and each frame keeps
  * enough windowsill to still read as a phone snap on a windowsill.
  *
- * WHY THERE IS ONE OUTPUT TILE AND NOT TWO. The still and the clip were specified as two
- * tiles side by side. They cannot be: `generated image.jpeg` IS frame 0 of
- * `Generated video.mp4`. Mean absolute luma difference between them is 3.37 of 255, which
- * is JPEG-against-h264 noise, not a different photograph. Two tiles would have printed the
- * same picture twice. One tile, and the still is the clip's poster — which is also the
- * corpus claim `jewelai-video` makes, drawn instead of written: the clip animates an image
- * the pipeline had already made and already checked.
+ * WHY THERE ARE THREE STATIONS, AND WHY THE THIRD IS NOT A SECOND COPY OF THE STILL.
+ * MJK, twice: "even with the ring example it should be 3 rings to image and then image to
+ * video right? that's the flow and also shows that we can do just image if required."
+ *
+ * The figure drew two stations for a reason that was sound as far as it went: `generated
+ * image.jpeg` IS frame 0 of `Generated video.mp4`, mean absolute luma difference 3.37 of
+ * 255, which is JPEG-against-h264 noise rather than a different photograph. Two tiles of
+ * the poster side by side would have printed the same picture twice.
+ *
+ * But that argues against printing it twice, not against drawing three stations. Three
+ * marks and two arrows says what the pipeline does and says the second thing he asked for:
+ * the image is a deliverable on its own, and a client who needs only stills stops at the
+ * middle station. So the third station is the CLIP, at rest a plate with a play mark and
+ * its duration rather than the poster again, and the video mounts into it when it is
+ * asked for. Nothing shows the same photograph twice at any moment.
+ *
+ * That also fixes a finding of its own: the control used to be an overlay on the still,
+ * typographically identical to the caption beside it. It is now the third mark in the
+ * flow, which is what it always was.
+ *
+ * THE COLUMN WIDTHS, AND WHAT THEY COST. `1fr / 2.6fr / 1.6fr` at a 560px cap: the
+ * references land at 85px against 92 before, the still at 220 against 276, and the clip at
+ * 135. The still is still the largest object in the figure, which is right — it is the
+ * deliverable. The row's height is the reference strip's, three abutting squares of width
+ * w stacking to 3w, so the figure is about 335px at 1440x900 against 384 before. A third
+ * station and it got shorter, which is what let the two cards under it keep their column.
  *
  * WHY THE CLIP IS 640px AND WHY IT DOES NOT AUTOPLAY. The source is 5,376 kB at 960x960
  * and 10.9 Mbit/s, which is about 0.49 bits per pixel per frame — an order of magnitude
@@ -149,7 +168,29 @@ export default function JewelEvidence() {
           <path className="jp-arrow-ink" d="M1 6 H21 M16 1.5 L21.5 6 L16 10.5" />
         </svg>
 
+        {/* Station 2: the deliverable. No control on it any more — see the header. */}
         <div className="jp-out">
+          <Image
+            src={POSTER.src}
+            alt={POSTER.alt}
+            width={1024}
+            height={1024}
+            sizes="(max-width: 900px) 46vw, 220px"
+            loading="lazy"
+          />
+        </div>
+
+        <svg className="jp-arrow" viewBox="0 0 24 12" aria-hidden="true" focusable="false">
+          <path className="jp-arrow-case" d="M1 6 H21 M16 1.5 L21.5 6 L16 10.5" />
+          <path className="jp-arrow-ink" d="M1 6 H21 M16 1.5 L21.5 6 L16 10.5" />
+        </svg>
+
+        {/*
+          Station 3: the clip. The whole tile is the control, so the target is the tile
+          rather than a 60x19px chip, and at rest it is a plate carrying a play mark and a
+          duration — never the poster, which is the middle station's picture.
+        */}
+        <button type="button" className="jp-clip" onClick={toggle} aria-pressed={playing}>
           {started ? (
             /*
              * `autoPlay` is defensible here and only here: the element does not exist
@@ -171,32 +212,23 @@ export default function JewelEvidence() {
               onEnded={() => setPlaying(false)}
               aria-label="A four-second clip: the camera pulls back and around the same generated scene, the ring on wet slate."
             />
-          ) : (
-            <Image
-              src={POSTER.src}
-              alt={POSTER.alt}
-              width={1024}
-              height={1024}
-              sizes="(max-width: 900px) 62vw, 300px"
-              loading="lazy"
-            />
-          )}
-
-          {/*
-            The whole frame is the control, so the target is 295px square rather than the
-            60x19px the carousel's toggle measured before it was enlarged. The visible chip
-            sits in a corner so it never covers the thing it is offering.
-          */}
-          <button type="button" className="jp-play" onClick={toggle} aria-pressed={playing}>
-            <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
-            {playing ? 'Pause' : 'Play the clip'}
-          </button>
-        </div>
+          ) : null}
+          <span className="jp-clip-mark" aria-hidden="true">
+            {playing ? '❚❚' : '▶'}
+          </span>
+          <span className="jp-clip-label">{playing ? 'Pause' : '4s clip'}</span>
+        </button>
       </div>
 
+      {/*
+        Three labels for three stations, on the flow's own column edges. `generated` and
+        `clip` both carry the accent, because both are output — the distinction the marks
+        draw is that one of them is a file a client can use on its own.
+      */}
       <p className="jp-meta">
         <span>phone snaps · one piece</span>
         <span className="jp-meta-out">generated</span>
+        <span className="jp-meta-out">clip</span>
       </p>
 
       {/*
