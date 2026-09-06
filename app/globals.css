@@ -104,6 +104,40 @@
    */
   --dock-h: 173px;
 
+  /**
+   * How far the dock's veil reaches ABOVE the dock, and the reason it is a token.
+   *
+   * `--dock-h` is the height a stop has to clear, and it was the whole of the answer until
+   * the veil grew upward. The veil used to be `inset: 0`, so its feather had nowhere to fade
+   * but inside the dock and the prompt chips sat 19px inside their own gradient. Extending
+   * the box to `-44px` put the solid stop exactly on the dock's top edge and fixed that, and
+   * moved the collision 44px up rather than removing it: the band immediately above the dock
+   * is now feathered over content whose clearance still derives from `--dock-h` alone. The
+   * measured symptom is on the one screen that exists to be acted on, at 390x664, where SS 11
+   * printed `mathew_johnk@hotmail.com` at roughly half strength inside the feather.
+   *
+   * So the feather is published here and both sides read it: the veil draws it, and every
+   * clearance derived from the dock adds it. Two numbers that had to agree and did not are
+   * now one number with two consumers.
+   *
+   * THE CONSUMERS READ IT AS `max(32px, var(--dock-feather))`, NOT AS AN EXTRA 44. The 32px
+   * those clearances used to carry was a comfort gap, chosen when the veil stopped at the
+   * dock's own top edge. The feather IS that gap now, and a graded one: its outer 18px runs
+   * from fully transparent to 22% before the solid stop. Stacking the old gap on top of the
+   * new one double-counts the same space, and it was measured costing more than it bought --
+   * at 1280x720 the extra 44px pushed §05's and §10's own addresses off the top of a panel
+   * that is `overflow: hidden`, clipping `§ 05 — Asanjo` by 9.6px and `§ 10 — The RD 350` by
+   * 5.3px. `max()` takes the larger of the two rather than their sum, so the reservation goes
+   * up by 12px, every kicker stays on screen, and if the feather is ever made shorter than
+   * 32px the old comfort gap holds by itself.
+   *
+   * 12px is also exactly the overlap that was reported. Content used to end 12px inside a
+   * feather whose alpha at that depth is about 0.52, which is the "roughly half strength"
+   * the email on §11 was rendering at. Clearing those 12px puts the last line at the depth
+   * where the veil's alpha is 0.
+   */
+  --dock-feather: 44px;
+
   --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
   --font-serif: var(--font-fraunces), 'Fraunces', Georgia, serif;
   --font-mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
@@ -285,7 +319,7 @@ html[data-flying] {
   button,
   input,
   [tabindex]:not([tabindex='-1']) {
-    scroll-margin-block: 96px calc(var(--dock-h) + 32px);
+    scroll-margin-block: 96px calc(var(--dock-h) + max(32px, var(--dock-feather)));
   }
 
   a {
@@ -389,8 +423,13 @@ html[data-flying] {
    * ResizeObserver on the dock itself, so a stop's last line clears the dock's black
    * gradient whatever the dock happens to be that viewport — which is what stops the
    * verdict line and the citation chips rendering inside it.
+   *
+   * `--dock-feather` is the other half of the same quantity and used to be missing. The
+   * veil reaches that far ABOVE the dock, so clearing `--dock-h` alone left a stop's last
+   * line inside a gradient it believed it was clear of. `max()` rather than a sum, for the
+   * reason recorded on the token.
    */
-  padding: 8vh min(5vw, 73px) calc(var(--dock-h) + 32px);
+  padding: 8vh min(5vw, 73px) calc(var(--dock-h) + max(32px, var(--dock-feather)));
   position: relative;
   text-align: left;
   transition: opacity 0.5s cubic-bezier(0.2, 0, 0, 1), transform 0.5s cubic-bezier(0.2, 0, 0, 1);
@@ -2297,7 +2336,7 @@ html[data-flying] .answer-layer-in {
  * Four pairs, one at a time, in a box whose height never changes.
  *
  * WHY A STEPPER AND NOT A STACK. §04's media column is a 623px band at 1440x900 —
- * `100svh - 8vh - (--dock-h 173 + 32)` — and `.panel` is `overflow: hidden`, so anything
+ * `100svh - 8vh - (--dock-h 143 + feather 44)` — and `.panel` is `overflow: hidden`, so anything
  * past the band is destroyed rather than scrolled. One pair plus two cards already
  * measured ~646px there, which is why a 1280x720 laptop loses 188px off this section on
  * every visit. A second always-visible pair costs another ~310px and would silently
@@ -2357,7 +2396,7 @@ html[data-flying] .answer-layer-in {
    * meta line, the caption, the two cards and their rules.
    */
   --pair-h: min(
-    max(31svh, calc(0.92 * 100svh - var(--dock-h) - 32px - 379px)),
+    max(31svh, calc(0.92 * 100svh - var(--dock-h) - max(32px, var(--dock-feather)) - 379px)),
     calc((100cqw - 56px) / 1.769)
   );
 }
@@ -2638,9 +2677,10 @@ html[data-flying] .answer-layer-in {
  * WHY THESE SHARE §04's BOX INSTEAD OF BEING ADDED TO IT.
  *
  * Measured on the built page, not estimated. `.section-inner` pads
- * `8vh 5vw calc(var(--dock-h) + 32px)`, and at 1440x900 `--dock-h` resolves to 143px, so
- * the media column has 900 - 72 - 175 = 653px of height. §04 already spends 647 of those
- * 653 on the apparel pair (383px) plus two cards (242px) plus the pair's 22px margin.
+ * `8vh 5vw calc(var(--dock-h) + max(32px, var(--dock-feather)))`, and at 1440x900 `--dock-h`
+ * resolves to 143px against a 44px feather, so the media column has 900 - 72 - 187 = 641px of
+ * height. §04 already spends 647 of those on the apparel pair (383px) plus two cards (242px)
+ * plus the pair's 22px margin, which is why this column is a stepper rather than a stack.
  * Above 900px `.panel` is `overflow: hidden`, so a figure ADDED to that column would not
  * scroll out of sight, it would be destroyed. These are therefore STATES of the column,
  * each sized to the 383px the pair occupies, and only one is ever in the DOM.
@@ -3132,7 +3172,7 @@ html[data-flying] .answer-layer-in {
    * everything the dock draws has opaque ground under it and the fade happens over the
    * section above. `pointer-events: none` already means the taller box catches nothing.
    */
-  inset: -44px 0 0 0;
+  inset: calc(-1 * var(--dock-feather)) 0 0 0;
   pointer-events: none;
   /*
    * In pixels from the top edge, not percentages of a height that changes.
@@ -3150,8 +3190,8 @@ html[data-flying] .answer-layer-in {
   background: linear-gradient(
     to top,
     var(--color-bg) 0,
-    var(--color-bg) calc(100% - 44px),
-    rgba(10, 10, 14, 0.78) calc(100% - 18px),
+    var(--color-bg) calc(100% - var(--dock-feather)),
+    rgba(10, 10, 14, 0.78) calc(100% - var(--dock-feather) + 26px),
     rgba(10, 10, 14, 0) 100%
   );
 }
@@ -3447,7 +3487,7 @@ html[data-flying] .answer-layer-in {
   .section-inner.center-stage {
     justify-content: center;
     gap: 28px;
-    padding: 4vh 7vw calc(var(--dock-h) + 32px);
+    padding: 4vh 7vw calc(var(--dock-h) + max(32px, var(--dock-feather)));
     min-height: var(--stop-height);
   }
 
