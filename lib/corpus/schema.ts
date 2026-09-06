@@ -82,7 +82,7 @@ const sectionSchema = z.enum(SECTIONS, {
  */
 const stopIdSchema = z.enum(STOP_IDS as unknown as readonly [StopId, ...StopId[]], {
   error: () =>
-    `\`stopId\` must name one of the nine stops declared in content/stops.ts: ${STOP_LIST}. ` +
+    `\`stopId\` must name one of the twelve stops declared in content/stops.ts: ${STOP_LIST}. ` +
     'The router maps a question to a stopId and the renderer maps that stopId to a layout, so a memory without ' +
     'a valid one can be retrieved but never placed -- it can never reach the screen. Add the stop this memory ' +
     'belongs to; do not invent an id here, add it to content/stops.ts first.',

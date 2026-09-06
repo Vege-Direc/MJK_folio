@@ -112,7 +112,7 @@ describe('visitor-facing copy never explains the machine', () => {
   /*
    * Below 768px the dock shows one suggestion at a time, in a row 272px wide at the
    * narrowest phone. A suggestion that wraps there makes the row two lines, which
-   * republishes `--dock-h`, which relays out all nine sections — in the middle of a
+   * republishes `--dock-h`, which relays out all twelve sections — in the middle of a
    * cross-fade. 40 characters is the measured budget at 14px Inter, and the guard is here
    * rather than in CSS because the copy is the fix and the clipping is only the net.
    */
@@ -128,8 +128,9 @@ describe('visitor-facing copy never explains the machine', () => {
   it('offers every stop a set the size the dock already draws', () => {
     /*
      * Four on a desktop, one rotating on a phone. A stop offering three or five would
-     * republish `--dock-h` on the scroll that reached it, and every one of the nine sections
-     * derives its bottom padding from that -- nine relayouts to change a suggestion.
+     * republish `--dock-h` on the scroll that reached it, and every one of the twelve
+     * sections derives its bottom padding from that -- twelve relayouts to change a
+     * suggestion.
      */
     for (const [stopId, prompts] of Object.entries(stopPrompts)) {
       expect(prompts.length, `${stopId} offers ${prompts.length} suggestions, not ${suggestedPrompts.length}`).toBe(

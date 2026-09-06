@@ -15,7 +15,7 @@ otherwise is what produced its worst mistakes:
 
 - **Experience** — a three.js network the camera travels through as you scroll. The
   artifact. *Let it lead; the interface recedes.*
-- **Read** — nine authored sections and a career history. Words that must be read
+- **Read** — twelve authored sections and a career history. Words that must be read
   comfortably, at length.
 - **Operate** — a persistent input that answers questions and streams prose into the page.
 
@@ -57,13 +57,18 @@ No argument, no exception, act on them:
 outright and says no brief earns it back. That ban is aimed at the decorative eyebrow —
 `PLATFORM` floating above `Built for scale`, carrying nothing. `§ 02 — The career` is not
 that.
-It is an address in a navigable space: the scroll is a camera path through nine named
+It is an address in a navigable space: the scroll is a camera path through twelve named
 locations, and a question routes an answer *to one of them*, so the visitor has to know
 where they just landed. It is a chapter heading, closer to a gallery room number than to
-a SaaS kicker. Kept for stops 1 through 8.
+a SaaS kicker. Kept for stops 1 through 11.
+
+An address that lies is worse than no address, which is why `evals/tier-a/stops.test.ts`
+asserts that every kicker's number agrees with its own position. It is also why the three
+project stops were inserted rather than appended: everything after them renumbered, and
+the test is what made that a two-minute edit instead of a defect nobody would have seen.
 
 **Section numbers.** Permitted by the same rule when the sequence carries information the
-reader needs. Here the sequence is the product: nine stops in a fixed order, traversed by
+reader needs. Here the sequence is the product: twelve stops in a fixed order, traversed by
 a camera. Kept.
 
 **Monospace, in two of its three uses.** The ban is on mono as a costume for "technical".

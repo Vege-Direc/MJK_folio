@@ -1,7 +1,7 @@
 /**
  * The router, judged on its misses.
  *
- * This site decides which of the nine stops a question belongs to BEFORE the model speaks:
+ * This site decides which of the twelve stops a question belongs to BEFORE the model speaks:
  * the camera starts flying at ~10 ms on the strength of `lib/retrieve.ts` alone. So the
  * retriever is not scored here on whether it found something relevant -- retrieval.test.ts
  * does that -- but on whether it found the RIGHT PLACE. A router that is right about the

@@ -31,9 +31,6 @@ export const ROUTING_TABLE: RoutingCase[] = [
   // question about a product goes here.
   ...cases(
     'work',
-    "what's mrunn",
-    'tell me about jewelai studio',
-    'do you build multi agent systems',
     "what's tallybridge",
     'who is artha',
     'show me the ai work',
@@ -41,6 +38,65 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'which awards have you won',
     'what did paxel say about your engineering',
     'who assessed your agent orchestration',
+  ),
+
+  /*
+   * -- the three project stops ---------------------------------------------
+   *
+   * `work` used to hold nineteen memories across four projects, so almost every question
+   * about any of them landed there with a share near 1.0 — by construction, because there
+   * was only one stop in the ballot. Twelve of those memories moved to a stop of their
+   * own, and three rows in this table moved with them.
+   *
+   * THREE RE-EXPECTATIONS, and the file's own rule is that each says why in a comment.
+   *
+   *   "tell me about jewelai studio"  work -> jewelai. The split working: JewelAI has a
+   *   section now, so that is where the answer lives and where the camera should fly.
+   *
+   *   "what's mrunn"                  work -> mrunn. The same.
+   *
+   *   "do you build multi agent systems"  work -> now, and this one is a genuine change
+   *   of answer rather than a relabelled address. It used to win on `work` ONLY because
+   *   two project memories were propping up `build-overview`: `work` scored 123.40 from
+   *   `build-overview` plus 0.35 x (71.88 from the photoshoot pipeline + 60.96 from
+   *   MruNN) = 169.89, against `now`'s 136.00 from `how-i-work-with-agents`,
+   *   `cap-ai-agents` and `what-i-do-now`. Take the two project memories away and
+   *   `build-overview` stands alone and loses. Under the new shape that is also the
+   *   better answer: `work` is an index of named artefacts, and `now` is the capability
+   *   stop whose own paragraph already reads "multi-agent pipelines, custom ERPs,
+   *   automation, and the analytics to say whether any of it worked". A capability
+   *   question belongs on the capability stop.
+   *
+   * No alias was widened to produce any of this. The corpus really does put these three
+   * answers where the table now expects them.
+   */
+  ...cases(
+    'asanjo',
+    // The client may be named, so a visitor may ask for them by name. Both of these were
+    // unanswerable before `asanjo-engagement` existed.
+    'who is asanjo',
+    'did you build the asanjo storefront',
+    'how do you turn a supplier photo into a catalogue image',
+    'what is the pass mark for the critic',
+    'what did the catalogue images cost',
+  ),
+
+  ...cases(
+    'jewelai',
+    'tell me about jewelai studio',
+    'how does jewelai read a piece of jewellery',
+    'how does jewelai check its work',
+    'what does jewelai studio run on',
+    'tell me about the ring',
+  ),
+
+  ...cases(
+    'mrunn',
+    'is it gst compliant',
+    'does anything change without approval',
+    'tell me about mrunn erp',
+    'what is a chat native erp',
+    "what's mrunn",
   ),
 
   // -- apac: the career, and the media decade ------------------------------
@@ -80,6 +136,11 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'what ai agent frameworks do you use',
     'what is your stack',
     'what do you do',
+    // Moved here from `work` by the project split, and it belongs here. See the long note
+    // above the project stops: `work` won this only while two project memories were
+    // propping up `build-overview`, and this is a question about a capability rather than
+    // about a named artefact.
+    'do you build multi agent systems',
   ),
 
   // -- origin: who he is, the aircraft, and the exit from it ---------------

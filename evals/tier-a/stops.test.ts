@@ -30,22 +30,40 @@ const RENDERABLE_COMPOSE: readonly ComposeKind[] = [
   // Added after launch and the only kind not in `reference/preview.html`: §05's general
   // arrangement of the MJK-101. See `components/stops/MJK101Figure.tsx`.
   'figure',
-  // §04's before-and-after pair, over a shortened card list.
+  // §06's JewelAI evidence, over a shortened card list. It used to be §04's, and it used
+  // to draw a three-state machine that chose between two projects' figures on the strength
+  // of an answer's first citation. Each project has a stop now, so it draws its figure.
   'proof',
+  // §05's supplier frame beside the catalogue frame the pipeline made from it. The same
+  // shape as `proof` with a different figure, and a separate kind rather than a prop
+  // because `compose` is what the stylesheet keys its phone layout on.
+  'pair',
+  // §04. The one stop with no figure at all: chapter tiles into the three project stops,
+  // over the cards for the work that has no stop of its own.
+  'index',
 ];
 
 describe('STOPS', () => {
-  it('has nine stops', () => {
-    expect(STOPS).toHaveLength(9);
-    expect(STOP_IDS).toHaveLength(9);
+  /*
+   * Twelve, and it stops there. Not a round number — four measured walls, all recorded in
+   * `SPEC-architecture.md` §7.1: `far-network.json`'s fixed volume is comfortable to about
+   * 14, the flight clamp to about the same, the screenshot-measurement debt is linear in
+   * the stop count and is re-paid on every change to it, and the 517px phone band is
+   * already failed by four sections. The extension point past twelve is a TILE on §04's
+   * index, not a thirteenth chapter — which is the whole reason this number does not have
+   * to be re-argued the next time MJK ships something.
+   */
+  it('has twelve stops', () => {
+    expect(STOPS).toHaveLength(12);
+    expect(STOP_IDS).toHaveLength(12);
   });
 
   it('has unique ids', () => {
     expect(new Set(STOP_IDS).size).toBe(STOP_IDS.length);
   });
 
-  it('indexes 0-8, contiguous and in order', () => {
-    expect(STOPS.map((s) => s.index)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  it('indexes 0-11, contiguous and in order', () => {
+    expect(STOPS.map((s) => s.index)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   });
 
   it('opens on hero', () => {
@@ -86,7 +104,7 @@ describe('STOPS', () => {
     // hero is authored-only. A model that can route to it can overwrite the one piece
     // of copy nobody reviews on the way past.
     expect(ANSWERABLE_STOP_IDS).not.toContain('hero');
-    expect(ANSWERABLE_STOP_IDS).toHaveLength(8);
+    expect(ANSWERABLE_STOP_IDS).toHaveLength(11);
     expect([...ANSWERABLE_STOP_IDS].sort()).toEqual([...STOP_IDS].filter((id) => id !== 'hero').sort());
   });
 

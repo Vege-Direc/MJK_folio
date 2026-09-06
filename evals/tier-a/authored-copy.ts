@@ -139,7 +139,7 @@ function source(relative: string): CopySource {
 /**
  * Every file that holds copy a reader sees and a human typed.
  *
- * `content/stops.ts` is the important one: it is where the nine authored titles and bodies
+ * `content/stops.ts` is the important one: it is where the twelve authored titles and bodies
  * live now. The stop components are scanned too, because a label -- a caption, a counter,
  * "01 · PDF" -- is copy even when it is three characters long.
  *

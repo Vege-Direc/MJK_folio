@@ -1,5 +1,5 @@
 /**
- * The nine stops. Single source of truth for stop identity, layout and authored copy.
+ * The twelve stops. Single source of truth for stop identity, layout and authored copy.
  *
  * Ids come from MJK_STOPS in the prototype (`reference/preview.html:2151`), the
  * authoritative design. `compose` is a property of the STOP, never of a generated
@@ -55,12 +55,17 @@
  * `evals/tier-a/stops.test.ts` hold that: one that the field is contiguous and
  * ascending, one that each kicker carries its own number.
  *
- * `align` alternates strictly: L R L R L R L R L. One field does three jobs — which
+ * `align` alternates strictly: L R L R L R L R L R L R. One field does three jobs — which
  * rail a one-column stop takes, which side the prose column takes on a two-column stop,
  * and `TEXT_SIDES` -> `anchorAt`, the side the reading light leans toward — and they
  * cannot be allowed to disagree. Two rails, and nothing in between; the sequence used to
- * repeat twice and neither repeat was ever defended. Nine is odd, so `hero` and
- * `contact` bookend on the same rail and the conversion screen never moves.
+ * repeat twice and neither repeat was ever defended.
+ *
+ * Twelve is EVEN, so `hero` and `contact` no longer bookend on the same rail, and the
+ * four stops after the insertion — engineering, pivot, rd350, contact — each swap sides.
+ * That is the alternation doing its job rather than a decision anybody took: holding any
+ * one of them still costs a repeat, and a repeat puts two consecutive stops' reading
+ * light on the same side of the screen.
  */
 
 export const STOPS = [
@@ -159,10 +164,114 @@ export const STOPS = [
     id: 'work',
     index: 4,
     kicker: '§ 04 — Selected work',
-    compose: 'proof',
+    /*
+     * `index`, and the reason is a count rather than a taste.
+     *
+     * This stop used to hold nineteen memories across four projects and draw ONE figure
+     * and two cards. Seventeen of the nineteen reached no HTML at all — reachable only by
+     * typing a question into the chat, which `app/robots.ts` disallows, so they were not
+     * slow to index, they were impossible to index. The site's own rule (TASKS 24) is
+     * that anything a question can reveal must also be reachable without asking, and this
+     * stop was the whole of the violation.
+     *
+     * It stops arbitrating one 653px column between four projects and becomes the index
+     * of them: three chapter tiles that are in-page anchors to the three project stops
+     * that follow, over the cards for the work that stays here. The extension point is a
+     * tile, not a chapter — the next thing MJK ships lands here without costing a stop,
+     * which is what stops the stop count having to be re-argued every time.
+     */
+    compose: 'index',
     align: 'left',
     title: { strong: 'Things I have built.' },
-    body: 'The things I have shipped, rather than the jobs I have held. Each one below is a question that has not been asked yet — press it and this page answers from what I have written down, which it is not allowed to contradict.',
+    body: 'The things I have shipped, rather than the jobs I have held. Each one below is a question that has not been asked yet — press it and this page answers from what I have written down, which it is not allowed to contradict. The first three have a section of their own, immediately below.',
+  },
+  {
+    /*
+     * ── THE THREE PROJECT STOPS ──────────────────────────────────────────────────
+     *
+     * They sit HERE, between `work` and `engineering`, and not at the end, for two
+     * separate reasons that happen to agree.
+     *
+     * The camera one is absolute: `lib/mind/waypoints.ts` gives the LAST vantage a
+     * nine-unit pullback under the positional guard `i === n - 1`. Anything appended
+     * after `contact` takes that pullback away from the conversion screen silently. See
+     * the note on `contact` below.
+     *
+     * The reading one is MJK's: the work is what a visitor came for, so it arrives
+     * before the biography rather than after it. `engineering`, `pivot` and `rd350` are
+     * the story and they keep their order behind the case.
+     *
+     * All three carry `mediaFirst`, which on a phone puts the picture above the
+     * paragraph. Every other stop on the site orders prose first, and that is why the
+     * aircraft, the timeline and the motorcycle photographs are all below the fold at
+     * 390x664. These three do not repeat it.
+     */
+    id: 'asanjo',
+    index: 5,
+    kicker: '§ 05 — Asanjo',
+    /*
+     * `pair` is `ApparelPair` over a short card list — the same shape `proof` has, with a
+     * different figure. It used to be one of three states of a single box on §04, chosen
+     * by whichever memory an answer happened to cite first, which meant the apparel work
+     * and the JewelAI work took turns in one slot and each hid the other. MJK's own
+     * verdict on that: "It shouldn't be one for the other." It is not, now.
+     */
+    compose: 'pair',
+    align: 'right',
+    mediaFirst: true,
+    /*
+     * "A finished catalogue image out." is `photoshoot-how-it-works` verbatim and the
+     * adjective is load-bearing: `claims.test.ts` reads "a … image" as a quantity and
+     * requires the phrase in the corpus, which says "a FINISHED catalogue image". Tidy
+     * the adjective away and the build goes red for a reason that looks arbitrary.
+     */
+    title: { strong: 'One flat supplier photograph in.', muted: 'A finished catalogue image out.' },
+    body: 'Five agents do the work between what Asanjo’s supplier sent and the finished frame, and a validator checks the prompt against the category’s rules before any money is spent on it. What fails the critic is kept rather than deleted, and that is the part that made the thing improve. The imagery came first, then the shop it fills.',
+  },
+  {
+    id: 'jewelai',
+    index: 6,
+    kicker: '§ 06 — JewelAI Studio',
+    /*
+     * `proof` already meant "one figure over a short card list", which is exactly what
+     * this stop is. What changed is that it now points straight at `JewelEvidence`
+     * instead of at a three-state machine that had to decide, on every answer, whether
+     * this column belonged to JewelAI or to the apparel work.
+     */
+    compose: 'proof',
+    align: 'left',
+    mediaFirst: true,
+    title: { strong: 'It is never told in words', muted: 'what the piece looks like.' },
+    /*
+     * No retry count, deliberately. `jewelai-gates` says the image "is made again"; it
+     * does not say once. `photoshoot-how-it-works` DOES say "exactly one more attempt" —
+     * but that is the apparel pipeline, and borrowing it here would be a fabrication of
+     * exactly the kind `claims.test.ts` exists to catch.
+     */
+    body: 'Three to five photographs of one piece go in together, and the whole set travels with every image the pipeline generates. A judge scores what comes back against those photographs, and a failure is made again with the judge’s own complaint folded into the prompt. The clip animates an image that has already been through all of that.',
+  },
+  {
+    id: 'mrunn',
+    index: 7,
+    kicker: '§ 07 — MruNN-ERP',
+    /*
+     * `cards` for now, and a video slot when the screen recording exists. Changing the
+     * compose kind later is one line and does NOT change the stop count, so it costs no
+     * second re-measurement pass — which is the whole reason this ships now rather than
+     * waiting for the asset.
+     *
+     * THE SITE SAYS NOTHING AT ALL ABOUT THIS PROJECT'S CLIENT STATUS. There is no user
+     * count, no time saved, no client and no date in what MJK has written down, because
+     * there is nothing yet to measure. So the page says what the thing is and shows it,
+     * and says nothing else. No "not yet launched", no "pre-launch", no "coming soon",
+     * no hedge of any kind, here or anywhere. A disclaimer would be the only way to turn
+     * a normal capability demonstration into a weakness, and nobody asked the question.
+     */
+    compose: 'cards',
+    align: 'right',
+    mediaFirst: true,
+    title: { strong: 'An ERP you talk to,', muted: 'that still renders a form when a form is the right tool.' },
+    body: 'Purchase orders, invoices and stock queries, through a Mastra multi-agent system on Telegram and the web. No data change ships without a human sign-off. I built it because every ERP I have used makes the person translate their intent into a form.',
   },
   {
     /*
@@ -170,8 +279,8 @@ export const STOPS = [
      * survives the move: arriving fifth it reads as the backstory, which is what it is.
      */
     id: 'engineering',
-    index: 5,
-    kicker: '§ 05 — Engineering',
+    index: 8,
+    kicker: '§ 08 — Engineering',
     /*
      * The one stop with a compose kind of its own, and it took three attempts to earn it.
      *
@@ -189,7 +298,7 @@ export const STOPS = [
      * be traced from his render and the dimensions taken from his table.
      */
     compose: 'figure',
-    align: 'right',
+    align: 'left',
     /*
      * General on purpose, and it took a live failure to see why. The title read "I drew an
      * airliner called the MJK-101", which is true, specific and provokes a question —
@@ -208,10 +317,10 @@ export const STOPS = [
   },
   {
     id: 'pivot',
-    index: 6,
-    kicker: '§ 06 — Pivot',
+    index: 9,
+    kicker: '§ 09 — Pivot',
     compose: 'plain',
-    align: 'left',
+    align: 'right',
     title: { strong: 'I started over', muted: 'as a media trainee.' },
     /*
      * The opening clause used to read "After the masters". The antecedent is still on the
@@ -232,10 +341,10 @@ export const STOPS = [
      * screen immediately before this one now instead of two screens back.
      */
     id: 'rd350',
-    index: 7,
-    kicker: '§ 07 — The RD 350',
+    index: 10,
+    kicker: '§ 10 — The RD 350',
     compose: 'carousel',
-    align: 'right',
+    align: 'left',
     title: { strong: 'I rebuilt a 1986 Yamaha RD 350', muted: 'as a cafe racer of my own design.' },
     body: 'The bike was my uncle’s. I rode it to work in Mumbai until it broke down, then took the gap between two Omnicom jobs — June to December 2014 — and rebuilt it at home in Kerala, bare frame to finished bike. I taught myself as I went: the seat, the tank, the handlebar and the headlight bracket were all made in-house, by trial and error. It is the proof that I can imagine something and get there with my own hands.',
   },
@@ -250,10 +359,17 @@ export const STOPS = [
      * an assertion in `evals/tier-a/stops.test.ts`.
      */
     id: 'contact',
-    index: 8,
-    kicker: '§ 08 — Brief me',
+    index: 11,
+    kicker: '§ 11 — Brief me',
     compose: 'contact',
-    align: 'left',
+    /*
+     * `right`, and it used to be `left`. Nothing here was re-decided — the alternation
+     * did it. Nine stops is odd, so `hero` and `contact` bookended on the same rail;
+     * twelve is even, so they cannot. Repeating a rail to hold this one screen still is
+     * the thing the header forbids, and it would put two consecutive stops' reading light
+     * on the same side. The conversion screen moves rails; it does not move position.
+     */
+    align: 'right',
     title: { strong: 'Tell me the problem,', muted: 'when you need it, and what has been tried.' },
     body: 'I come back within a day with a scoped proposal or an honest no, and I say no about as often as yes. Ask below, or reach me directly:',
   },
@@ -279,6 +395,24 @@ export type StopTitle = { readonly strong: string; readonly muted?: string };
  */
 export function ledeOf(stop: Stop): string | undefined {
   return 'lede' in stop ? stop.lede : undefined;
+}
+
+/**
+ * Whether this stop puts its media above its paragraph on a phone.
+ *
+ * Read the same way as `lede`, and for the same reason: `STOPS` is `as const`, so the
+ * field exists on exactly three members and is unreadable on the union. The `in`
+ * narrowing keeps it genuinely optional rather than widening nine stops to carry a
+ * property they do not have.
+ *
+ * It is an OPT-IN and not a global flip. Below 900px every other stop orders prose first,
+ * which is why the aircraft, the career rail and the motorcycle photographs are all below
+ * the fold at 390x664 — and flipping any of them is a per-section composition judgement
+ * that has to be screenshotted, not a CSS fact. The three project stops are media-first
+ * from the day they ship, so they never acquire that debt.
+ */
+export function mediaFirstOf(stop: Stop): boolean {
+  return 'mediaFirst' in stop ? stop.mediaFirst : false;
 }
 
 export const STOP_IDS = STOPS.map((s) => s.id) as readonly StopId[];

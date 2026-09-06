@@ -25,12 +25,14 @@ export const suggestedPrompts = [
  *
  * The dock offered the same four questions on all nine stops, on a site whose whole
  * architecture is that a question belongs to a section. The cards address the memories that
- * are drawn; these address the ones that are not, and on §04 that is seventeen of nineteen —
- * the outreach engine, Artha, the awards, the numbers, and four of the seven JewelAI
- * memories. There is nowhere to draw them: §04's media column has 35.2px of slack at
- * 1440x900 and −74.5px at 1280x720, into an `overflow: hidden` that destroys. The chip row is
- * height the page has already paid for — 32.9px at 1440x900, 41px on a phone, on every screen
- * at every scroll position.
+ * are drawn; these address the ones that are not.
+ *
+ * That gap used to be enormous on §04 — seventeen of nineteen — and the split closed most
+ * of it: the index and the three project stops now draw thirty of the fifty-five, against
+ * seventeen before. What is left for these chips is the depth that genuinely has nowhere
+ * to go, four of the seven JewelAI memories among it. The chip row is height the page has
+ * already paid for — 32.9px at 1440x900, 41px on a phone, on every screen at every scroll
+ * position.
  *
  * AUTHORED STRINGS, NOT DERIVED FROM TITLES. A generated chip cannot be checked, and the
  * check is not decorative: below 768px the row is one chip in an `overflow: hidden` grid
@@ -39,7 +41,7 @@ export const suggestedPrompts = [
  * that, which settles the question on its own.
  *
  * Four per stop, matching the count the dock already shows, so `--dock-h` never changes and
- * the nine stops are never relaid out to swap a suggestion.
+ * the twelve stops are never relaid out to swap a suggestion.
  *
  * `hero` is absent deliberately: it has no memories of its own and it is where a visitor
  * arrives, so it keeps the four that introduce the whole site.
@@ -99,6 +101,35 @@ export const stopPrompts: Partial<Record<StopId, readonly string[]>> = {
     'Tell me about TallyBridge.',
     'What is Artha?',
     'Tell me about the outreach engine.',
+  ],
+  /*
+   * The three project stops. Each set was run through the retriever with `viewing` set to
+   * its own stop — which is what the dock sends — and every one routes home, comes back
+   * topical, and fits the 40-character line the narrowest phone gives a chip.
+   *
+   * `topical` is the field the handler branches on, so a chip that came back untopical
+   * would be the site offering a question and then refusing it. Two candidates did exactly
+   * that and were dropped: "How many images were accepted?" and "Why not just a form?".
+   * Both read well and both would have produced "not my lane" from a control the page
+   * itself put on the screen.
+   */
+  asanjo: [
+    'What did you build for Asanjo?',
+    'What does a supplier photo become?',
+    'What is the pass mark for the critic?',
+    'How many catalogue images were made?',
+  ],
+  jewelai: [
+    'How does it read a piece?',
+    'Does the pipeline ever refuse?',
+    'What does JewelAI Studio run on?',
+    'Tell me about the ring.',
+  ],
+  mrunn: [
+    'What is MruNN-ERP?',
+    'Does anything change without approval?',
+    'Is it GST compliant?',
+    'Why build an ERP you talk to?',
   ],
   contact: [
     'What do you take on?',

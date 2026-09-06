@@ -1,19 +1,21 @@
 import type { ReactNode } from 'react';
 import { SITE } from '@/content/site';
-import { ledeOf, type Stop, type StopTitle } from '@/content/stops';
+import { ledeOf, mediaFirstOf, type Stop, type StopTitle } from '@/content/stops';
 import { memoriesForStop } from '@/lib/corpus/load';
 import ApparelPair from './ApparelPair';
 import AskCard from './AskCard';
 import AuthoredBody from './AuthoredBody';
+import JewelEvidence from './JewelEvidence';
 import MJK101Figure from './MJK101Figure';
+import WorkIndex from './WorkIndex';
 import { cardKicker } from './card-kicker';
+import { cardsFrom, firstSentence } from './draw-rule';
 import Carousel from './Carousel';
 import Timeline from './Timeline';
-import WorkFigure from './WorkFigure';
 import { timelineGroups } from './timeline-data';
 
 /**
- * One stop, server-rendered. Nine of these are the page.
+ * One stop, server-rendered. Twelve of these are the page.
  *
  * Ported from `renderStopHTML` (reference/preview.html:2264-2291), which was five string
  * concatenations with no escaping — `renderCarousel` interpolated a caption straight into
@@ -25,74 +27,18 @@ import { timelineGroups } from './timeline-data';
  * listener and the carousel need to be client code, and none of them is here.
  */
 
-/** The prototype's five, and no more. A generated answer cannot introduce a sixth. */
+/**
+ * The kinds a stop may compose, and a generated answer cannot introduce another: `compose`
+ * is a property of the STOP, read from `content/stops.ts`, and the model has no say in it.
+ *
+ * The card counts and the first-sentence cut used to live here as constants and a
+ * function. They are in `./draw-rule` now, because `scripts/check-corpus.ts` has to know
+ * exactly what this file draws in order to count which memories reach the HTML at all —
+ * and it was knowing that by keeping a copy of these numbers plus four regexes over this
+ * file's source to check the copy had not gone stale. One module, imported by both, and
+ * there is nothing left to drift.
+ */
 type Compose = Stop['compose'];
-
-/**
- * Cards per stop.
- *
- * A stop is one viewport tall and the grid is two columns, so four is what fits — the
- * number the prototype hard-coded per stop before the corpus existed. `apac` and `now`
- * each carry eleven memories now, and showing all of them would push a 100svh panel into
- * `overflow: hidden` and silently cut the last row in half. First four in corpus order:
- * the order in `content/memories.yaml` is authored, so this is a choice an author can
- * change by moving a memory up, without touching a component.
- */
-const MAX_CARDS = 4;
-
-/** Cards are drawn from the corpus, so a card can never claim what a memory does not. */
-const CARD_SECTIONS = new Set(['projects', 'capabilities', 'timeline']);
-
-/**
- * How much of a card's description fits in the two lines the layout gives it.
- *
- * Two lines at the NARROWEST column a card ever gets, which is 351px on a 390px phone.
- * Measured on the built page rather than derived: 14px at 1.55 line-height in that column
- * takes about 44 characters a line, so 88 is the honest budget and anything past it was
- * being thrown away by CSS.
- */
-const CARD_CHARS = 88;
-
-/**
- * The first sentence of a memory body, cut to fit the card.
- *
- * Bodies are YAML folded scalars, so they arrive as one long line with the newlines
- * already collapsed. Splitting on a full stop followed by a space is enough, and falling
- * back to the whole body means a one-sentence memory renders whole rather than empty.
- *
- * THE SECOND CUT, AND WHY IT IS HERE RATHER THAN IN CSS. `.mini-card .mb` also carries
- * `-webkit-line-clamp: 2`, so a first sentence longer than two lines was truncated twice —
- * and the second truncation knows nothing about words. A judge panel found three cards
- * reading "…renders traditional forms when they ar…" and "…an AI assistant in front of it
- * — 27 MCP…", each with `scrollHeight` 65 against `clientHeight` 43 and free space under
- * the card.
- *
- * Raising the clamp to three lines was measured and rejected: it clears every desktop cut
- * but costs §04 43px, which fits at 1440 and 1920 and overflows a 1280x720 band that has
- * 15px of slack — a defect traded for a defect. And it still leaves three of six cut on a
- * phone, where the column is narrowest. Cutting on a word boundary here costs 0px at every
- * viewport and is the only version that fixes the phone too.
- *
- * The ellipsis is deliberate and the clamp stays. A visible cut is a promise that there is
- * more, and the card's id is the memory's id, so the whole thing is one question away in
- * the chat. The clamp remains as the backstop for a column narrower than any measured here.
- */
-function firstSentence(body: string): string {
-  const text = body.replace(/\s+/g, ' ').trim();
-  const end = text.search(/[.!?](\s|$)/);
-  const sentence = end === -1 ? text : text.slice(0, end + 1);
-  if (sentence.length <= CARD_CHARS) return sentence;
-  // Back up to the last space inside the budget, so the cut lands between words. The
-  // fallback is the hard slice, for the pathological case of a single 88-character word.
-  const cut = sentence.lastIndexOf(' ', CARD_CHARS);
-  const kept = sentence.slice(0, cut > 0 ? cut : CARD_CHARS);
-  // A word boundary is not always a good place to stop: "...syncs Indian accounting
-  // software into a" is grammatically mid-thought and reads as a bug rather than as a
-  // trim. Dropping a dangling function word and any punctuation that led into it costs
-  // nothing and leaves the cut on a noun.
-  // The group repeats, because "software into a" needs both words dropped, not one.
-  return `${kept.replace(/(?:[\s,;:—-]+(?:a|an|the|of|to|in|into|on|for|and|or|with|that|its|their))+$/i, '').replace(/[,;:—-]$/, '')}…`;
-}
 
 /**
  * The hero's title is the page's `<h1>` and every other stop's is an `<h2>`.
@@ -145,10 +91,14 @@ function Content({ stop, wide }: { stop: Stop; wide?: boolean }) {
   );
 }
 
-function Cards({ stop, limit = MAX_CARDS }: { stop: Stop; limit?: number }) {
-  const memories = memoriesForStop(stop.id)
-    .filter((m) => CARD_SECTIONS.has(m.section))
-    .slice(0, limit);
+/**
+ * How many cards a stop draws is now a property of its compose kind rather than a literal
+ * passed at one call site. It used to be `<Cards stop={stop} limit={2} />` on the one stop
+ * that had a figure; there are three such stops now, and a second literal is how the two
+ * would have started disagreeing.
+ */
+function Cards({ stop }: { stop: Stop }) {
+  const memories = cardsFrom(stop.compose, memoriesForStop(stop.id));
 
   if (!memories.length) return null;
 
@@ -236,26 +186,34 @@ function media(stop: Stop): ReactNode {
     case 'figure':
       return <MJK101Figure />;
     /*
-     * §04 is the section a sceptic reads, and until now it answered them with four cards
-     * of prose. A review put it plainly: no link, screenshot, repo or demo for any of the
-     * work. So the column leads with a photograph the pipeline actually made from a
-     * photograph a supplier actually sent, and the card list drops to two — which also
-     * retires both cards about the third-party assessment, whose volume numbers that same
-     * review called volume rather than outcomes.
+     * §04, the index. No figure at all, and that is the change: this column used to be one
+     * box arbitrating between four projects on the strength of whichever memory an answer
+     * happened to cite first, so JewelAI could only be shown by hiding the apparel work
+     * and the apparel work could only be shown by hiding JewelAI. Each project has a stop
+     * now; this is the way in to them plus the cards for the work that stays here.
      */
+    case 'index':
+      return <WorkIndex stop={stop} />;
     /*
-     * The photograph is now the DEFAULT state of that column rather than its only one.
-     * §04 carries eighteen memories, seven of them JewelAI's, and there is no room to add
-     * a second figure: the column has 653px at 1440x900 and this already spends 647 of
-     * them, under a `.panel` that is `overflow: hidden`. So `WorkFigure` swaps the box's
-     * contents on the first memory a streamed answer cited, and `ApparelPair` is handed
-     * through as a prop so it stays a Server Component and this file stays out of it.
+     * One figure over a short card list, twice. `proof` is §06's JewelAI evidence — the
+     * photographs a client sends and what comes back — and `pair` is §05's supplier frame
+     * beside the catalogue frame the pipeline made from it. Both point straight at their
+     * figure: `WorkFigure`, the three-state machine that used to stand here and choose
+     * between them, is deleted along with `FIGURE_BY_CITE`, `AMBIGUOUS_CITE` and the
+     * `cites[0]` heuristic. After the split there is no contest to arbitrate.
      */
     case 'proof':
       return (
         <>
-          <WorkFigure pair={<ApparelPair />} />
-          <Cards stop={stop} limit={2} />
+          <JewelEvidence />
+          <Cards stop={stop} />
+        </>
+      );
+    case 'pair':
+      return (
+        <>
+          <ApparelPair />
+          <Cards stop={stop} />
         </>
       );
     case 'contact':
@@ -295,6 +253,19 @@ export default function StopSection({ stop }: { stop: Stop }) {
        * the corpus's `stopId`, and no stylesheet has ever had an opinion about it.
        */
       data-compose={stop.compose}
+      /*
+       * Media above prose, on a phone only, on the stops that opt in.
+       *
+       * Below 900px the stylesheet orders `.content-zone` first and `.media-zone` second
+       * on every stop, which is why the aircraft, the career rail and the motorcycle
+       * photographs are all under the fold at 390x664. This attribute is the opt-out, and
+       * it is an attribute rather than a global flip because the naive flip has been
+       * screenshotted on an existing stop and it is wrong: it takes the § address and the
+       * title off the screen along with the paragraph. What the rule keyed on this does
+       * instead is order the four parts individually — kicker, title, media, body — which
+       * is the shape §02 already proved.
+       */
+      data-media-first={mediaFirstOf(stop) ? '' : undefined}
       className="panel"
     >
       {/*

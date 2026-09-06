@@ -26,18 +26,9 @@
     everything — a cafe racer from an RD350, a chat-native ERP, a multi-agent creative pipeline for
     jewellery, a website that behaves like a mind.
 
-- id: project-jewel-ai
-  section: projects
-  stopId: work
-  title: JewelAI Studio
-  tags: [ai, agents, creative, langgraph]
-  body: >
-    A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
-    for jewellery brands. LangGraph orchestration, custom retouching agents, brand-voice guardrails.
-
 - id: project-mrunn-erp
   section: projects
-  stopId: work
+  stopId: mrunn
   title: MruNN-ERP — chat-native ERP
   tags: [ai, ops, mastra, agents]
   body: >
@@ -167,7 +158,7 @@
 
 - id: project-photoshoot-pipeline
   section: projects
-  stopId: work
+  stopId: asanjo
   title: The multi-agent photoshoot
   tags: [ai, agents, creative]
   body: >
@@ -326,7 +317,7 @@
 
 - id: mrunn-approval-gate
   section: projects
-  stopId: work
+  stopId: mrunn
   title: MruNN-ERP, approval-gated
   tags: [ai, erp, mastra, india, safety]
   body: >
@@ -336,7 +327,7 @@
 
 - id: jewelai-platform
   section: projects
-  stopId: work
+  stopId: jewelai
   title: JewelAI Studio, under the hood
   tags: [ai, video, langgraph, architecture, krunch]
   body: >
@@ -597,7 +588,7 @@
 
 - id: jewelai-reads-the-piece
   section: projects
-  stopId: work
+  stopId: jewelai
   title: How JewelAI Studio reads a piece of jewellery
   tags: [ai, jewelai, pipeline, jewellery, multi-reference, vision, generation, krunch]
   body: >
@@ -616,7 +607,7 @@
     get a different ring back.
 - id: jewelai-gates
   section: projects
-  stopId: work
+  stopId: jewelai
   title: The gates inside JewelAI Studio
   tags: [ai, jewelai, quality, qc, validation, judgement, agents, krunch]
   body: >
@@ -634,7 +625,7 @@
     credits for what did not.
 - id: jewelai-video
   section: projects
-  stopId: work
+  stopId: jewelai
   title: The video half of JewelAI Studio
   tags: [ai, jewelai, video, animation, models, fallback, krunch]
   body: >
@@ -649,7 +640,7 @@
     through them in order when one refuses the job.
 - id: photoshoot-how-it-works
   section: projects
-  stopId: work
+  stopId: asanjo
   title: How the photoshoot pipeline turns a supplier photo into a catalogue image
   tags: [ai, agents, apparel, clothing, catalogue, photoshoot, prompt-memory, qa]
   body: >
@@ -668,7 +659,7 @@
     and layout from this image exactly, because this is the actual thing being sold.
 - id: photoshoot-numbers
   section: projects
-  stopId: work
+  stopId: asanjo
   title: The photoshoot pipeline's own ledger
   tags: [ai, agents, apparel, volume, cost, measurement, prompt-memory]
   body: >
@@ -681,7 +672,7 @@
     complaint that sank them. The whole body of work cost 27 dollars in model calls.
 - id: jewelai-infrastructure
   section: projects
-  stopId: work
+  stopId: jewelai
   title: What JewelAI Studio runs on
   tags: [ai, jewelai, architecture, stack, langgraph, nestjs, nextjs, cloudflare, supabase, krunch]
   body: >
@@ -695,9 +686,17 @@
     private bucket read only through signed URLs. Every model call has something behind it: two image
     providers, three video providers, and the text models routed through whichever endpoint still has
     credit. Sentry and OpenTelemetry run in all of the Node services.
+- id: project-jewel-ai
+  section: projects
+  stopId: jewelai
+  title: JewelAI Studio
+  tags: [ai, agents, creative, langgraph]
+  body: >
+    A multi-agent creative pipeline that turns product photography and briefs into finished ad creatives
+    for jewellery brands. LangGraph orchestration, custom retouching agents, brand-voice guardrails.
 - id: jewelai-the-ring
   section: projects
-  stopId: work
+  stopId: jewelai
   title: The ring I use to show what JewelAI Studio does
   tags: [ai, jewelai, jewellery, photography, video, example, krunch]
   body: >
@@ -709,3 +708,31 @@
     short clip that begins on that same frame and pulls the camera away. Nothing in the prompt described
     the ring. The wrap in the picture that came back is the wrap in the photographs, turn for turn, and
     that is the only test of this I trust.
+
+# ── Added 2026-09-06 ──────────────────────────────────────────────────────────
+# The apparel imagery and the Shopify storefront are ONE engagement for ONE named client,
+# and MJK gave permission to name them: "The client for apparel and website is Asanjo, we
+# can name them no issues." Until this entry existed the site could not print the name at
+# all -- permission to name is not a licensed fact, and evals/tier-a/claims.test.ts binds
+# authored copy to what is written here.
+#
+# Three things are deliberately absent and must stay absent until MJK supplies them.
+# An OUTCOME: there is none in his own account, so none is claimed. A URL: the storefront
+# he built is an unpublished preview theme, and the design asanjokutch.org serves today is
+# not his, so the site must never link it as his work -- a screen recording replaces it.
+# And the client's point of contact, a private individual, whose name appears nowhere in
+# this repository and must not be added to it.
+- id: asanjo-engagement
+  section: projects
+  stopId: asanjo
+  title: Asanjo
+  tags: [asanjo, apparel, catalogue, shopify, storefront, ecommerce, client, krunch]
+  period: 2026
+  body: >
+    Asanjo is the client behind both the catalogue imagery and the shop it fills. The imagery came
+    first: their supplier's flat photographs of their own garments, run through the multi-agent
+    photoshoot pipeline until the catalogue was shot without a shoot. On the back of that I was
+    contracted to rebuild the storefront itself, a Shopify 2.0 theme built between March and June
+    2026, whose hero is a scroll-scrubbed video made from an AI-generated clip of one of their own
+    products. The theme is finished and not yet published, so the storefront a visitor sees at their
+    address today is not the one I built.

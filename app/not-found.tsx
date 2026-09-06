@@ -16,7 +16,7 @@ export default function NotFound() {
           Wrong stop.
         </h1>
         <p className="mt-8 max-w-xl text-lg text-[color:var(--color-type-muted)] leading-relaxed">
-          Nothing lives at this address. The other nine do — start back at the top.
+          Nothing lives at this address. The other twelve do — start back at the top.
         </p>
         <Link
           href="/"

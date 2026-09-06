@@ -114,8 +114,21 @@ describe('the flight clamp', () => {
     expect(src).not.toMatch(/Math\.min\(\s*820\b/);
   });
 
-  it('is exactly 820ms at nine stops, so today nothing moves', () => {
-    // The bit pattern, not the printed decimal: 820 * 8 / 8 has to BE 820, not round to it.
-    expect(Object.is((820 * (STOPS.length - 1)) / 8, 820)).toBe(true);
+  /*
+   * It WAS exactly 820ms, because the derivation is `820 * (n - 1) / 8` and the page was
+   * nine stops long, so the change that introduced it moved nothing. The page is twelve
+   * stops long now and the longest flight is `820 * 11 / 8` = 1,127.5ms.
+   *
+   * That is the point of the derivation rather than a cost of it. The clamp was ALREADY
+   * saturated at nine — the hero-to-contact flight asked for 948ms and got 820 — so peak
+   * velocity on it rises linearly with the number of stops. Left at 820 the longest flight
+   * at twelve stops would peak at about 377 px/frame against the ~141 this file's own
+   * header ties to visible tearing, 2.67x over. Growing the ceiling with the page holds
+   * today's already-over-threshold peak instead of making it worse.
+   *
+   * The bit pattern, not the printed decimal, for the same reason it always was.
+   */
+  it('grows with the page: 1,127.5ms at twelve stops', () => {
+    expect(Object.is((820 * (STOPS.length - 1)) / 8, 1127.5)).toBe(true);
   });
 });

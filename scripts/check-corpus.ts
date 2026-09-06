@@ -29,6 +29,9 @@ import { ANSWERABLE_STOP_IDS, STOP_IDS, STOPS, type StopId } from '../content/st
 // memory with a period, wherever it lives, and that rule is allowed to change without this
 // script quietly disagreeing with the rail a visitor is looking at.
 import { timelineEntries } from '../components/stops/timeline-data';
+// The card rule, imported rather than restated. See section 10: these numbers were a copy
+// with an alarm on it until the copy was deleted.
+import { cardsFrom, WORK_CHAPTERS } from '../components/stops/draw-rule';
 import {
   gallerySlug,
   memorySchema,
@@ -62,6 +65,12 @@ const SECTIONS_FOR_STOP: Record<Exclude<StopId, 'hero'>, readonly Section[]> = {
   // timeline the apac stop renders, and it lives here rather than there.
   now: ['story', 'projects', 'capabilities', 'timeline'],
   work: ['timeline', 'projects', 'capabilities'],
+  // The three project stops. `projects` and nothing else: each one is a single built
+  // thing, so a `story` or a `timeline` memory landing here is a copy-paste from the
+  // entry above rather than a choice.
+  asanjo: ['projects'],
+  jewelai: ['projects'],
+  mrunn: ['projects'],
   contact: ['contact'],
 };
 
@@ -540,9 +549,16 @@ for (const { memory, index } of valid) {
  * types a question into a canvas.
  *
  * It was being violated in the plainest way. 54 memories; 17 of them drawn. Thirty-seven
- * memory bodies appear in no HTML at all, and the thesis that produced that -- "we can
+ * memory bodies appeared in no HTML at all, and the thesis that produced that -- "we can
  * choose to not show some information" -- is right about the mechanism and silent about the
  * cost, which lands on the 90-odd percent of visitors who never ask anything.
+ *
+ * The single worst offender was the work stop: 19 memories across four projects, of which
+ * TWO reached the page, because its column drew one figure and two cards and the figure
+ * had to choose which project it belonged to. Splitting it into an index and three project
+ * stops took the total from 17 of 54 to 30 of 55 in one change. What is left is a corpus
+ * backlog rather than a structural fault -- the story stops draw no cards at all, which is
+ * a separate argument about what a `plain` stop is for.
  *
  * WHAT "APPEARS" MEANS, and the definition is the whole of the design. The cheap version is
  * "the id is in the HTML somewhere", and it is worthless: fifty-four `<div data-memory=""
@@ -560,37 +576,27 @@ for (const { memory, index } of valid) {
  * artefact is the green light that means nothing.
  *
  * So the drawn set is derived from the same modules the page draws from, and the derivation
- * was checked against the real thing: the ids below are exactly the seventeen `id="..."`
- * attributes in `.next/server/app/index.html` from the last build, no more and no fewer.
- * What it cannot see is a component changing its mind, so `MODEL_ASSUMPTIONS` reads
- * `StopSection.tsx` and stops the ratchet from meaning anything the moment it stops
- * matching.
- */
-const CARD_SECTIONS = new Set<Section>(['projects', 'capabilities', 'timeline']);
-const MAX_CARDS = 4;
-const PROOF_CARDS = 2;
-
-/**
- * What `StopSection.tsx` has to still say for the model above to be a description of it
- * rather than a story about it. Text rather than behaviour, because the alternative is
- * rendering, and rendering does not work here.
+ * was checked against the real thing: the ids were exactly the `id="..."` attributes in
+ * `.next/server/app/index.html` from the build of the day it landed, no more and no fewer.
+ *
+ * WHAT USED TO BE HERE AND IS NOT ANY MORE. The card counts and the section filter were
+ * COPIED into this file, and four regexes over `StopSection.tsx` checked that the copy had
+ * not gone stale -- an alarm on a duplicate rather than the removal of the duplicate. The
+ * fix this file's own error message asked for is now done: `components/stops/draw-rule.ts`
+ * holds the numbers, the renderer imports them and so does this, so there is one of each
+ * and the drift class is gone rather than monitored. `MODEL_ASSUMPTIONS` is what is LEFT --
+ * the two rules that are still shapes in a component rather than data.
  */
 const MODEL_ASSUMPTIONS: { pattern: RegExp; what: string }[] = [
-  { pattern: /const MAX_CARDS = 4;/, what: `a cards stop draws ${MAX_CARDS}` },
-  {
-    pattern: /CARD_SECTIONS = new Set\(\['projects', 'capabilities', 'timeline'\]\)/,
-    what: 'only projects, capabilities and timeline memories become cards',
-  },
-  { pattern: /<Cards stop=\{stop\} limit=\{2\} \/>/, what: `the proof stop draws ${PROOF_CARDS}` },
   { pattern: /function Contact\(/, what: 'the contact stop draws every memory it has' },
+  {
+    pattern: /<WorkIndex stop=\{stop\} \/>/,
+    what: 'the index stop draws its chapter tiles and its cards',
+  },
 ];
 
 const allMemories = valid.map((v) => v.memory);
 const onStop = (stopId: StopId) => allMemories.filter((m) => m.stopId === stopId);
-const cardsOn = (stopId: StopId, limit: number) =>
-  onStop(stopId)
-    .filter((m) => CARD_SECTIONS.has(m.section))
-    .slice(0, limit);
 
 /** Every memory the server HTML of `/` carries a title and a first sentence for. */
 const drawn = new Map<string, string>();
@@ -599,12 +605,17 @@ const draw = (id: string, how: string) => {
 };
 
 for (const stop of STOPS) {
+  // Every stop whose media column is a card list, whatever else is in it. The limit per
+  // compose kind is `draw-rule`'s, which is the same one the renderer calls.
+  for (const m of cardsFrom(stop.compose, onStop(stop.id))) draw(m.id, `card on §${stop.index}`);
+
   switch (stop.compose) {
-    case 'cards':
-      for (const m of cardsOn(stop.id, MAX_CARDS)) draw(m.id, `card on §${stop.index}`);
-      break;
-    case 'proof':
-      for (const m of cardsOn(stop.id, PROOF_CARDS)) draw(m.id, `card on §${stop.index}`);
+    case 'index':
+      // The three chapter tiles, each an anchor to a project stop carrying that project's
+      // name and first sentence under the memory's own id. They are not cards -- they are
+      // navigation -- but they put the same two things in the HTML, which is what the rule
+      // asks for.
+      for (const c of WORK_CHAPTERS) draw(c.memoryId, `chapter tile on §${stop.index}`);
       break;
     case 'contact':
       for (const m of onStop(stop.id)) draw(m.id, `card on §${stop.index}`);
@@ -615,7 +626,8 @@ for (const stop of STOPS) {
       for (const e of timelineEntries(allMemories)) draw(e.id, `timeline row on §${stop.index}`);
       break;
     default:
-      // hero, plain, carousel and figure draw authored copy and pictures. No memory prose.
+      // hero, plain, carousel and figure draw authored copy and pictures; `cards`, `proof`
+      // and `pair` are already covered by the card pass above.
       break;
   }
 }
@@ -635,7 +647,7 @@ const undrawn = allMemories.filter((m) => !drawn.has(m.id));
  * Raise the floor when the drawn count goes up. That is the only maintenance this needs, and
  * it is the point: the number can only travel one way.
  */
-const RULE_24_FLOOR = 17;
+const RULE_24_FLOOR = 30;
 
 const stopSectionSource = readFileSync(join(ROOT, 'components', 'stops', 'StopSection.tsx'), 'utf-8');
 const modelDrifted = MODEL_ASSUMPTIONS.filter((a) => !a.pattern.test(stopSectionSource));

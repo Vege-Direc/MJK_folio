@@ -239,7 +239,7 @@ html[data-flying] {
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Nine stops of 100svh: the page is tall on purpose, and never wide. */
+  /* Twelve stops of 100svh: the page is tall on purpose, and never wide. */
   body {
     overflow-x: hidden;
   }
@@ -400,7 +400,7 @@ html[data-flying] {
  * The "you are here" affordance, and it is no longer a blanket opacity.
  *
  * It used to dim the whole inactive stop to 0.32. That reads well in isolation and is
- * indefensible once measured: at any moment eight of the nine stops multiplied every
+ * indefensible once measured (at n=9): at any moment eight of the nine stops multiplied every
  * glyph *and its halo* by a third, which put their body copy at 1.1:1 against the scene
  * and dimmed the RD 350 photographs — the only real photographs on the site — along
  * with them. The detector counted twelve findings and every one of them was this rule.
@@ -1396,6 +1396,62 @@ html[data-flying] .answer-layer-in {
   }
 }
 
+/* ── the index ─────────────────────────────────────────────────────────────── */
+
+/*
+ * §04's media column, and the only card grid on the site with two columns.
+ *
+ * Every other stop's cards sit under or beside a figure, so one column is right and four
+ * cards is what fits. This stop has NO figure — it is the index of the things he has built
+ * — so the column IS the grid, and it has to hold three chapter tiles plus every card the
+ * stop owns. Seven tiles in one column measured about 800px into a ~653px band, under a
+ * `.panel` that is `overflow: hidden` above 900px, where the excess is destroyed rather
+ * than scrolled. Two columns makes it four rows instead of seven.
+ *
+ * Nothing here restyles a card. `.wi-chapter` carries `.mini-card` as well, so the
+ * hairline, the accent eyebrow, the serif title, the clamped description and the focus
+ * ring are the same objects a visitor has already learned on §03 — the tile is a card that
+ * goes somewhere instead of asking something, and it should look like one.
+ */
+.work-index {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+}
+
+/*
+ * Three across, one row, above the cards. The row is the shape of the promise: these three
+ * have a section of their own and the four below do not, and a reader gets that from the
+ * layout before reading a word of it.
+ */
+.wi-chapters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.wi-chapter {
+  text-decoration: none;
+  /* The tile is a link, so the whole of it is the target rather than the title inside it. */
+  cursor: pointer;
+}
+
+/*
+ * The count and the address are the affordance. `.mini-card .mk` is already the accent
+ * mono eyebrow; this only widens the tracking back out, because "§ 06 · 6 more" is an
+ * address and a number rather than a word, and at 0.15em the two halves ran together.
+ */
+.wi-chapter .mk {
+  letter-spacing: 0.18em;
+}
+
+.wi-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
 /* ── timeline ──────────────────────────────────────────────────────────────── */
 
 /**
@@ -2115,7 +2171,7 @@ html[data-flying] .answer-layer-in {
  *
  * The fixed height is a guard, not the fix. The fix is the copy rule: at 320px this row
  * has 272px of usable width, and a suggestion that wraps republishes `--dock-h` and
- * relays out all nine sections mid-rotation. `evals/tier-a/voice.test.ts` asserts the
+ * relays out all twelve sections mid-rotation. `evals/tier-a/voice.test.ts` asserts the
  * length so a future edit cannot reintroduce one; `overflow: hidden` means that if it
  * ever does, the row clips instead of resizing the dock.
  */
@@ -3226,9 +3282,10 @@ html[data-flying] .answer-layer-in {
      * The desktop gap is `clamp(3rem, 5vw, 6rem)` — at least 48px — and it is the gap
      * between two side-by-side COLUMNS. Stacked into one column on a phone it becomes
      * 48px of vertical dead air between a section's words and its media, on the axis
-     * where space is scarcest. Measured at 390x844: five of the nine sections already
-     * run past the top of the dock when scrolled to their own top, by 113px to 503px,
-     * and this returns 22px of that to every one of them.
+     * where space is scarcest. Measured at 390x844, at n=9: five of the nine sections
+     * already ran past the top of the dock when scrolled to their own top, by 113px to
+     * 503px, and this returns 22px of that to every one of them. There are twelve sections
+     * now and that figure has not been re-taken.
      */
     gap: 26px;
     /*
@@ -3414,6 +3471,20 @@ html[data-flying] .answer-layer-in {
   }
 
   .card-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /*
+   * The index goes to one column on a phone, both halves of it.
+   *
+   * Two columns of a 351px screen is a 167px tile, and a card's title is a serif line —
+   * "MruNN-ERP — chat-native ERP" wraps to three lines there and the description under it
+   * to five. Below 900px `.panel` is `height: auto; overflow: visible`, so the extra height
+   * is scrolled rather than destroyed, which is exactly the trade the desktop cannot make.
+   */
+  .wi-chapters,
+  .wi-cards {
     grid-template-columns: 1fr;
     gap: 16px;
   }

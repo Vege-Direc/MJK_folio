@@ -8,7 +8,7 @@
  * wrong.
  *
  * Authored copy did not go away. It moved. `content/stops.ts` carries a title and a body
- * for each of the nine stops, and that copy is exactly the kind that shipped the
+ * for each of the twelve stops, and that copy is exactly the kind that shipped the
  * fabrications: first-person, confident, and typed by hand next to a corpus that says
  * something slightly different. The prototype's own stop table
  * (`reference/preview.html:2151`) held four of the six retired claims below on the day
