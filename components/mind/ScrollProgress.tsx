@@ -40,7 +40,35 @@ export default function ScrollProgress({ count }: { count: number }) {
       sections = Array.from(document.querySelectorAll<HTMLElement>('section[data-stop]'));
       const maxScroll = Math.max(1, root.scrollHeight - window.innerHeight);
       marks = sections.map((el) => el.offsetTop);
-      if (marks.length) marks[marks.length - 1] = maxScroll;
+      /*
+       * The last mark is the smaller of the last section's top and the furthest the
+       * document can scroll — and the `min` is the whole of the fix.
+       *
+       * This line used to be `marks[last] = maxScroll` unconditionally, defended by "a
+       * section is a viewport tall, so its top is the last thing you can scroll to only
+       * when nothing follows it". That premise is true on a desktop and false on a phone.
+       * Measured on the production build at 1440x900, `contact` sits at offsetTop 7200
+       * and maxScroll is 7200 — identical, so the old line was a no-op there. At 390x664
+       * `contact` sits at 7820 and maxScroll is 8299, because below 900px `.panel` is
+       * `height: auto` and the section is 1,136px tall inside a 664px viewport.
+       *
+       * That 479px tail was being added to the FINAL segment only. It ran 6658 -> 8299
+       * instead of 6658 -> 7820: 41% longer than every other segment, so the camera
+       * crossed it 29% slower and reached the last vantage at the absolute bottom of the
+       * document rather than when `contact` reached the top of the screen. Every earlier
+       * stop was correct, because both ends of those segments are `offsetTop`. MJK: "the
+       * scroll end is not mapped properly on mobile".
+       *
+       * With the `min`, `local` clamps to 1 for the length of the tail, so the camera
+       * arrives with the section and then HOLDS while the visitor reads the rest of it,
+       * which is the behaviour every other stop already had.
+       *
+       * The `min` is not decoration. When the last section is SHORTER than the viewport
+       * its top is past the end of the scrollable range, and then `maxScroll` really is
+       * the last reachable position — which is the case the original line was written
+       * for, and the only case where it was right.
+       */
+      if (marks.length) marks[marks.length - 1] = Math.min(marks[marks.length - 1], maxScroll);
     }
 
     /** Where we are, in 0..1 over the stops, from the segment we are inside. */
