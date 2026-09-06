@@ -7,6 +7,21 @@
  *   npx tsx scripts/make-portrait.ts path/to/portrait.jpg  # use a real photograph
  *   npx tsx scripts/make-portrait.ts p.jpg --crop 120,340,520,700
  *
+ * THE FLAGS, AND WHICH ONES A NEW PHOTOGRAPH ACTUALLY NEEDS.
+ *
+ *   --crop l,t,w,h            the 3:4 box in source pixels
+ *   --head cx,cy,halfW,halfH  where the head sits in that box, 0..1. The gate ZOOMS at it
+ *   --matte lo0,lo1,hi0,hi1[,keepLo]   chroma band-pass: see PHOTO_MATTE
+ *   --open r,a,b              opens the matte so thin slivers go: see PHOTO_OPEN
+ *   --contrast pivot,k,knee   the tone curve: see PHOTO_CURVE
+ *   --unsharp a               local contrast, default 0.7
+ *
+ * Only `--crop` and `--head` are always needed. The other three exist because the first
+ * real photograph had a room in it, and each is documented at the function that uses it
+ * with the measurement that forced it. A photograph shot to the brief — head and
+ * shoulders, DARK PLAIN BACKGROUND, one soft key at about 45 degrees with real fill —
+ * needs none of them, and that is still the photograph to ask for.
+ *
  * WHY A TONE MAP AND NOT A TRACE. A face is carried by tone, not by edges. Davies, Ellis
  * and Shepherd 1978 found line drawings that preserve every edge are extremely hard to
  * recognise; Bruce et al. 1992 found the same drawings become recognisable once the light
@@ -209,12 +224,166 @@ function syntheticTone(w: number, h: number): Float32Array {
 
 type Crop = { left: number; top: number; width: number; height: number };
 
-async function photographTone(file: string, crop: Crop | null): Promise<Float32Array> {
+/** `--matte lo0,lo1,hi0,hi1[,keepLo]` — the chroma band-pass. See `PHOTO_MATTE`. */
+type Matte = { lo0: number; lo1: number; hi0: number; hi1: number; keepLo: number };
+/** `--open r,a,b` — the matte opening. See `PHOTO_OPEN`. */
+type Open = { r: number; a: number; b: number };
+/** `--contrast pivot,k,knee` — the tone curve. See `PHOTO_CURVE`. */
+type Curve = { pivot: number; k: number; knee: number };
+
+type PhotoOpts = {
+  crop: Crop | null;
+  matte: Matte | null;
+  open: Open | null;
+  curve: Curve | null;
+  unsharp: number;
+};
+
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/*
+ * PHOTO_MATTE — WHY A PHOTOGRAPH NEEDS A MATTE AND WHY IT IS BUILT FROM COLOUR.
+ *
+ * The placeholder was a head on nothing, so the silhouette was free. A photograph has a
+ * room in it, and the first real one measured here is the hard case: MJK against warm
+ * wooden slats, indoors. Measured on the frame, Rec.709 luminance 0-255:
+ *
+ *   wall, behind and beside the head   99 - 104
+ *   his forehead 98 · shadow cheek 101 · jaw 102
+ *
+ * The wall IS the face's midtone. So a luminance floor cannot separate them — any floor
+ * that kills the wall kills the shadow half of the face, which is exactly the half-a-face
+ * failure this file's placeholder had to be re-lit to avoid — and cropping does not fix
+ * it either, because the wall is BEHIND him, not merely around him. Rendered without a
+ * matte the gate drew a rectangle of even dust with a white slab at the bottom and a
+ * dark hole where the head was; the head was the least legible thing in the frame.
+ *
+ * What separates them is SATURATION. The varnished wood is a near-pure orange —
+ * (174, 86, 18), HSV S = 0.89 — and skin at the same luminance is (152, 90, 55), S = 0.64.
+ * Hue does not separate them at all (both about 25 degrees); purity does, and cleanly:
+ * over the crop the saturation histogram is bimodal, the wall in a mode at 0.80-0.95 and
+ * the whole head spread 0.15-0.75, with a valley at 0.72-0.80 holding 7% of pixels.
+ *
+ * The other end of the same axis is his white shirt, S = 0.02 at luminance 250 — 1.4x the
+ * brightest thing on his face and far more area, so with the shirt in frame the sampler
+ * spends more marks on his chest than on his head and the portrait is a glowing wedge.
+ * A shutter cord behind him is white for the same reason.
+ *
+ * So it is one rule with two edges: keep the band of colour purity that skin and hair
+ * occupy, drop what is more saturated than skin (the room) and what is less (the shirt).
+ * `keepLo` leaves a small residual of the achromatic end rather than zero, because the
+ * collar at a tenth of its weight is the dim base that stops the head from floating —
+ * the same job the placeholder's own shoulder stub does at tone 0.22.
+ */
+function matteValue(m: Matte, R: number, G: number, B: number): number {
+  const mx = Math.max(R, G, B);
+  const s = mx ? (mx - Math.min(R, G, B)) / mx : 0;
+  const lo = m.keepLo + (1 - m.keepLo) * smoothstep(m.lo0, m.lo1, s);
+  return lo * (1 - smoothstep(m.hi0, m.hi1, s));
+}
+
+/*
+ * PHOTO_OPEN — and the reason chroma alone is not enough.
+ *
+ * Scanning the wall strip beside his head row by row, most rows sit at S = 0.83-0.95 and
+ * the matte removes them outright. A handful do not: the varnish throws specular bands a
+ * few pixels tall that land at S = 0.65-0.73, INSIDE the skin band, and the cord's
+ * anti-aliased edge does the same where it blends into the wood. Rendered, those survive
+ * as horizontal scan-lines across the frame and a dotted scratch above his head. No
+ * chroma threshold removes them without removing his shadow cheek with them.
+ *
+ * What separates them is not colour but SIZE: the subject is one large connected region
+ * and a specular sliver is 4 pixels of it. So the matte is opened — box-blurred at radius
+ * `r` and thresholded — and a pixel keeps its matte only where the matte has body around
+ * it. A 3px cord in a 19px window averages 0.16 and goes; the head averages 1 and stays.
+ * Outside the frame counts as zero, so the crop's own edge erodes like any other sliver
+ * rather than becoming a bright rectangle border.
+ *
+ * It costs the silhouette about `r` pixels of feather. For a portrait that assembles out
+ * of dust and disperses back into it, a soft edge is the right cost to pay.
+ */
+function openMatte(m: Float32Array, w: number, h: number, o: Open): void {
+  const r = Math.max(0, Math.round(o.r));
+  if (r < 1) return;
+  const t1 = new Float32Array(w * h);
+  const t2 = new Float32Array(w * h);
+  const d = 2 * r + 1;
+  const gx = (y: number, x: number) => (x < 0 || x >= w ? 0 : m[y * w + x]);
+  const gy = (y: number, x: number) => (y < 0 || y >= h ? 0 : t1[y * w + x]);
+  for (let y = 0; y < h; y++) {
+    let acc = 0;
+    for (let x = -r; x <= r; x++) acc += gx(y, x);
+    for (let x = 0; x < w; x++) {
+      t1[y * w + x] = acc / d;
+      acc += gx(y, x + r + 1) - gx(y, x - r);
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    let acc = 0;
+    for (let y = -r; y <= r; y++) acc += gy(y, x);
+    for (let y = 0; y < h; y++) {
+      t2[y * w + x] = acc / d;
+      acc += gy(y + r + 1, x) - gy(y - r, x);
+    }
+  }
+  for (let i = 0; i < m.length; i++) m[i] *= smoothstep(o.a, o.b, t2[i]);
+}
+
+/*
+ * PHOTO_CURVE — the tone curve, and why the tone map looking right is not the test.
+ *
+ * The matted 72x96 grid is a good likeness to the eye, and it was still a poor DOT FIELD,
+ * which are two different things. The sampler's only strong channel is density — the
+ * sprite alpha ramp runs 0.28 to 0.51 and the colour ramp is near-flat above bucket 3 —
+ * and density goes as (v - 0.1)^0.9. In the untouched photograph his hair sits at 0.23 to
+ * 0.53 of the range and his face at 0.29 to 1.0, so hair and face drew at 1.6x of each
+ * other and the head came out as one even oval. The placeholder gets its legibility from
+ * hair BELOW the draw floor, drawn as absence.
+ *
+ * A gentle S about the midtone fixes it: it puts the dark hair and the eye sockets under
+ * the floor and lifts the lit planes, and `knee` rolls the top off with a tanh so the lit
+ * cheek does not clip into one white mass — the fusion failure recorded above the sprite
+ * ramps. It is deliberately gentle (k = 1.35 here). Pushed to 1.9 it recreated the OTHER
+ * recorded failure exactly: the shadow half of the face dropped under the floor with the
+ * hair, and the frame became half a face.
+ */
+function toneCurve(g: Float32Array, c: Curve): void {
+  for (let i = 0; i < g.length; i++) {
+    let t = c.pivot + (g[i] - c.pivot) * c.k;
+    if (t > c.knee) t = c.knee + (1 - c.knee) * Math.tanh((t - c.knee) / (1 - c.knee));
+    g[i] = Math.min(1, Math.max(0, t));
+  }
+}
+
+async function photographTone(file: string, opt: PhotoOpts): Promise<Float32Array> {
   // Imported lazily and by name so the placeholder path never needs sharp installed.
   const sharp = (await import('sharp')).default;
   let img = sharp(readFileSync(file));
-  if (crop) img = img.extract(crop);
-  const { data } = await img
+  if (opt.crop) img = img.extract(opt.crop);
+  // Full-resolution RGB first: the matte is a colour decision and it has to be made
+  // before the downsample mixes the wall into the cheek.
+  const { data, info } = await img.raw().toBuffer({ resolveWithObject: true });
+  if (info.channels < 3) throw new Error(`expected an RGB photograph, got ${info.channels} channels`);
+  const n = info.width * info.height;
+  const ch = info.channels;
+  const lum = new Float32Array(n);
+  const matte = new Float32Array(n).fill(1);
+  for (let i = 0; i < n; i++) {
+    const R = data[i * ch], G = data[i * ch + 1], B = data[i * ch + 2];
+    lum[i] = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    if (opt.matte) matte[i] = matteValue(opt.matte, R, G, B);
+  }
+  if (opt.open) openMatte(matte, info.width, info.height, opt.open);
+
+  const grey = Buffer.alloc(n);
+  for (let i = 0; i < n; i++) grey[i] = Math.max(0, Math.min(255, Math.round(lum[i] * matte[i])));
+  const res = await sharp(grey, { raw: { width: info.width, height: info.height, channels: 1 } })
+    // Explicit, and not decoration: without it sharp promotes a one-channel raw input back
+    // to sRGB and `.raw()` hands back three interleaved channels. Reading that as one
+    // channel scrambles the grid into stripes, which is what it looked like when it did.
     .greyscale()
     // Stretch to full range before downsampling. A tone quantiser has sixteen levels to
     // spend and a phone JPEG of a lit face rarely uses more than half the histogram.
@@ -222,8 +391,10 @@ async function photographTone(file: string, crop: Crop | null): Promise<Float32A
     .resize(W, H, { fit: 'fill', kernel: 'lanczos3' })
     .raw()
     .toBuffer({ resolveWithObject: true });
+  if (res.info.channels !== 1) throw new Error(`expected 1 grey channel, got ${res.info.channels}`);
   const out = new Float32Array(W * H);
-  for (let i = 0; i < out.length; i++) out[i] = data[i] / 255;
+  for (let i = 0; i < out.length; i++) out[i] = res.data[i] / 255;
+  if (opt.curve) toneCurve(out, opt.curve);
   return out;
 }
 
@@ -240,32 +411,63 @@ function encode4bpp(tone: Float32Array): string {
   return bytes.toString('base64');
 }
 
+/** `--flag a,b,c` or `--flag=a,b,c`, as numbers. `null` when the flag is absent. */
+function numbers(args: string[], flag: string): number[] | null {
+  const eq = args.find((a) => a.startsWith(`--${flag}=`));
+  const raw = eq ? eq.slice(flag.length + 3) : args.includes(`--${flag}`) ? args[args.indexOf(`--${flag}`) + 1] : undefined;
+  if (raw === undefined) return null;
+  const out = raw.split(',').map(Number);
+  if (out.some((v) => !Number.isFinite(v))) throw new Error(`--${flag} wants numbers, got "${raw}"`);
+  return out;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const file = args.find((a) => !a.startsWith('--')) ?? null;
-  const cropArg = args.find((a) => a.startsWith('--crop='))?.slice(7) ??
-    (args.includes('--crop') ? args[args.indexOf('--crop') + 1] : undefined);
-  const crop = cropArg
-    ? (() => {
-        const [left, top, width, height] = cropArg.split(',').map(Number);
-        return { left, top, width, height };
-      })()
+  const cropN = numbers(args, 'crop');
+  const crop = cropN ? { left: cropN[0], top: cropN[1], width: cropN[2], height: cropN[3] } : null;
+  const matteN = numbers(args, 'matte');
+  const matte = matteN
+    ? { lo0: matteN[0], lo1: matteN[1], hi0: matteN[2], hi1: matteN[3], keepLo: matteN[4] ?? 0 }
     : null;
+  const openN = numbers(args, 'open');
+  const open = openN ? { r: openN[0], a: openN[1], b: openN[2] } : null;
+  const curveN = numbers(args, 'contrast');
+  const curve = curveN ? { pivot: curveN[0], k: curveN[1], knee: curveN[2] } : null;
+  const sharpen = numbers(args, 'unsharp')?.[0] ?? 0.7;
+  const headN = numbers(args, 'head');
+  // The placeholder's own box, and the default only because a photograph should pass its
+  // own: the gate zooms at `head`, and aiming the zoom at the wrong place is invisible in
+  // a still and obvious in motion.
+  const head = headN
+    ? { cx: headN[0], cy: headN[1], halfW: headN[2], halfH: headN[3] }
+    : { cx: 0.5, cy: 0.435, halfW: 0.31, halfH: 0.3 };
 
-  const tone = file ? await photographTone(file, crop) : syntheticTone(W * SS, H * SS);
-  const grid = unsharp(file ? tone : downsample(tone, W * SS, H * SS, W, H), W, H, 0.7);
+  const tone = file
+    ? await photographTone(file, { crop, matte, open, curve, unsharp: sharpen })
+    : syntheticTone(W * SS, H * SS);
+  const grid = unsharp(file ? tone : downsample(tone, W * SS, H * SS, W, H), W, H, file ? sharpen : 0.7);
 
   const lit = grid.reduce((a, b) => a + (b > 0.1 ? 1 : 0), 0) / grid.length;
   const mean = grid.reduce((a, b) => a + b, 0) / grid.length;
+  const flags = [
+    crop && `--crop ${cropN!.join(',')}`,
+    matte && `--matte ${matteN!.join(',')}`,
+    open && `--open ${openN!.join(',')}`,
+    curve && `--contrast ${curveN!.join(',')}`,
+    numbers(args, 'unsharp') && `--unsharp ${sharpen}`,
+    headN && `--head ${headN.join(',')}`,
+  ].filter(Boolean).map((f) => `\n *     ${f}`).join('');
 
   const body = `/**
  * The intro gate's luminance map. GENERATED — edit \`scripts/make-portrait.ts\`, not this.
  *
- *   npx tsx scripts/make-portrait.ts <photograph> [--crop left,top,w,h]
+ *   npx tsx scripts/make-portrait.ts <photograph> [--crop l,t,w,h] [--matte …] [--open …]
+ *     [--contrast pivot,k,knee] [--unsharp a] [--head cx,cy,halfW,halfH]
  *
  * ${
    file
-     ? `Source: ${file}${crop ? ` cropped ${crop.left},${crop.top} ${crop.width}x${crop.height}` : ''}`
+     ? `Source: ${file} — the owner's own frame, kept outside the repository.\n * Regenerate:\n *   npx tsx scripts/make-portrait.ts ${file}${flags}`
      : 'Source: the synthetic placeholder head. NOT a likeness of anyone.'
  }
  * ${(lit * 100).toFixed(1)}% of cells are above the draw floor; mean tone ${mean.toFixed(3)}.
@@ -278,7 +480,7 @@ export const PORTRAIT = {
   h: ${H},
   /** True while this is the synthetic head. The gate will not claim it is anyone. */
   placeholder: ${!file},
-  head: { cx: 0.5, cy: 0.435, halfW: 0.31, halfH: 0.3 },
+  head: { cx: ${head.cx}, cy: ${head.cy}, halfW: ${head.halfW}, halfH: ${head.halfH} },
   /** Row-major, 4 bits a cell, high nibble first, base64. See \`decodeTone\`. */
   data:
     '${encode4bpp(grid)}',
