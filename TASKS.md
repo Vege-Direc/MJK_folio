@@ -2836,6 +2836,117 @@ model.** That is a capability claim with the evidence running underneath it.
 
 ---
 
+# 50 REOPENED — the lanes were vetoed on a measurement error. `spec'd`, and the synthesis is his idea
+
+## The geometry does not veto it. The earlier veto was wrong twice over
+
+**Error one: it compared the chord to the wrong path.** It used `Σ|S[i+1] − S[i]|` = 53.0 — the
+*straight node polyline*, which is drawn nowhere. The axon the visitor actually sees is
+`makeCurve`, **57.19 long**. So a shortcut is **8.3% shorter, not 1.1% — wrong by a factor of
+7.5.**
+
+**Error two: it read proximity backwards.** A camera sitting 1.4 units off the axon
+*magnifies* a 2.6-unit gap rather than hiding it. Projected through the scene's own camera at
+`V[1]`, the two lanes separate by **313–354px on a 900px frame**, against a tube that renders
+**2–7px wide** — **20x to 100x its own width.** That is a fork, not z-fighting.
+
+The departure angle is **30.2°**, squarely inside the scene's existing 21–60° branch cone, so
+it is anatomically ordinary for this field.
+
+> **And MJK picked the best chord on the spine by eye.** Separation-to-length ratio for
+> `S[1] → S[4]` is **8.4%**, against 7.1% for 1→6, 6.7% for 4→7, 5.2% for 7→10 and 4.3% for
+> 1→8. The joint he chose is the most legible one available.
+
+**One real caution:** seen from `V[0]` the separation falls to 16–52px, so at the opening
+vantage it reads as a thin double line rather than a fork.
+
+## The evidence transfers only halfway, and the earlier verdict took the wrong half
+
+Sherwin's line about self-identification is **reason #3 of five**, and its supporting sentence
+is about identity. Her actual remedy is *"prioritize topics and tasks over audience
+categories"*, and Richardson's GOV.UK conclusion is *"people approach a service based on the
+task… not on their job description."* **Both recommend the axis MJK chose.**
+
+But three of Sherwin's five reasons never mention identity at all, and her closing criterion
+lands **harder** on a preference choice than on an identity one: categories should be mutually
+exclusive with *"sufficiently unique content to justify a new section"*. **His shortcut is a
+strict subset with zero unique content behind it.** Plus constructed preference (Bettman, Luce
+& Payne 1998): labels of this kind **manufacture** a preference rather than revealing one.
+
+**Withdraw the thoughtbot precedent.** It was fetched and checked: it has a plain hub nav and
+**no entry chooser**. I repeated that citation to MJK and it was wrong. And "build for needs,
+not audiences" sits under GOV.UK Principle 6, *"This is for everyone"* — an accessibility
+principle, not a navigation one.
+
+## Of my four objections, three stand and the one I called fatal is false
+
+**FALSE — "the chat breaks because an answer has nowhere to dock."** `ChatDock.tsx:165` already
+does `const showInline = answer !== null && !docked`, and its own comment says that is exactly
+what it is for. **Degraded, not broken.** I called this fatal to MJK; it is not.
+
+**Stands** — the two denominators, plus `data-stop` being a static authored integer, so removal
+dims the page. **Stands but narrower** — `0x5eed ^ M` fires only if a different waypoint count
+is *passed*; DOM removal never changes `M`. **Not a problem at all** — the scroll jump measures
+**510ms at a 132 px/frame peak** across 2,700px, under the ~141 tearing threshold and **under
+half the 274 px/frame the chat flight already ships**.
+
+**The fast-pulse idea, judged honestly: a consolation prize.** It answers a question about
+*speed* when MJK asked one about *route*.
+
+## His cut is on a sharper joint than mine, and my order was not even on the frontier
+
+`engineering` and `pivot` are biography. `apac` is the career rail carrying **16 memories** —
+the recruiter's entire case. **He skips the biography and keeps the career. My reorder moved
+both down together**, which is the cruder cut.
+
+Measured at 390x844: **his short flow puts `apac` at screenful 3.0. My reorder puts it at
+11.31.**
+
+**And my proposed order is strictly dominated.** Lifting `apac` to index 6 leaves `work` at
+1,923px *unchanged* and brings `apac` **2,532px earlier, for free.** I proposed a
+Pareto-inferior ordering and presented it as the recommendation.
+
+**A number correction I owe MJK:** the "first proof moves to screenful 2.3" I gave him mixes
+conventions. On the same table's own convention it is **3.28**.
+
+## The synthesis: his idea, with the mechanism deleted
+
+    hero, origin, apac, now, work, asanjo, jewelai, mrunn, engineering, pivot, rd350, contact
+
+**This reproduces his short flow exactly** — `work` at 4,138px, `apac` at 1,688px — **for 100%
+of visitors, with no question asked, nothing removed, no re-roll, and one array literal
+changed.**
+
+> **The reorder does not defeat the branch. It makes it unnecessary.**
+
+**And if he still wants the fork drawn — it is cheap and it can be honest.** One curve appended
+to `secondaryCurves`, inside an already-merged draw call. **Never to `nodeConnCurves` or
+`pulsePool`**, both of which feed `rng`-driven shuffles that would re-roll the dust.
+
+Then give it a real job rather than decoration: **swap `camCurves[1..3]` for the collateral for
+the duration of a jump only.** C⁰-continuous at both ends, cleared on arrival — and the 30.2°
+break **is** the visible "different route" MJK asked for. **Diegetic branching, with nobody
+asked anything.**
+
+## The number that settles the door itself
+
+**~0.1%.** Fandom's article-width toggle is the only hard uptake figure available for an
+optional preference control, and it sits an **order of magnitude below** the 2% threshold
+`DIRECTION.md` set for keeping an affordance.
+
+> **A door cannot carry the distance problem. Only the ordering can.**
+
+And `contact` — carrying the résumé and LinkedIn — sits at **11,055px in every twelve-stop
+ordering.** No reordering fixes that; only an index does.
+
+## One unrelated defect, load-bearing for every ordering above
+
+`MindCanvas.tsx:110` never passes `waypoints`, so `scene.ts:163` runs the literal
+`buildWaypoints(9)` against `count={STOPS.length}`. Already specified in
+`SPEC-architecture.md` §2.3 as increment 0, and **nothing here can ship before it does.**
+
+---
+
 ## Blocked — needs MJK
 
 1. **A wider photograph of the finished RD 350.** Its rear wheel is cut off at the frame

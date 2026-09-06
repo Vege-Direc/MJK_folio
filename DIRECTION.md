@@ -14,7 +14,7 @@ how this project has already retracted four numbers.
 
 | # | Do this | Why, in one line |
 |---|---|---|
-| 1 | **Reorder the spine: work above story.** `hero, now, work, asanjo, jewelai, mrunn, origin, engineering, pivot, apac, rd350, contact` | First proof moves from screenful **9.1 to 2.3** |
+| 1 | **Reorder — REVISED 2026-09-06 to MJK's own cut.** `hero, origin, apac, now, work, asanjo, jewelai, mrunn, engineering, pivot, rd350, contact` | Reproduces his short flow for **100% of visitors, no question asked**. `work` 4,138px, `apac` 1,688px. My earlier order was strictly dominated |
 | 2 | **§07 becomes an index**; JewelAI, Asanjo and MruNN get stops; JewelAI and Asanjo get routes | 17 of 19 work memories are currently never drawn |
 | 3 | **Navbar WITHDRAWN.** The hero sentence becomes the anchor; §07 is the index; `§ NN` labels self-anchor; **add `pushState` to `goToStop`** | Chat moves the viewport but produces no address. The one move that makes the chat *navigate* rather than be replaced |
 | 4 | **The scroll carries existence AND evidence.** Withhold biography depth and work depth only | Never withhold a project, artefact, role, year or title |
@@ -87,6 +87,10 @@ how this project has already retracted four numbers.
 | "6,000–8,000 particles, 43ms" for the portrait | **Wrong by 3x.** The objection does not stand |
 | "Portrait needs ≥1500px" (mine) | **~1280px, comfortable from 1366** |
 | "The scroll carries existence" (mine) | **Existence AND evidence** |
+| "A shortcut is 1.1% shorter and would read as a duplicated mesh" | **Wrong by 7.5x.** Compared against the straight node polyline, not the drawn curve. It is 8.3% shorter and separates by 313–354px on a 900px frame |
+| "The chat breaks — an answer would have nowhere to dock" (mine, called fatal) | **False.** `ChatDock.tsx:165` already renders inline when no container exists |
+| "thoughtbot segments the entry successfully" | **False.** Fetched and checked: plain hub nav, no entry chooser |
+| "First proof moves to screenful 2.3" (mine) | **3.28** on the same table's own convention |
 | "`subMaxNodes` 720→200 is a saving" | **It is not.** Neither cap is ever reached |
 | The 86ms flight frame gap | Retracted earlier; the last place still asserting it was fixed in `8f424c2` |
 
