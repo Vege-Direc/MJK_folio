@@ -1827,6 +1827,78 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     const clock = new THREE.Clock();
     let frames = 0, fpsTime = performance.now();
 
+    /**
+     * Adaptive quality: measure frame time, shed the expensive things, in order.
+     *
+     * The sensor for this was already here and was being thrown away — `onFps` has been
+     * computed every 500ms in animate() since the scene was written and nothing ever
+     * consumed it. What was missing was the controller.
+     *
+     * The ladder sheds bloom FIRST and resolution second, because that is the measured
+     * order of cost. Bloom is thirteen full-screen draws and took this tier's
+     * unconditional full-screen fill from 1.0 frames to 2.13; pixel ratio is quadratic
+     * but starts from a much smaller base. Level 0 is what a phone that can afford it
+     * sees, and it is the scene MJK asked for.
+     *
+     *   0  bloom on,  ratio 1.00 of the tier cap
+     *   1  bloom off, ratio 1.00
+     *   2  bloom off, ratio 0.83   (-31% device pixels)
+     *   3  bloom off, ratio 0.67   (-55% device pixels)
+     *
+     * The loop is Google `<model-viewer>`'s, not one invented here
+     * (packages/model-viewer/src/three-components/Renderer.ts): an EMA of frame duration,
+     * a hard clamp on how much any ONE frame can move it, a dead band wide enough that a
+     * step cannot land inside it, and an EMA reset to the middle of the band on every
+     * change so a step cannot immediately trigger its own reversal.
+     *
+     * The thresholds are ABSOLUTE, and the first version of this got that wrong. It
+     * compared the average against the fastest interval the display had ever produced,
+     * so that a 165Hz panel would be held to 165Hz. One anomalously short delta during
+     * startup latched the reference near zero and the controller then degraded a machine
+     * that was rendering the scene perfectly — caught by driving it on an unthrottled
+     * desktop, where it walked all the way down to level 3.
+     *
+     * Absolute is also the better question. Dropping 9 frames in 10 on a 165Hz display
+     * still looks like 60fps and nobody minds; what a visitor notices is frame time
+     * crossing into the low forties. So: shed above 24ms (~41fps), restore below 17ms
+     * (~59fps), and do nothing in between. The 7ms dead band is wider than the frame-time
+     * change a single step produces, which is what stops the ladder oscillating.
+     */
+    const QUALITY_DOWN_MS = 24;
+    const QUALITY_UP_MS = 17;
+    const QUALITY_SCALES = [1, 1, 0.83, 0.67];
+    let qualityLevel = 0;
+    let emaMs = QUALITY_UP_MS;   // start optimistic; a real problem takes it up in ~2s
+    let lastQualityChange = 0;
+
+    function applyQuality(){
+      if (bloomPass) bloomPass.enabled = cfg.bloom && qualityLevel < 1;
+      resize(viewW, viewH);
+    }
+
+    function stepQuality(nowMs: number, frameMs: number){
+      // Never under reduced motion. The reduced path holds an exact promise — 7.88% of
+      // pixels changing per frame becomes 0.01% — and resizing the drawing buffer is
+      // itself a whole-frame pixel change, which is the one event that promise forbids.
+      if (reduced) return;
+      const ms = Math.min(frameMs, 100);
+      // model-viewer's +/-5ms clamp: one 400ms hitch must not move the average enough to
+      // trigger a step, because a phone's frame-time distribution has a long tail from
+      // thermal scaling, GC and texture uploads that says nothing about the steady state.
+      const d = 0.2 * (ms - emaMs);
+      emaMs += d > 5 ? 5 : d < -5 ? -5 : d;
+      if (nowMs - lastQualityChange < 2500) return;
+      const want = emaMs > QUALITY_DOWN_MS ? qualityLevel + 1
+                 : emaMs < QUALITY_UP_MS ? qualityLevel - 1
+                 : qualityLevel;
+      const next = Math.max(0, Math.min(QUALITY_SCALES.length - 1, want));
+      if (next === qualityLevel) return;
+      qualityLevel = next;
+      lastQualityChange = nowMs;
+      emaMs = (QUALITY_DOWN_MS + QUALITY_UP_MS) / 2;  // mid dead band, so a step cannot rebound
+      applyQuality();
+    }
+
     function animate(){
       raf = view.requestAnimationFrame(animate);
       stepTier3();
@@ -2218,6 +2290,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
 
       frames++;
       const now = performance.now();
+      stepQuality(now, dt * 1000);
       if (now - fpsTime >= 500){
         if (onFps) onFps(Math.round(frames * 1000 / (now - fpsTime)));
         frames = 0; fpsTime = now;
@@ -2229,7 +2302,15 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       viewW = w; viewH = h;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      // The tier cap, times whatever the adaptive controller has decided.
+      const pr = Math.min(view.devicePixelRatio || 1, cfg.pixelRatioCap) * QUALITY_SCALES[qualityLevel];
+      renderer.setPixelRatio(pr);
       renderer.setSize(w, h, false);
+      // EffectComposer captures the renderer's pixel ratio when it is constructed and
+      // keeps its own copy. Without this its two full-size targets stay at the ratio the
+      // scene started with, and the scene renders at one resolution into buffers sized
+      // for another.
+      composer.setPixelRatio(pr);
       composer.setSize(w, h);
       // Same fraction as at construction, or the pyramid silently returns to full
       // resolution the first time the viewport changes.
