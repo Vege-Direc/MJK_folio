@@ -221,11 +221,33 @@ function record(ops: readonly Op[]): void {
   // own last request, which is the intended retention read the useful way round.
   for (const key of touched) pipeline.expire(key, RETENTION_SECONDS);
 
-  pipeline.exec().catch((err: unknown) => {
-    // A counter that cannot write is a counter that cannot write. It is never a reason
-    // for a visitor to see anything different.
-    console.warn('[instrument] write failed:', err instanceof Error ? err.message : err);
-  });
+  pipeline
+    .exec()
+    .then((results) => {
+      // `exec()` does NOT reject when the commands inside it fail -- it resolves with the
+      // error in each entry's first slot. Without this the writes were failing in total
+      // silence against an unreachable store, which is how a page of zeroes came to look
+      // exactly like a site nobody had visited.
+      const failed = results?.find(([err]) => err)?.[0];
+      if (failed) warnOnce(failed.message);
+    })
+    .catch((err: unknown) => warnOnce(err instanceof Error ? err.message : String(err)));
+}
+
+/**
+ * One line a minute, at most.
+ *
+ * A counter that cannot write is never a reason for a visitor to see anything different,
+ * and it is also never a reason to write a line per request into a log the owner has to
+ * read. An unreachable Redis would otherwise produce one warning for every page view on
+ * the site, which buries the answers this instrument exists to surface.
+ */
+let lastWarnedAt = 0;
+function warnOnce(message: string): void {
+  const now = Date.now();
+  if (now - lastWarnedAt < 60_000) return;
+  lastWarnedAt = now;
+  console.warn('[instrument] write failed (suppressed for 60s):', message);
 }
 
 /* -- what the callers record -------------------------------------------------- */
@@ -297,6 +319,22 @@ export type InstrumentReading = {
   /** Distinct address hashes across the whole window, as a union of the daily sketches. */
   uniqueViewers: number;
   uniqueAskers: number;
+  /**
+   * How many of the reads that made this page came back as an error, out of how many were
+   * issued.
+   *
+   * CAUGHT ON THE FIRST LIVE RUN OF THIS CODE, and it is the exact defect the whole
+   * feature is a reaction to. `REDIS_URL` pointed at a hostname that does not resolve
+   * outside the compose network, and the report printed a clean page of zeroes -- "nobody
+   * visited" and "the store is unreachable" rendered identically. A `pipeline.exec()` does
+   * not reject when its commands fail; it resolves with an error in each entry's first
+   * slot, and every one of them was being read as a missing value and coerced to nought.
+   *
+   * A site with no visitors and an instrument with no connection are different facts, and
+   * an instrument that cannot tell them apart is worse than no instrument, because it
+   * produces a confident answer to the question it was built to settle.
+   */
+  reads: { failed: number; total: number };
 };
 
 /** The last `n` UTC days, newest first, as key suffixes. */
@@ -372,5 +410,6 @@ export async function read(days: number): Promise<InstrumentReading | null> {
     days: daysOut,
     uniqueViewers: Number(value(tail)) || 0,
     uniqueAskers: Number(value(tail + 1)) || 0,
+    reads: { failed: results.filter(([err]) => err).length, total: results.length },
   };
 }
