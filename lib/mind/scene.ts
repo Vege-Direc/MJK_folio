@@ -259,6 +259,44 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
     sizeClampD: 0.0,
     exciteCut: 0.45,
   };
+  /**
+   * --- COLLATERAL ---
+   * One extra filament that leaves the spine at S[1] and rejoins it at S[4], so the axon
+   * visibly forks. It is anatomy first — a recurrent collateral, the commonest shape in a
+   * real axon — and the camera's alternate route second (see `beginLane`).
+   *
+   * `S[1] -> S[4]` was picked by measuring every span whose endpoints are interior, which
+   * is the only kind that works: `makeCurve`'s offsets depend on (dir, len, seed) and
+   * never on absolute position, so `makeCurve(V[a],V[b],s)` is `makeCurve(S[a],S[b],s)`
+   * shifted up by exactly 1.4 — but only while both vantages are on the plain `+1.4` rule.
+   * `V[0]` is pulled 15 back and 6 up and `V[M-1]` 9 back (`waypoints.ts`), so a span
+   * touching either end would put the camera in open space beside a filament instead of
+   * inside it. Measured for this span: max |laneCam(t) - (collateral(t) + up*1.4)| =
+   * 1.3e-15 world units.
+   *
+   * Against every other interior span (`D:\tmp\l2\rank.mjs`, n=9), 1->4 is the only one
+   * that is wide at BOTH junctions: it leaves at 30.2 degrees and rejoins at 20.1, both
+   * inside the 21-60 degree cone `growGW` already branches in. Its nearest rival on how
+   * often a flight crosses it, 1->3, rejoins at 6.2 degrees — a merge that shallow is the
+   * geometry that reads as a duplicated mesh rather than as a junction. Projected through
+   * this camera at V[1], 1->4 separates from the axon by 89px median and 352px peak on a
+   * 900px frame, against a tube that renders 2-7px wide there: 27x its own width.
+   *
+   * The seed is outside every range already in use (spine 1-15, secondary 1000+, sub
+   * 5000+, midground 8000+, far field 20000+) and is the seed J1 measured, so what ships
+   * is the object that was measured.
+   *
+   * It is NOT pushed into `nodeConnCurves`, `secondaryCurves` or `pulsePool`. All three
+   * are iterated by loops that then consume `rng` — the pulse shuffle at the bottom of
+   * this build and the nebula sampling below it — so lengthening any of them re-rolls the
+   * dust field and the pulse coverage, and invalidates every screenshot measurement in the
+   * repository. Its tube goes straight into `tubeGeos`, which is the array
+   * `mergeGeometries` folds into the one filament draw call, and `makeCurve` consumes only
+   * `srand` (a stateless hash). Not one `rng()` call in this build moves.
+   */
+  const COLLATERAL = { from: 1, to: 4, seed: 30001 };
+  /** Whether this waypoint count can carry it: both endpoints interior, and a real span. */
+  const hasCollateral = COLLATERAL.from >= 1 && COLLATERAL.to <= M - 2 && COLLATERAL.to - COLLATERAL.from >= 2;
   let currentStop = -1;
   let flight: Flight | null = null;
   let paused = false;
@@ -736,6 +774,14 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
     for (let s = 0; s < secondary.length; s++){
       secondaryCurves.push({ curve: makeCurve(S[secondaryParent[s]], secondary[s], 1000 + s), main: false });
     }
+    /*
+     * The collateral, in its own array so that neither `pulsePool` nor `nebCurves` — both
+     * built by iterating the two arrays above and both followed by `rng` draws — changes
+     * length. See the COLLATERAL block at the top of `createMind` for why this span.
+     */
+    const collateralCurve = hasCollateral
+      ? makeCurve(S[COLLATERAL.from], S[COLLATERAL.to], COLLATERAL.seed)
+      : null;
 
     // Per-spine-node list of MAIN-BRANCH curves that ORIGINATE at that node
     // (getPointAt(0) == S[i] -> the pulse departs FROM the reached node).
@@ -790,6 +836,25 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
       const seg = Math.max(12, Math.floor(cfg.tubeSeg * 0.8));
       tubeGeos.push(tubeWithTangent(secondaryCurves[s].curve, seg, cfg.tubeRadius * 0.7, cfg.tubeRad,
         nodeSway[secondaryParent[s]], nodeSway[M + s]));
+    }
+    if (collateralCurve){
+      /*
+       * Segment count is the spine's, not the secondaries', and that is a measurement
+       * rather than a preference. The collateral is 31.86 units against a spine axon's
+       * 10.03, but `makeCurve` caps its meander at `min(len*0.16, 1.7)`, so the longer
+       * curve is also the gentler one and the two need the same sampling to be equally
+       * smooth. Max distance from the true curve to the drawn polyline, measured in
+       * `D:\tmp\l2\seg.mjs`: spine 0.0033 at 64 segments and 0.0192 at 26; collateral
+       * 0.0035 at 64 and 0.0199 at 26. Within 4% on both tiers. It matters here more than
+       * on a twig because the camera flies along this curve, close enough to see faceting.
+       *
+       * Radius is the secondaries' 0.7x. It is a branch off the spine, not a second
+       * spine, and drawing it at full trunk width would state a symmetry that is not
+       * there — two equal roads is a diagram of a choice, which is the one thing this
+       * must not become.
+       */
+      tubeGeos.push(tubeWithTangent(collateralCurve, Math.max(8, Math.floor(cfg.tubeSeg)), cfg.tubeRadius * 0.7, cfg.tubeRad,
+        nodeSway[COLLATERAL.from], nodeSway[COLLATERAL.to]));
     }
     for (let c = 0; c < subCurves.length; c++){
       const sc = subCurves[c];
