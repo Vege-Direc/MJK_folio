@@ -13,8 +13,10 @@
  * The guard runs against the REAL corpus via loadMemories(). No fixture corpus, because a
  * fixture corpus is a place for the guard to be right about a world that does not ship.
  */
+import { cardQuestion } from '../../lib/card-question';
 import { loadMemories } from '../../lib/corpus/load';
 import { guard, salvage, type Violation } from '../../lib/grounding/guard';
+import { retrieve } from '../../lib/retrieve';
 
 export type Fixture = {
   answer: string;
@@ -97,6 +99,72 @@ export const BENIGN: string[] = [
   'I explain the tradeoff before I defend the decision.',
 ];
 
+/**
+ * TRUE SENTENCES THE GUARD HAS TAKEN, or took until something above this line was fixed.
+ *
+ * The tables above answer "does the guard catch what it should" and "does it pass the nine
+ * rows we wrote for it". Neither answers the question that actually cost this site
+ * answers: HOW MUCH TRUE PROSE DOES IT DELETE. A guard whose failure mode is silently
+ * removing correct sentences needs a number pointed at that, and it cannot be a pass/fail
+ * table, because a pass/fail table can only hold rows that already pass.
+ *
+ * So this set is SCORED, not gated. Rows are allowed to fail. `guard:eval` prints the
+ * percentage of characters salvage would remove from them and names every survivor of a
+ * sentence it took, and `grounding.test.ts` holds a ratchet above the current figure so it
+ * can fall but not quietly climb.
+ *
+ * WHERE THE ROWS COME FROM. Every one was written by a real free model on 2026-09-06,
+ * through the real corpus, the real system prompt and the real provider path, and every
+ * one is TRUE -- checked by hand against `content/memories.yaml`, sentence by sentence.
+ * Nothing here was invented to make the guard look bad, and nothing was trimmed to make it
+ * look good. `licences` is the memory set retrieval returned for that question, so each row
+ * is licensed exactly as the live path licensed it, `topLicences: 3` included.
+ */
+export type ParaphraseFixture = {
+  answer: string;
+  licences: string[];
+  why: string;
+};
+
+export const TRUE_PARAPHRASES: ParaphraseFixture[] = [
+  {
+    answer:
+      'I worked on the Paxel assessment with Claude Code.\n\nI shipped 208,803 lines across 993 commits. I logged 154 hours.',
+    licences: ['paxel-assessment', 'how-i-work-with-agents', 'paxel-numbers'],
+    why: 'carry-over reached across a paragraph break and bound the corpus’s own unattributed figures to Claude Code; nine violations, 22% of the answer',
+  },
+  {
+    answer: 'It turned raw supplier photos into more than 50 on-brand catalog images across 20-plus products.',
+    licences: ['project-photoshoot-pipeline', 'photoshoot-numbers', 'photoshoot-how-it-works'],
+    why: 'the corpus writes "20+ products"; the extractor backtracked "20-plus" into a count of 2',
+  },
+  {
+    answer: 'What makes this distinct is the principle that I’ve learned works.',
+    licences: ['jewelai-the-ring', 'jewelai-reads-the-piece', 'jewelai-video'],
+    why: 'a contraction reported as a fabricated proper noun, because the gazetteer was built from six memories',
+  },
+  {
+    answer: 'The critic scores out of ten points and seven is the pass mark.',
+    licences: ['photoshoot-how-it-works', 'photoshoot-numbers', 'project-photoshoot-pipeline'],
+    why: 'the corpus writes "seven points is the pass mark"; dropping the repeated noun makes the unit absent, and absent-vs-present is a deliberate disagreement',
+  },
+  {
+    answer: 'JewelAI Studio asks for three to five shots of one piece, taken from different angles.',
+    licences: ['jewelai-reads-the-piece', 'jewelai-gates', 'jewelai-platform'],
+    why: 'the corpus writes "three to five photographs"; a synonym for the counted noun unlicenses the number',
+  },
+  {
+    answer: 'It animates one image from the validated set.',
+    licences: ['jewelai-video', 'jewelai-gates', 'jewelai-platform'],
+    why: 'the corpus writes "one of the images", where a bare "one" is suppressed as grammar; the paraphrase gives it a unit and nothing licenses it',
+  },
+  {
+    answer: 'At Kinnect I automated the reporting. It cut report generation time by half.',
+    licences: ['project-kinnect-automation', 'kinnect-years', 'kinnect-rustomjee'],
+    why: 'the control: carry-over inside one paragraph, which must keep working',
+  },
+];
+
 export type Row = {
   group: 'must-fire' | 'must-pass' | 'benign';
   answer: string;
@@ -152,3 +220,118 @@ export function salvageDemo(): { kept: string | null; violations: number } {
   const result = guard(SALVAGE_ANSWER, loadMemories());
   return { kept: salvage(SALVAGE_ANSWER, result), violations: result.violations.length };
 }
+
+/* -- the false-positive rate ----------------------------------------------- */
+
+export type FalsePositive = {
+  answer: string;
+  why: string;
+  violations: Violation[];
+  /**
+   * Characters of true prose the guard objects to: the length of every distinct sentence
+   * carrying a violation.
+   *
+   * NOT what salvage ends up removing, and the difference is the reason. `salvageDetailed`
+   * has a floor -- half the sentences must survive, and either two must be left or the one
+   * that is must be long enough to stand alone -- so a one-sentence row that fails scores
+   * 100% removed whether the guard objected to one clause or the whole thing. That is an
+   * artefact of the row's length, not a property of the guard. Counting the sentences the
+   * guard rejects is the same measurement without the floor in it, and it is comparable
+   * between a one-line row and a five-paragraph answer.
+   *
+   * It rounds UP slightly: a sentence whose only fault is a counted word keeps its place
+   * and loses the word. Erring towards over-reporting is the right direction for a number
+   * whose whole job is to stop this guard flattering itself.
+   */
+  removed: number;
+  chars: number;
+};
+
+export type FalsePositiveReport = {
+  /** Every scored row, failing ones first. */
+  rows: FalsePositive[];
+  chars: number;
+  removed: number;
+  /** Characters removed as a share of characters written. The headline. */
+  rate: number;
+  violations: number;
+  /** Corpus bodies the live path would license, and how many the guard rejects. */
+  corpus: { checked: number; rejected: string[]; skipped: string[] };
+};
+
+/**
+ * What the guard TAKES, measured on prose that is true by construction.
+ *
+ * Two populations, and they answer different halves of the question.
+ *
+ * `TRUE_PARAPHRASES` is the half that moves: real model output, hand-checked against the
+ * corpus, licensed as the live path licensed it. A paraphrase is where every false positive
+ * this repository has found actually lived -- a dropped repeated noun, a synonym for a
+ * counted noun, a contraction, a figure the corpus states without attributing -- and none
+ * of them can appear in a table of verbatim corpus text.
+ *
+ * The corpus bodies are the half that should never move: MJK's own writing, checked against
+ * his own writing, licensed by retrieval on that memory's own card question. Two memories
+ * are skipped and named rather than quietly dropped -- their titles tokenise to nothing, so
+ * their own card question retrieves nothing at all and the live path refuses instead of
+ * answering. A violation there would be a routing fact, not a guard fact.
+ */
+export function falsePositives(): FalsePositiveReport {
+  const memories = loadMemories();
+  const byId = new Map(memories.map((m) => [m.id, m]));
+
+  const rows: FalsePositive[] = TRUE_PARAPHRASES.map(({ answer, licences, why }) => {
+    const licensed = licences.flatMap((id) => {
+      const memory = byId.get(id);
+      if (!memory) throw new Error(`TRUE_PARAPHRASES names "${id}", which is not in the corpus`);
+      return [memory];
+    });
+    const result = guard(answer, licensed, { topLicences: 3 });
+    const rejected = new Set(result.violations.map((v) => v.sentence));
+    const removed = [...rejected].reduce((n, s) => n + s.length, 0);
+    return { answer, why, violations: result.violations, removed, chars: answer.length };
+  });
+
+  const chars = rows.reduce((n, r) => n + r.chars, 0);
+  const removed = rows.reduce((n, r) => n + r.removed, 0);
+
+  const rejected: string[] = [];
+  const skipped: string[] = [];
+  for (const memory of memories) {
+    const hits = retrieve(cardQuestion(memory.title)).hits.map((h) => h.memory);
+    if (!hits.some((m) => m.id === memory.id)) {
+      skipped.push(memory.id);
+      continue;
+    }
+    if (!guard(memory.body.trim(), hits, { topLicences: 3 }).ok) rejected.push(memory.id);
+  }
+
+  return {
+    rows: [...rows].sort((a, b) => b.removed - a.removed),
+    chars,
+    removed,
+    rate: chars ? removed / chars : 0,
+    violations: rows.reduce((n, r) => n + r.violations.length, 0),
+    corpus: { checked: memories.length - skipped.length, rejected, skipped },
+  };
+}
+
+/**
+ * The ratchet.
+ *
+ * MEASURED at 0.356 on 2026-09-06, with three of the seven paraphrase rows still failing: a
+ * repeated noun dropped ("seven points" -> "seven"), a synonym for a counted noun
+ * ("photographs" -> "shots"), and a bare "one" given a unit. All three are real defects,
+ * none of them is fixed here, and the number says so. A zero on this line would mean the
+ * set had been trimmed to what the guard already passes, which is the exact failure the set
+ * exists to correct.
+ *
+ * WHAT THIS RATE IS NOT is a figure for real traffic. `TRUE_PARAPHRASES` is a regression
+ * set, chosen because these sentences failed, so it is adversarial by construction. The
+ * traffic figure, measured the same day over ten live answers through the real free-model
+ * path, was 11.5% of all characters written before this branch and 5.2% after it.
+ *
+ * It is a CEILING, not a target. It may fall freely; it may not climb without someone
+ * editing this line and saying why in the commit that does it.
+ */
+export const MAX_FALSE_POSITIVE_RATE = 0.4;

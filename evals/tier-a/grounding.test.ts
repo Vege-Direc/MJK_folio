@@ -23,7 +23,15 @@ import { guard, salvage, salvageDetailed } from '../../lib/grounding/guard';
 import { buildGazetteer, extractEntities } from '../../lib/grounding/entities';
 import { extractQuantities, sameQuantity, type Quantity } from '../../lib/grounding/numbers';
 import { normalise, sentences } from '../../lib/grounding/text';
-import { renderTable, runFixtures, BENIGN, MUST_FIRE, MUST_PASS } from './grounding.fixtures';
+import {
+  falsePositives,
+  MAX_FALSE_POSITIVE_RATE,
+  renderTable,
+  runFixtures,
+  BENIGN,
+  MUST_FIRE,
+  MUST_PASS,
+} from './grounding.fixtures';
 
 const CORPUS = loadMemories();
 const ROWS = runFixtures();
@@ -126,6 +134,52 @@ describe('no false positives on authored prose', () => {
   it.each(CORPUS.map((m) => [m.id, m.body] as const))('%s guards clean', (_id, body) => {
     const result = guard(body, CORPUS);
     expect(result.violations.map((v) => `[${v.kind}] ${v.detail} :: ${v.sentence}`)).toEqual([]);
+  });
+});
+
+/**
+ * THE NUMBER THIS FILE DID NOT HAVE.
+ *
+ * Every assertion above is a row the guard is supposed to get right, so the suite could
+ * only ever report that the guard works. The failure that actually costs this site answers
+ * runs the other way: a correct answer arrives, the guard objects to a true sentence, and
+ * salvage deletes it with nothing on the wire but a verdict. Measured 2026-09-06 over ten
+ * live answers, the guard removed 11.5% of everything the model wrote and 16 of its 20
+ * violations were true content -- and no test in this repository could have said so.
+ *
+ * `TRUE_PARAPHRASES` is that population, and it is scored rather than gated, because a
+ * pass/fail table can only ever hold rows that already pass.
+ */
+describe('what the guard takes from prose that is true', () => {
+  const report = falsePositives();
+
+  it(`rejects no more than ${(MAX_FALSE_POSITIVE_RATE * 100).toFixed(0)}% of it`, () => {
+    const detail = report.rows
+      .filter((r) => r.removed)
+      .map((r) => `  ${r.answer.replace(/\n+/g, ' / ')}\n      true because: ${r.why}`)
+      .join('\n');
+    expect(
+      report.rate,
+      `the guard rejects ${(100 * report.rate).toFixed(1)}% of prose that is true by ` +
+        `construction (${report.removed} of ${report.chars} characters).\n${detail}\n` +
+        'Run `npm run guard:eval` for the violations. If this rose, a true sentence is now ' +
+        'being deleted from real answers; the ceiling is not the thing to raise.',
+    ).toBeLessThanOrEqual(MAX_FALSE_POSITIVE_RATE);
+  });
+
+  it('is measuring a population that can actually fail', () => {
+    // A regression set trimmed to rows the guard already passes measures nothing. If this
+    // ever reaches zero the rows have been fixed, and the ceiling should come down with it.
+    expect(report.rows.length).toBeGreaterThanOrEqual(6);
+    expect(report.rows.some((r) => r.removed === 0)).toBe(true);
+  });
+
+  it('finds every memory guardable against the memories its own card question retrieves', () => {
+    // The live path's licensing, not the whole corpus: `handleAsk` passes retrieval's hits
+    // and `topLicences: 3`. The two memories it skips are named in the report rather than
+    // dropped, because their own card question retrieves nothing at all.
+    expect(report.corpus.rejected, 'the corpus cannot license its own prose').toEqual([]);
+    expect(report.corpus.checked).toBeGreaterThanOrEqual(CORPUS.length - 4);
   });
 });
 
