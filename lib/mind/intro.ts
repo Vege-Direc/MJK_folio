@@ -356,6 +356,14 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
     // The mark pitch the count implies over the drawn part of the figure. 0.45 is the
     // fraction of the tone map above the draw floor, which `make-portrait.ts` prints; it
     // only has to be about right, because it sets grain and not legibility.
+    //
+    // The photograph prints 37.3% and this stays at 0.45 ON PURPOSE. The constant sets
+    // sprite SIZE; the tone map sets mark SPACING; and a matted photograph draws less of
+    // its frame than the placeholder's 45.4% did, so honouring the new number would shrink
+    // the mark from 6.77px to 6.16px at 1440x900 while the spacing stayed put. Rendered
+    // side by side, the smaller mark is airier and the SHADOW half of the face separates
+    // first — which is the half already carrying the least. Grain, not legibility, is what
+    // this number sets, so it is set by eye on the rendered frame.
     pitch = Math.sqrt((box.w * box.h * 0.45) / INTRO.MARKS);
     sprites = buildSprites(pitch, dpr);
   };
