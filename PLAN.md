@@ -1,7 +1,13 @@
 # Plan and specification
 
-Written 2026-09-03, against the deployment at https://mjk.nila.li. Branch
-`fix/unbreak-build-and-facts`, which auto-deploys on push.
+Written 2026-09-03 against the deployment at https://mjk.nila.li, and levelled with the
+build on **2026-09-06**. Branch `fix/unbreak-build-and-facts`, which auto-deploys on push.
+
+**The site is twelve stops now, not nine.** Every figure below taken at nine stops is
+marked, because `mulberry32(0x5eed ^ M)` re-rolls the whole secondary field when the stop
+count changes, so a nine-stop screenshot number is a measurement of a scene that no longer
+exists. Layout numbers taken at nine stops survive only where the section itself did not
+move.
 
 `DESIGN.md` is the authority on design questions and this file does not overrule it. This
 is the schedule and the specification: what was measured, what shipped, what is specified
@@ -15,7 +21,7 @@ reproduced, it says so rather than repeating the original figure.
 ## 1. What the site is, and what it is for
 
 A long-scroll editorial over a full-screen three.js network that the camera travels as
-you scroll. Nine authored sections. A persistent input at the foot of the page: a
+you scroll. **Twelve** authored sections. A persistent input at the foot of the page: a
 question is routed deterministically to a section, the page flies there, a layout
 envelope arrives, and a model streams prose into that section which is checked against a
 written corpus before the visitor sees it. The model has authority over neither layout
@@ -29,7 +35,7 @@ rule.
 | Mode | What it is |
 |---|---|
 | Experience | The scene, the travel, the light |
-| Read | Nine authored sections of prose |
+| Read | Twelve authored sections of prose |
 | Operate | The input, and the answer that docks into a section |
 
 > The scene and the words occupy the same space, and neither may mask the other.
@@ -80,8 +86,16 @@ this round put text into it. Whether a career's detail should be one tap away fr
 crawler is a decision about the timeline, and it is MJK's.
 
 **Five of nine sections run past the dock on a phone**, measured at 390×844 with a 214px
-dock. Spill past the dock's top edge, with the section scrolled to the top of the
-viewport:
+dock. **Both halves of that instrument have since moved** — there are twelve stops, and the
+dock measures **147px at 390x664 and 143px at every desktop width, identical across all
+twelve stops** (re-taken 2026-09-06). The table stands as the measurement that identified
+the sparse/dense imbalance; it is **not** a current spill figure. What replaced it is a
+count of elements sitting under the dock at each stop's own top — the position a routed
+flight lands on — at 390x664: **asanjo 9, apac 6, now 4, work 4, contact 4 (including the
+email address), jewelai 3, rd350 3, mrunn 1**; at 1280x720, **hero 1 and jewelai 1**.
+
+Spill past the dock's top edge, with the section scrolled to the top of the viewport,
+**at nine stops, 390×844, 214px dock**:
 
 | Section | Panel height | Spill |
 |---|---|---|
@@ -194,7 +208,11 @@ which are the three stops carrying photographs.
 ### 4.6 One judgement for MJK's eye
 
 Removing the far network changed exactly one frame visibly: `contact` at 375, whole-frame
-luminance 127.6 to 92.2. The measurement says what goes is a flat brightening haze over
+luminance 127.6 to 92.2 — **on the instrument §4.5 twelve lines above has already told you
+not to quote.** Repeating it flat, in the same file, below its own caveat, is how a
+retracted number survives: it is quoted with no caveat in **nine places** across this repo.
+Read the pair as a *direction*, not a scale. The measurement says what goes is a flat
+brightening haze over
 an already-pale frame rather than structure, and that the stop holds more depth without
 it. That is the one call worth overruling on sight.
 
@@ -203,6 +221,32 @@ it. That is the one call worth overruling on sight.
 midground cluster and dust mote the comparison was made against. The judgement may well
 still hold — it is about a haze rather than about a specific pixel — but it is a
 measurement of a scene that no longer exists and must not be quoted as a current one.
+
+### 4.7 `JewelGates` into §06 — measured, conditional, not built
+
+`components/stops/JewelGates.tsx` is a confirmed dead file (`knip`). Two independent panels
+recommended swapping it into §06 in place of that stop's two cards. **It does not fit, and
+it breaks a gate**, and both were found by measuring rather than by looking:
+
+- **Pixels.** §06's slack is **11px at 1280x720, 160px at 1440x900, 286px at 1920x1080**.
+  Removing the two cards frees 220px, giving **231px against the ~365px the lane needs** —
+  **134px short at 1280x720**. `.panel { overflow: hidden }` above 900px *destroys* the
+  excess rather than scrolling it, and the 134px destroyed is the bottom of the lane: the
+  judge row, the exit row, and the caption "it is allowed to stop". That is the payload.
+- **The gate.** §06's two cards are `jewelai-platform` and `jewelai-reads-the-piece`.
+  Removing them takes rule-24 reach **29 → 27 against `RULE_24_FLOOR = 29`**
+  (`scripts/check-corpus.ts:660`), which is an **error**, not a warning.
+
+Three ways out, in order of preference: gate it from 1440 up; cut the lane to five rows —
+in / same-piece / angles / judge / out — which costs ~150px and keeps all three exits; or
+retune `--pair-h` and re-measure. Whichever is taken, **the floor change is deliberate and
+its reason goes in the commit**: it trades machine-readable coverage for human-readable
+evidence, and saying so is the difference between a decision and a quietly lowered number.
+And §06's body already carries four of the lane's eight rows, so the body is re-cut with
+it or the figure illustrates the paragraph beside it — the charge that killed the unit
+chart in §4.1.
+
+`DIRECTION.md` decision 16 is the decision this sits under.
 
 ---
 
@@ -252,8 +296,10 @@ measurement of a scene that no longer exists and must not be quoted as a current
    build carried an unverified, false claim **about that build**. Describing before judging
    makes a judgement auditable; it does not make it true. Re-check the claim, not only the
    instrument.
-3. **Links to the work.** JewelAI, MruNN-ERP and TallyBridge have no link, screenshot,
-   repo or demo. TallyBridge is MIT open source and therefore trivially linkable.
+3. **Links to the work.** ~~TallyBridge~~ **linked, `5bd17ec`.** JewelAI and MruNN-ERP
+   still have no link, screenshot, repo or demo. Asanjo has a screen recording instead of a
+   link, deliberately: the live storefront is not his design and must not be presented as
+   his work.
 4. **The Paxel report.** It borrows Y Combinator's name for authority, and occupies half
    of Selected Work; 208,803 lines and 993 commits are volume, not outcomes.
 5. **Four facts about the engine simulator**, if you want the caption to say more than it
@@ -275,17 +321,22 @@ top of the before/after frame; §02 is 896px on an 812px phone; and `sharp` is n
 
 Nothing ships on assertion. Every change carries `typecheck`, `npm test`, `corpus:check`,
 `route:eval`, `guard:eval`, `lint` and `build`; `npx impeccable detect` against the
-deployed site, which must not rise above its current 2; screenshots at 1440×900 and
-375×812 that are actually looked at, described before they are judged; and, for anything
-touching the scene or the text, a frame-time distribution rather than an average.
+deployed site, which must not rise above its current **3** — it was 2 until the collapsed
+timeline pushed half the page's prose behind a tap, and that third pattern is recorded in
+§2 with the character counts that produced it; screenshots at 1440×900 and 375×812 that
+are actually looked at, described before they are judged; and, for anything touching the
+scene or the text, a frame-time distribution rather than an average.
 
-Three rules learned the hard way, in the order they cost the most:
+**And `npm run serve:check` before you believe any of it.** A server that renders a perfect
+page and loads no JavaScript passes every visual check you can make against it. See
+`README.md`, "When a server lies to you".
 
-- **A guard that silently deletes true sentences is worse than no guard.** A four-digit
-  year with a comma after it was read as a count, and the sentence carrying MJK's
-  bachelors degree was removed from answers about his education.
-- **"It costs nothing to render" is a measurement, not an intuition.** The halo was
-  asserted to be free and was responsible for a 100ms p95 on mobile.
-- **Do not edit source files through shell one-liners.** `node -e` and `perl -0pi -e`
-  have corrupted this repository more than once by turning `\n` into a literal newline
-  inside a string. Use the editing tools, or a quoted heredoc.
+**One rule that governs editing this file and every other.** Do not edit source files
+through shell one-liners: `node -e` and `perl -0pi -e` have corrupted this repository more
+than once by turning `\n` into a literal newline inside a string. Use the editing tools, a
+quoted heredoc, or a script that reads and writes UTF-8 explicitly.
+
+The rest of the method — what a guard that deletes true content costs, what "it costs
+nothing to render" cost and the blur-radius budget rule that came out of it, and the seven
+other lessons this project has paid for — is stated once, with its measurements, in
+`TASKS.md` under **"The rules this session paid for"**. It is not repeated here.
