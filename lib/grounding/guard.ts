@@ -14,7 +14,8 @@
  *
  *   1. UNKNOWN ENTITY. A capitalised name with no home in the corpus is a violation on
  *      its own, numbers or not. This is the "Isobar" case -- a plausible employer he
- *      never worked for.
+ *      never worked for. Asked of the WHOLE corpus, never of the retrieved subset: see
+ *      `world()` for the day that distinction turned a contraction into a company.
  *   2. UNLICENSED QUANTITY. The number appears in no licence sentence at all.
  *   3. MISPAIRED QUANTITY. The number exists, but every sentence that licenses it is
  *      about someone else.
@@ -32,6 +33,7 @@
  *     opening sentence with a number and no name gets set-membership treatment. Callers
  *     holding a ranked retrieval set should pass `topLicences` and tighten it.
  */
+import { loadMemories } from '../corpus/load';
 import type { Memory } from '../corpus/schema';
 import { buildGazetteer, entityMatches, extractEntities, type Gazetteer } from './entities';
 import { extractQuantities, sameQuantity, type Quantity } from './numbers';
@@ -146,8 +148,48 @@ function namesIn(licence: LicenceSentence): string {
   return licence.entities.length ? licence.entities.join(', ') : 'nothing named';
 }
 
+/**
+ * The world, and why it is the whole corpus rather than the six memories that were
+ * retrieved.
+ *
+ * `entities.ts` opens by stating the premise this guard rests on: "the corpus is the
+ * complete list of names that exist, so a capitalised proper noun with no home in the
+ * corpus is a violation by construction". The guard then built its gazetteer from
+ * `licences` -- the six memories BM25 happened to return for this question -- so the
+ * premise was true of a different, much smaller world on every request, and the same word
+ * was a fabrication or not depending on what had been retrieved.
+ *
+ * MEASURED, 2026-09-06. Asked about JewelAI Studio, the model wrote "the principle that
+ * I've learned works" and the guard reported `I've` as a name appearing "in none of the 6
+ * licensed memories" -- a fabricated company, on a contraction. The same run over the
+ * corpus's own prose is worse: `who-i-am` guarded against a licence set that came back
+ * empty reported Hindustan Unilever, Visa, Skechers, Evian and Krunch Labs as
+ * fabrications. Every one of them is in `content/memories.yaml`. The names were never
+ * missing; the gazetteer was.
+ *
+ * WHAT DOES NOT WIDEN IS THE LICENCE. `indexLicences` still runs over `licences` alone and
+ * `top` still bounds it, so a number is still licensed only by a memory this question
+ * actually retrieved. The two are different questions -- "may this site say this name at
+ * all", which is a property of the corpus, and "does this retrieved material license this
+ * figure", which is a property of the request -- and they were being answered from one
+ * set. `Isobar` is in no memory and still fires; `evals/tier-a/grounding.fixtures.ts`
+ * row 6 is the reason this module exists.
+ *
+ * Cached on the array identity `loadMemories()` returns, which is itself cached, so the
+ * 55-memory build happens once per process rather than once per answer.
+ */
+let worldCache: { source: readonly Memory[]; gazetteer: Gazetteer } | null = null;
+
+function world(): Gazetteer {
+  const source = loadMemories();
+  if (!worldCache || worldCache.source !== source) {
+    worldCache = { source, gazetteer: buildGazetteer(source) };
+  }
+  return worldCache.gazetteer;
+}
+
 export function guard(answer: string, licences: Memory[], options: GuardOptions = {}): GuardResult {
-  const gazetteer = buildGazetteer(licences);
+  const gazetteer = world();
   const index = indexLicences(licences, gazetteer);
   const top = new Set(licences.slice(0, options.topLicences ?? licences.length).map((m) => m.id));
 
@@ -168,8 +210,8 @@ export function guard(answer: string, licences: Memory[], options: GuardOptions 
           sentence,
           kind: 'unknown-entity',
           detail:
-            `"${name}" appears in none of the ${licences.length} licensed memories. The corpus is the ` +
-            'complete list of names this site may say, so an unrecognised one is a fabrication, not a gap.',
+            `"${name}" appears nowhere in content/memories.yaml. The corpus is the complete list of ` +
+            'names this site may say, so an unrecognised one is a fabrication, not a gap.',
         });
       }
 
