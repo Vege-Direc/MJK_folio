@@ -24,7 +24,11 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { isMap, isSeq, parseDocument, type Document } from 'yaml';
-import { ANSWERABLE_STOP_IDS, STOP_IDS, type StopId } from '../content/stops';
+import { ANSWERABLE_STOP_IDS, STOP_IDS, STOPS, type StopId } from '../content/stops';
+// The page's own selector, imported rather than restated: a timeline row is any `timeline`
+// memory with a period, wherever it lives, and that rule is allowed to change without this
+// script quietly disagreeing with the rail a visitor is looking at.
+import { timelineEntries } from '../components/stops/timeline-data';
 import {
   gallerySlug,
   memorySchema,
@@ -525,6 +529,155 @@ for (const { memory, index } of valid) {
   });
 }
 
+/* -- 10. rule 24: the scroll carries what the chat can reveal --------------- */
+
+/**
+ * THE RULE. Anything a question can reveal must ALSO be reachable without asking. It is not
+ * a preference: answers stream from `/api/ask`, which `app/robots.ts` **disallows**, so
+ * anything only the chat will say is not slow to index, it is impossible to index. It also
+ * has no URL, which is fatal for the audience that scans and forwards rather than converses
+ * -- a recruiter cannot send a hiring committee a sentence that only exists after somebody
+ * types a question into a canvas.
+ *
+ * It was being violated in the plainest way. 54 memories; 17 of them drawn. Thirty-seven
+ * memory bodies appear in no HTML at all, and the thesis that produced that -- "we can
+ * choose to not show some information" -- is right about the mechanism and silent about the
+ * cost, which lands on the 90-odd percent of visitors who never ask anything.
+ *
+ * WHAT "APPEARS" MEANS, and the definition is the whole of the design. The cheap version is
+ * "the id is in the HTML somewhere", and it is worthless: fifty-four `<div data-memory=""
+ * hidden>` would turn this green and index nothing. So a memory appears when the server HTML
+ * carries, under an element addressed by the memory's own id, its title AND at least its
+ * first sentence -- existence and evidence, which is exactly the grain `DIRECTION.md`
+ * decision 4 settled on. Composition and connective prose stay chat-only; a name, a year,
+ * an artefact and a sentence of proof do not.
+ *
+ * WHY IT DOES NOT READ THE HTML. Three ways were tried. Rendering the tree here dies in
+ * `AuthoredBody` on "useAsk must be used inside <ChatProvider>", and `next/image` is three
+ * components further down. `.next/server/app/index.html` is real and is genuinely the
+ * rendered page -- but `prebuild` runs this script BEFORE the build, so the gate would be
+ * reading the previous build's output and calling it today's. A gate that reads a stale
+ * artefact is the green light that means nothing.
+ *
+ * So the drawn set is derived from the same modules the page draws from, and the derivation
+ * was checked against the real thing: the ids below are exactly the seventeen `id="..."`
+ * attributes in `.next/server/app/index.html` from the last build, no more and no fewer.
+ * What it cannot see is a component changing its mind, so `MODEL_ASSUMPTIONS` reads
+ * `StopSection.tsx` and stops the ratchet from meaning anything the moment it stops
+ * matching.
+ */
+const CARD_SECTIONS = new Set<Section>(['projects', 'capabilities', 'timeline']);
+const MAX_CARDS = 4;
+const PROOF_CARDS = 2;
+
+/**
+ * What `StopSection.tsx` has to still say for the model above to be a description of it
+ * rather than a story about it. Text rather than behaviour, because the alternative is
+ * rendering, and rendering does not work here.
+ */
+const MODEL_ASSUMPTIONS: { pattern: RegExp; what: string }[] = [
+  { pattern: /const MAX_CARDS = 4;/, what: `a cards stop draws ${MAX_CARDS}` },
+  {
+    pattern: /CARD_SECTIONS = new Set\(\['projects', 'capabilities', 'timeline'\]\)/,
+    what: 'only projects, capabilities and timeline memories become cards',
+  },
+  { pattern: /<Cards stop=\{stop\} limit=\{2\} \/>/, what: `the proof stop draws ${PROOF_CARDS}` },
+  { pattern: /function Contact\(/, what: 'the contact stop draws every memory it has' },
+];
+
+const allMemories = valid.map((v) => v.memory);
+const onStop = (stopId: StopId) => allMemories.filter((m) => m.stopId === stopId);
+const cardsOn = (stopId: StopId, limit: number) =>
+  onStop(stopId)
+    .filter((m) => CARD_SECTIONS.has(m.section))
+    .slice(0, limit);
+
+/** Every memory the server HTML of `/` carries a title and a first sentence for. */
+const drawn = new Map<string, string>();
+const draw = (id: string, how: string) => {
+  if (!drawn.has(id)) drawn.set(id, how);
+};
+
+for (const stop of STOPS) {
+  switch (stop.compose) {
+    case 'cards':
+      for (const m of cardsOn(stop.id, MAX_CARDS)) draw(m.id, `card on §${stop.index}`);
+      break;
+    case 'proof':
+      for (const m of cardsOn(stop.id, PROOF_CARDS)) draw(m.id, `card on §${stop.index}`);
+      break;
+    case 'contact':
+      for (const m of onStop(stop.id)) draw(m.id, `card on §${stop.index}`);
+      break;
+    case 'timeline':
+      // The rail reads across every stop, not just this one, and renders the whole body
+      // inside a disclosure -- the fullest reach any memory gets without being asked for.
+      for (const e of timelineEntries(allMemories)) draw(e.id, `timeline row on §${stop.index}`);
+      break;
+    default:
+      // hero, plain, carousel and figure draw authored copy and pictures. No memory prose.
+      break;
+  }
+}
+
+const undrawn = allMemories.filter((m) => !drawn.has(m.id));
+
+/**
+ * The ratchet, and it is here because the gate cannot pass today and pretending otherwise
+ * would be worse than not having it.
+ *
+ * TARGET: every memory. FLOOR: what was reachable the day this check landed. Below the
+ * floor is an error, because it means a change removed something a crawler and a JS-off
+ * visitor could previously read, and that is a regression whoever made it and whatever they
+ * were doing at the time. Between the floor and the target is a warning that names what is
+ * missing, which is the corpus-authoring backlog stated as a list rather than as a feeling.
+ *
+ * Raise the floor when the drawn count goes up. That is the only maintenance this needs, and
+ * it is the point: the number can only travel one way.
+ */
+const RULE_24_FLOOR = 17;
+
+const stopSectionSource = readFileSync(join(ROOT, 'components', 'stops', 'StopSection.tsx'), 'utf-8');
+const modelDrifted = MODEL_ASSUMPTIONS.filter((a) => !a.pattern.test(stopSectionSource));
+
+if (modelDrifted.length > 0) {
+  warn({
+    field: 'rule 24',
+    message:
+      `components/stops/StopSection.tsx no longer says what this script assumes about it -- ` +
+      `${modelDrifted.map((d) => d.what).join('; ')}. The reach figure below is therefore a guess, and ` +
+      'the floor that would have failed a regression is not being applied.',
+    fix:
+      'update the drawn-set model in scripts/check-corpus.ts section 10 to match the component, and ' +
+      'recount RULE_24_FLOOR from the new number. Better: export the card rule from a module both ' +
+      'files import, so there is nothing left to drift.',
+  });
+} else if (drawn.size < RULE_24_FLOOR) {
+  error({
+    field: 'rule 24',
+    message:
+      `${drawn.size} of ${allMemories.length} memories are drawn in the HTML of \`/\`, down from ${RULE_24_FLOOR}. ` +
+      'Something that a crawler and a visitor with JavaScript off could read is now reachable only by asking ' +
+      'a question -- and answers come from /api/ask, which app/robots.ts disallows, so it is not indexable at ' +
+      'all and has no URL to forward.',
+    fix:
+      'draw the memories listed under `reach` below, or, if the removal is deliberate and argued, lower ' +
+      'RULE_24_FLOOR in scripts/check-corpus.ts and say why in the commit.',
+  });
+} else if (undrawn.length > 0) {
+  warn({
+    field: 'rule 24',
+    message:
+      `${undrawn.length} of ${allMemories.length} memories appear in no HTML at all. The chat can reveal every ` +
+      'one of them; nothing else can. The target is all of them -- a title and a first sentence each, under the ' +
+      "memory's own id -- with composition and connective prose left to the chat, which is the only part of a " +
+      'memory a question is genuinely better at delivering.',
+    fix:
+      'give the stops that own them something that draws them -- §07 as an index, a stop per project, or a ' +
+      'card limit raised where the panel has the height for it -- and raise RULE_24_FLOOR to match.',
+  });
+}
+
 /* -- 7. coverage ----------------------------------------------------------- */
 
 const perStop = new Map<StopId, number>(STOP_IDS.map((id) => [id, 0]));
@@ -576,6 +729,27 @@ for (const id of ANSWERABLE_STOP_IDS) {
   const short = MIN_MEMORIES_PER_STOP - count;
   const note = short > 0 ? yellow(`needs ${short} more`) : dim('ok');
   console.log(`  ${id.padEnd(width)}  ${String(count).padStart(2)}  ${note}`);
+}
+console.log('');
+
+/*
+ * Reach, printed whether or not it is failing, for the same reason the coverage table is:
+ * this is the list somebody writes the next section against, and a backlog you only see once
+ * it is already bad is a backlog nobody plans against. Named ids rather than a count, because
+ * "37 missing" is a number and "project-tallybridge, paxel-assessment, awards" is a morning's
+ * work.
+ */
+console.log(
+  bold(`reach · ${drawn.size} of ${allMemories.length} memories are in the HTML of /`) +
+    dim(`  (target ${allMemories.length}, floor ${RULE_24_FLOOR})`),
+);
+for (const stop of STOPS) {
+  const mine = allMemories.filter((m) => m.stopId === stop.id);
+  if (mine.length === 0) continue;
+  const missing = mine.filter((m) => !drawn.has(m.id)).map((m) => m.id);
+  const count = `${mine.length - missing.length}/${mine.length}`;
+  const head = `  ${stop.id.padEnd(width)}  ${count.padStart(5)}  `;
+  console.log(head + (missing.length === 0 ? dim('all drawn') : yellow(`no HTML: ${missing.join(', ')}`)));
 }
 console.log('');
 
