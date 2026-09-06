@@ -33,13 +33,13 @@
  * is a genuinely unexpected failure that even the insurance limiter could not absorb.
  */
 import { createHash } from 'node:crypto';
-import Redis from 'ioredis';
 import {
   RateLimiterMemory,
   RateLimiterRedis,
   RateLimiterRes,
   type RateLimiterAbstract,
 } from 'rate-limiter-flexible';
+import { getRedisClient } from '../redis';
 
 export type AdmitReason = 'ip-burst' | 'ip-day' | 'global-day' | 'unavailable';
 
@@ -70,27 +70,6 @@ function globalDailyBudget(): number {
   const raw = process.env.ASK_DAILY_BUDGET?.trim();
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : DEFAULT_GLOBAL_DAILY_BUDGET;
-}
-
-/* -- shared redis client ------------------------------------------------------ */
-
-let redisClient: Redis | null | undefined; // undefined = not resolved yet, null = no REDIS_URL
-
-function getRedisClient(): Redis | null {
-  if (redisClient !== undefined) return redisClient;
-  const url = process.env.REDIS_URL?.trim();
-  if (!url) {
-    redisClient = null;
-    return redisClient;
-  }
-  // enableOfflineQueue: false -- a call made while Redis is unreachable must fail fast
-  // so rate-limiter-flexible's insuranceLimiter can take over immediately, rather than
-  // the request hanging behind a queue that only drains once Redis comes back.
-  redisClient = new Redis(url, { enableOfflineQueue: false });
-  redisClient.on('error', (err) => {
-    console.error('[security/limits] redis connection error:', err instanceof Error ? err.message : err);
-  });
-  return redisClient;
 }
 
 /* -- limiter factory ---------------------------------------------------------- */
@@ -147,8 +126,15 @@ function getGlobalDayLimiter(): RateLimiterAbstract {
  * personal data the limiter has no reason to retain; 64 bits of a cryptographic hash is
  * far more collision headroom than this site's visitor count will ever need, so two
  * different visitors are never merged into one budget by an accident of truncation.
+ *
+ * Exported because `lib/instrument/counters.ts` needs the same value and must not compute
+ * a second one. Its distinct-count sketches take this hash as their input, and the whole
+ * privacy argument for those sketches is that they observe nothing the limiter was not
+ * already deriving from the same header on the same request. A separate hash -- a
+ * different truncation, a different salt -- would be a second derivation of the visitor's
+ * address, which is exactly the thing worth not doing.
  */
-function hashIp(ip: string): string {
+export function hashIp(ip: string): string {
   return createHash('sha256').update(ip).digest('hex').slice(0, 16);
 }
 
