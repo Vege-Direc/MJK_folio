@@ -17,6 +17,9 @@ import { describe, expect, it } from 'vitest';
 import { defaultDeps, handleAsk, type AskDeps } from '../../lib/ask/handler';
 import type { EnvelopeData } from '../../lib/ask/types';
 import { retrieve } from '../../lib/retrieve';
+import { memoriesForStop } from '../../lib/corpus/load';
+import { cardQuestion } from '../../lib/card-question';
+import { STOPS } from '../../content/stops';
 
 /* -- helpers ------------------------------------------------------------------ */
 
@@ -182,6 +185,111 @@ describe('/api/ask degrades to corpus text, never to an error', () => {
   });
 });
 
+/**
+ * The tail under an answer is the question the answer did NOT answer.
+ *
+ * It is the one part of the envelope that is a function of the model's output, and it must
+ * stay a function of it in the only direction that is safe: the prose is scored, never
+ * obeyed. So the assertions here are about the RANKING, not about a particular memory --
+ * the same answer, said two different ways, has to move the pick.
+ */
+describe('the tail is the memory the answer used least', () => {
+  const question = 'Tell me about JewelAI Studio, under the hood.';
+
+  /**
+   * The same candidate set `nextQuestionCandidates` builds: this stop's memories, the ones
+   * retrieval ranked first and in its order, then the rest as MJK wrote them, minus the
+   * memory the answer is about.
+   */
+  function candidatesFor(q: string): { id: string; title: string }[] {
+    const r = retrieve(q);
+    const licences = r.hits.map((h) => h.memory);
+    const ranked = licences.filter((m) => m.stopId === r.stopId);
+    const seen = new Set(ranked.map((m) => m.id));
+    const rest = memoriesForStop(r.stopId!).filter((m) => !seen.has(m.id));
+    return [...ranked, ...rest]
+      .filter((m) => m.id !== licences[0]?.id)
+      .map((m) => ({ id: m.id, title: m.title }));
+  }
+
+  /*
+   * A tail offers a memory whose question must come back to it, exactly as a card's does.
+   * `evals/tier-a/cards.test.ts` holds that for the memories StopSection draws; the tail can
+   * offer any memory on its stop, including ones nothing draws, so the same property has to
+   * be asserted over that wider set or the tail can quietly send a reader somewhere else.
+   *
+   * The filter mirrors `coverageOf`'s own rule: a title with no content word of four letters
+   * or more cannot be measured and is never picked. "Who I am" is the only one in this
+   * corpus, and it is also the only stop memory whose question does not rank itself first --
+   * the measurement and the routing agree about it from opposite directions, which is the
+   * reason this filter is a statement about the corpus and not a convenience.
+   */
+  it('offers only memories whose own question comes back to them', () => {
+    const wrong: string[] = [];
+    for (const stop of STOPS) {
+      if (stop.id === 'hero') continue;
+      for (const m of memoriesForStop(stop.id)) {
+        if (!/[a-z0-9]{4,}/.test(m.title.toLowerCase())) continue;
+        const r = retrieve(cardQuestion(m.title), { viewing: m.stopId });
+        if (r.stopId === m.stopId && r.hits[0]?.memory.id === m.id && r.topical) continue;
+        wrong.push(`  ${JSON.stringify(m.title)} (${m.id}) -> stop=${r.stopId} top=${r.hits[0]?.memory.id}`);
+      }
+    }
+    expect(wrong, `a next question would not come back to its own memory:\n${wrong.join('\n')}`).toEqual([]);
+  });
+
+  it('has more than one memory to choose between, or this test proves nothing', () => {
+    expect(candidatesFor(question).length).toBeGreaterThan(1);
+  });
+
+  it('offers at most one, and never the memory the answer is about', async () => {
+    const licences = retrieve(question).hits.map((h) => h.memory);
+    const chunks = await chunksOf(
+      await handleAsk(post({ question }), depsWith(modelSaying('JewelAI Studio is a multi-agent pipeline for jewellery imagery.'))),
+    );
+    const last = envelopes(chunks).at(-1) as EnvelopeData;
+    expect(last.cards.length).toBeLessThanOrEqual(1);
+    expect(last.cards.map((c) => c.id)).not.toContain(licences[0]?.id);
+  });
+
+  it('moves the pick when the answer covers a different memory', async () => {
+    const candidates = candidatesFor(question);
+
+    /** An answer written to be entirely about one candidate, in units the scorer counts. */
+    const allAbout = (title: string) =>
+      [`${title} is the thing here.`, `${title} is what this section is for.`, `${title} again.`].join(' ');
+
+    const pickAfter = async (text: string) => {
+      const chunks = await chunksOf(await handleAsk(post({ question }), depsWith(modelSaying(text))));
+      const last = envelopes(chunks).at(-1) as EnvelopeData;
+      return last.cards[0]?.id;
+    };
+
+    // Saturate the first candidate: it can no longer be the least-used one, so the pick
+    // must be some other candidate. Then saturate that one and watch the pick move again.
+    const first = await pickAfter(allAbout(candidates[0].title));
+    expect(first).not.toBe(candidates[0].id);
+    expect(candidates.map((c) => c.id)).toContain(first);
+
+    const saturated = candidates.find((c) => c.id === first);
+    expect(saturated).toBeDefined();
+    const second = await pickAfter(`${allAbout(candidates[0].title)} ${allAbout(saturated!.title)}`);
+    expect(second).not.toBe(candidates[0].id);
+    expect(second).not.toBe(saturated!.id);
+  });
+
+  it('breaks a tie by retrieval rank, so an answer that names nobody is still deterministic', async () => {
+    const candidates = candidatesFor(question);
+    // Prose that mentions none of them: every candidate scores exactly 0, and the rule that
+    // decides is "strictly lower wins", which keeps the best-ranked one.
+    const chunks = await chunksOf(
+      await handleAsk(post({ question }), depsWith(modelSaying('It is a pipeline. It runs end to end.'))),
+    );
+    const last = envelopes(chunks).at(-1) as EnvelopeData;
+    expect(last.cards[0]?.id).toBe(candidates[0].id);
+  });
+});
+
 describe('/api/ask streams a grounded answer in the right order', () => {
   const question = 'How did you automate reporting at Kinnect?';
   const truth =
@@ -201,7 +309,10 @@ describe('/api/ask streams a grounded answer in the right order', () => {
     expect(first.status).toBe('streaming');
     expect(first.stopId).toBe(retrieve(question).stopId);
     expect(first.kicker).toMatch(/^§ ANSWER · /);
-    expect(first.cards.length).toBeGreaterThan(0);
+    // At most one card, and never before the stream: the tail is a next question, and a
+    // list that shrank from three to one when the caret stopped would take a grid row out
+    // of the section at the exact moment the reader started reading it.
+    expect(first.cards.length).toBeLessThanOrEqual(1);
     expect(first.cards.every((card) => !('metric' in card))).toBe(true);
     expect(first.cites).toContain('project-kinnect-automation');
 

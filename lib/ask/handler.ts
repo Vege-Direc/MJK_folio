@@ -11,7 +11,9 @@ import {
 
 type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
 import { stopById, type StopId } from '../../content/stops';
-import type { AskUIMessage, EnvelopeData } from './types';
+import type { AskUIMessage, EnvelopeCard, EnvelopeData } from './types';
+import type { Memory } from '../corpus/schema';
+import { memoriesForStop } from '../corpus/load';
 import { fallbackBlock, type FallbackBlock, type FallbackReason } from '../fallback';
 import { guard, salvageDetailed } from '../grounding/guard';
 import {
@@ -289,46 +291,167 @@ function toLastSentence(text: string): string {
  */
 const DEK_BAR = 0.5;
 
-function dekFor(answer: string, licences: readonly { title: string }[]): string {
-  // The unit is a sentence OR a semicolon clause, because a series is written with
-  // semicolons -- "MruNN-ERP is a chat-native ERP; TallyBridge, an open-source bridge" --
-  // and a series counted as one unit hands the whole answer to whichever item comes
-  // first. MEASURED: asked what he had built with AI agents, the site answered in a
-  // single 621-character sentence listing a photoshoot pipeline, MruNN-ERP, JewelAI
-  // Studio and this site, and JewelAI scored a perfect 1.0. That is the same "one of
-  // several, named once" heading this function was rewritten to stop, arriving inside one
-  // sentence instead of across seven.
-  const prose = sentences(answer)
+/**
+ * The answer, cut into the units coverage is counted in.
+ *
+ * A sentence OR a semicolon clause, because a series is written with semicolons --
+ * "MruNN-ERP is a chat-native ERP; TallyBridge, an open-source bridge" -- and a series
+ * counted as one unit hands the whole answer to whichever item comes first. MEASURED:
+ * asked what he had built with AI agents, the site answered in a single 621-character
+ * sentence listing a photoshoot pipeline, MruNN-ERP, JewelAI Studio and this site, and
+ * JewelAI scored a perfect 1.0. That is the same "one of several, named once" heading this
+ * measurement was rewritten to stop, arriving inside one sentence instead of across seven.
+ */
+function coverageUnits(answer: string): string[] {
+  return sentences(answer)
     .flatMap((s) => s.split(';'))
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  if (prose.length === 0) return '';
+}
+
+/**
+ * How much of the finished answer this memory accounts for, or `null` when that cannot be
+ * measured at all.
+ *
+ * A unit mentions a memory when every one of its title's content words is in that unit, on
+ * word boundaries -- `includes` matched "agent" inside "directing an agents" and that is
+ * how a whole third-party report came to be headed "How I actually direct an agent". A
+ * unit naming nothing carries on from the one before it, once, no chaining: the guard's own
+ * pronoun rule, and unchained because chaining hands the tail of an answer to whatever was
+ * named last.
+ *
+ * `null` is not zero, and the difference is load-bearing in both directions. "The RD 350"
+ * and "The MJK-101" reduce to no content words, so nothing about them can be found in the
+ * prose either way -- as a dek that means the title can never be shown to describe
+ * anything, and as a next question it would otherwise win every argmin below by default and
+ * put the same unmeasurable card under every answer on its stop.
+ */
+function coverageOf(units: readonly string[], title: string): number | null {
+  const words = title.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
+  if (words.length === 0 || units.length === 0) return null;
+  const named = words.map((w) => new RegExp(`\\b${w}\\b`));
+
+  let covered = 0;
+  let previousNamedIt = false;
+  for (const unit of units) {
+    const namesIt = named.every((re) => re.test(unit));
+    if (namesIt || previousNamedIt) covered++;
+    previousNamedIt = namesIt;
+  }
+  return covered / units.length;
+}
+
+function dekFor(answer: string, licences: readonly { title: string }[]): string {
+  const units = coverageUnits(answer);
+  if (units.length === 0) return '';
 
   let best = '';
   let bestCoverage = DEK_BAR; // the bar, not a starting score: at or below it, no dek
 
   for (const m of licences) {
-    const words = m.title.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
-    // "The RD 350" and "The MJK-101" reduce to nothing, and a title with no content words
-    // can never be shown to describe anything.
-    if (words.length === 0) continue;
-    const named = words.map((w) => new RegExp(`\\b${w}\\b`));
-
-    let covered = 0;
-    let previousNamedIt = false;
-    for (const sentence of prose) {
-      const namesIt = named.every((re) => re.test(sentence));
-      if (namesIt || previousNamedIt) covered++;
-      previousNamedIt = namesIt;
-    }
-
-    const coverage = covered / prose.length;
-    if (coverage > bestCoverage) {
+    const coverage = coverageOf(units, m.title);
+    if (coverage !== null && coverage > bestCoverage) {
       bestCoverage = coverage;
       best = m.title;
     }
   }
   return best;
+}
+
+function cardOf(m: Memory): EnvelopeCard {
+  return { id: m.id, title: m.title, kicker: String(m.period ?? m.tags[0] ?? '').toUpperCase() };
+}
+
+/**
+ * The memories a next question may be drawn from, best-ranked first.
+ *
+ * On-stop only -- a Taboola question must not offer "The arc" because it happened to score
+ * -- and never the memory the answer is primarily about. `licences[0]` is what retrieval
+ * ranked first, which `evals/tier-a/cards.test.ts` pins to the pressed card's own memory,
+ * so offering it back is the echo this whole change exists to remove.
+ *
+ * THE STOP'S MEMORIES, NOT ONLY THE RETRIEVED ONES, and that widening was forced by a
+ * measurement rather than chosen. Written the narrow way -- the retrieved memories on this
+ * stop -- the tail never appeared at all. `AnswerBlock` draws it on `plain` stops only,
+ * because everywhere else the memories are already cards beside the text, and there are
+ * exactly two `plain` stops. Asked in a real browser: "Tell me about The arc, compressed."
+ * retrieves `arc-aircraft-to-agents` and then two memories belonging to OTHER stops;
+ * "Tell me about The pattern." retrieves `pattern-imagine-then-learn` and then five from
+ * five other stops. One on-stop hit each, minus the memory the answer is about, is zero
+ * candidates -- a feature that is a no-op everywhere it is allowed to run.
+ *
+ * Retrieval's job is to license an answer, so it ranks the whole corpus against a question
+ * and returns the best few from anywhere. The tail's job is different: it asks what else is
+ * written down HERE, and `stopId` is the corpus's own authored answer to that. So retrieval
+ * still decides the order it can speak to -- its on-stop hits come first, in rank order --
+ * and the rest of the section follows in the order MJK wrote them, which is deterministic
+ * and is a real editorial judgement rather than a leftover of array position.
+ *
+ * Nothing unanswerable can arrive this way: every memory here has this stop's `stopId`, and
+ * `coverageOf` returns `null` for a title with no content words -- "Who I am" is the one in
+ * this corpus -- which is also the only stop memory whose own question does not rank itself
+ * first. The measurement and the routing agree about it, from opposite directions.
+ */
+function nextQuestionCandidates(licences: readonly Memory[], stopId: StopId): Memory[] {
+  const answeredAbout = licences[0]?.id;
+  const ranked = licences.filter((m) => m.stopId === stopId);
+  const seen = new Set(ranked.map((m) => m.id));
+  const rest = memoriesForStop(stopId).filter((m) => !seen.has(m.id));
+  return [...ranked, ...rest].filter((m) => m.id !== answeredAbout);
+}
+
+/**
+ * THE NEXT QUESTION: the memory this stop retrieved that the finished answer used LEAST.
+ *
+ * WHAT WAS HERE BEFORE, AND WHY IT WAS THE WRONG THING. The cards under an answer were the
+ * top three retrieved memories -- which is to say, the memories the answer had just been
+ * written from. On the two `plain` stops, where `AnswerBlock` actually draws them, that made
+ * the tail an echo: read a paragraph, then read the names of the things the paragraph was
+ * about. It is the same defect the dek above has now been fixed for twice, arriving one
+ * element further down the page. And nothing followed from it, because there was nothing to
+ * press -- a visitor who had just been answered was offered nothing at all, on a site whose
+ * entire thesis is that they will ask a second question.
+ *
+ * SO THE SELECTOR IS TURNED AROUND. `dekFor` scores every licensed memory by coverage -- the
+ * fraction of the finished answer's units it accounts for -- at exactly the moment the
+ * envelope is rewritten. It is already a used-versus-merely-retrieved detector. The dek
+ * wants the argmax of it; the next question wants the argmin. One measurement read from
+ * both ends, and no second notion of relevance to keep honest.
+ *
+ * THE MODEL HAS NO LAYOUT AUTHORITY HERE EITHER, and that distinction is what this whole
+ * architecture rests on. Its prose is an INPUT to a server-side ranking over memories
+ * retrieval had already chosen. It cannot name a card, add one, or reorder them. It can
+ * only be measured.
+ *
+ * ONE, NOT THREE. Three next questions is a menu, and a menu is a thing to decide about
+ * rather than a thing to do. It also took three grid cells on a page whose pixel budget is
+ * already negative on two stops. One is self-limiting by construction: it is the question
+ * this answer did not answer, and there is exactly one of those.
+ *
+ * TIES GO TO RETRIEVAL RANK. `candidates` arrives in retrieval order and the comparison is
+ * strictly less-than, so an unbroken tie keeps the better-ranked memory. That matters more
+ * than it looks: an answer that mentions none of its neighbours leaves every one of them at
+ * coverage 0, and with no rule the pick would be whichever the array happened to end with.
+ *
+ * ITS FALSIFIER IS ALREADY BUILT. `depth` in `lib/instrument/counters.ts` is the ordinal of
+ * a question inside its conversation -- "one ask is curiosity; two is the thesis". If this
+ * tail works, the buckets above 1 rise. If they do not move, it does not work, and no
+ * argument written here changes that.
+ */
+function nextQuestionFor(answer: string, candidates: readonly Memory[]): EnvelopeCard[] {
+  const units = coverageUnits(answer);
+
+  let pick: Memory | null = null;
+  let lowest = Infinity;
+  for (const m of candidates) {
+    const coverage = coverageOf(units, m.title);
+    if (coverage === null) continue;
+    if (coverage < lowest) {
+      lowest = coverage;
+      pick = m;
+    }
+  }
+  return pick ? [cardOf(pick)] : [];
 }
 
 /** Enough of a prior answer to remember what was said, far too little to anchor on. */
@@ -525,20 +648,28 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   }
 
   const licences = retrieved.hits.map((h) => h.memory);
-  // Cards belong to the stop the answer landed on. A Taboola question should not show
-  // "The arc" as a card because it happened to score; the off-stop hits still license.
-  const onStop = licences.filter((m) => m.stopId === stopId);
-  const cardSource = onStop.length > 0 ? onStop : licences;
+  const candidates = nextQuestionCandidates(licences, stopId);
   const envelope: EnvelopeData = {
     stopId,
     index: stop.index,
     kicker: `§ ANSWER · ${stopLabel(stopId)}`,
     title: licences[0]?.title ?? stopLabel(stopId),
-    cards: cardSource.slice(0, 3).map((m) => ({
-      id: m.id,
-      title: m.title,
-      kicker: String(m.period ?? m.tags[0] ?? '').toUpperCase(),
-    })),
+    /*
+     * The next question, guessed, because the answer it is measured against does not exist
+     * yet -- this envelope goes out at ~15ms, before the model has said anything.
+     *
+     * Retrieval rank is the only signal available at this point, and it points the same way:
+     * the worst-ranked candidate is the one this answer is least likely to be about. So the
+     * guess is `nextQuestionFor`'s own tie-break rule applied with every coverage unknown,
+     * which is exactly what it reduces to. It is replaced by the measured pick when the
+     * caret stops.
+     *
+     * ONE HERE AND ONE THERE, and that is deliberate rather than tidy. Three cards that
+     * became one at the end of the stream would take a grid row away from a section as its
+     * answer finished, and `.panel` is `overflow: hidden` -- on a page whose slack is already
+     * negative on two stops, a late height change deletes something silently.
+     */
+    cards: candidates.length > 0 ? [cardOf(candidates[candidates.length - 1])] : [],
     cites: licences.map((m) => m.id),
     status: 'streaming',
   };
@@ -699,6 +830,9 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
             ...envelope,
             status: 'verified',
             title: dekFor(text, licences),
+            // The dek and the tail are the same measurement read from both ends: the memory
+            // this answer is most about heads it, the one it is least about follows it.
+            cards: nextQuestionFor(text, candidates),
             ...(rewritten ? { body: text } : {}),
           },
         });
@@ -738,8 +872,11 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
               ...envelope,
               status: 'salvaged',
               // From what survived, not from what was written: salvage can remove the
-              // very sentence the dek was describing.
+              // very sentence the dek was describing -- and, on the other end of the same
+              // measurement, can leave a memory looking unused because the sentence that
+              // used it was the one the guard took.
               title: dekFor(kept.text, licences),
+              cards: nextQuestionFor(kept.text, candidates),
               body: kept.text,
               note: `Checked against the corpus; ${parts.join(', ')}.`,
             },

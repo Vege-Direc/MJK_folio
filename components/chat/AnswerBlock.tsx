@@ -1,18 +1,21 @@
 'use client';
 
 import { STOPS } from '@/content/stops';
+import { askHref, cardQuestion } from '@/lib/card-question';
 import type { Answer } from './ChatProvider';
 import { useAsk } from './ChatProvider';
 
 /**
- * Cards inside the answer only where the stop has no media column of its own. On a
- * `cards`, `timeline`, `carousel` or `contact` stop the same memories already sit beside
- * the text; repeating them under the answer says the same thing twice.
+ * The tail shows only where the stop has no media column of its own. On a `cards`,
+ * `timeline`, `carousel` or `contact` stop the memories already sit beside the text and a
+ * question about one of them is a card the reader can already see.
  *
- * These are also the whole of the answer's provenance now. The `[project-taboola]`
- * chips that used to sit under the prose are gone: an internal id is developer output,
- * not something to print on a portfolio, and on the three stops where the reader would
- * otherwise see nothing, this list already names the same memories by their titles.
+ * WHAT THIS LIST USED TO BE. Three cards naming the top-cited memories -- the answer's
+ * provenance, which is to say the memories the answer had just been written from. Inert,
+ * and an echo: read a paragraph, then read the names of the things the paragraph was
+ * about. It is one element, and one question, now. The provenance did not move somewhere
+ * worse; it was never doing the job it was credited with, because a reader who has just
+ * read the paragraph does not need the paragraph's subjects listed underneath it.
  */
 function showsCards(stopId: string | undefined): boolean {
   const stop = STOPS.find((s) => s.id === stopId);
@@ -64,7 +67,7 @@ function isOrdinaryKicker(kicker: string | undefined): boolean {
  */
 export default function AnswerBlock({ answer, compact = false }: { answer: Answer; compact?: boolean }) {
   const { envelope, shown, streaming, question } = answer;
-  const { showOriginal, setShowOriginal } = useAsk();
+  const { ask, showOriginal, setShowOriginal } = useAsk();
   const done = !streaming && envelope !== null && envelope.status !== 'streaming';
 
   // Compact means the dock is showing this itself, with no stop kicker above it, so the
@@ -128,12 +131,53 @@ export default function AnswerBlock({ answer, compact = false }: { answer: Answe
         {done ? shown || envelope?.title || '' : ''}
       </p>
 
+      {/*
+        THE NEXT QUESTION, and the whole of it is one element that was already here.
+        `nextQuestionFor` in `lib/ask/handler.ts` picks the memory on this stop the finished
+        answer used LEAST, so this is the question the paragraph above did not answer.
+
+        The title is a link now, and it is INSIDE the span rather than instead of it. That
+        is not a detail. The span is a flex item, so an `<a>` put in its place is blockified
+        and the global `a { }` rule's 1px rule stretches the full width of the column --
+        which, stacked under the `border-top` the list item already carries, reads as a
+        divider rather than as a link. Inline inside the span, the same rule hugs the words,
+        the accent colour separates the question from the muted card text around it, and an
+        inline box adds nothing to the line: MEASURED at 1280x720, the block version put the
+        item at 20.5px against the span's 19.5 and took §09's slack from -0.8px to +0.2px,
+        into a `.panel` that is `overflow: hidden` and destroys rather than scrolls.
+
+        What the link buys over a click handler is everything a link already is: a focus
+        ring, Enter, a status bar, middle-click, cmd-click, and `Copy link address` -- which
+        is how the audience this site is aimed at actually forwards things. `WorkIndex`'s
+        chapter tiles already made this move for the same reason.
+
+        Modified clicks are left to the browser on purpose. A cmd- or middle-click here means
+        "open that answer somewhere else", and `askHref` makes it a real address rather than
+        a dead `#`.
+
+        `aria-label` says the whole question -- "Tell me about X." -- while the visible text
+        is X, so the accessible name contains the visible label and WCAG 2.5.3 Label in Name
+        holds for voice control. The link's destination and the click's question are the same
+        memory by construction: both are built from `card.id` and `card.title`.
+      */}
       {envelope && envelope.cards.length > 0 && !compact && showsCards(envelope.stopId) && (
         <ul className="answer-cards">
           {envelope.cards.map((card) => (
             <li key={card.id} id={`card-${card.id}`}>
               <span className="answer-card-kicker">{card.kicker}</span>
-              <span className="answer-card-title">{card.title}</span>
+              <span className="answer-card-title">
+                <a
+                  href={askHref(card.id)}
+                  aria-label={cardQuestion(card.title)}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                    e.preventDefault();
+                    ask(cardQuestion(card.title), 'link');
+                  }}
+                >
+                  {card.title}
+                </a>
+              </span>
             </li>
           ))}
         </ul>

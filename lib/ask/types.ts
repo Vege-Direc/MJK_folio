@@ -11,7 +11,14 @@ import type { StopId } from '../../content/stops';
  */
 type EnvelopeStatus = 'streaming' | 'verified' | 'salvaged' | 'replaced';
 
-type EnvelopeCard = { id: string; title: string; kicker: string };
+/**
+ * One card under an answer. There is at most one of them now -- see `nextQuestionFor` in
+ * `lib/ask/handler.ts` -- and it is a question rather than a citation.
+ *
+ * Exported because the handler builds it in two places, before the answer exists and again
+ * once it does, and a shape written twice is a shape that drifts.
+ */
+export type EnvelopeCard = { id: string; title: string; kicker: string };
 
 export type EnvelopeData = {
   stopId: StopId;
