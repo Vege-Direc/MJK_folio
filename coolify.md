@@ -8,8 +8,12 @@ Runs alongside Mrunn and Jewel AI on your existing Coolify host.
 
 **Env vars to set in Coolify:**
 - `OPENROUTER_API_KEY` — one key. OpenRouter rate-limits per account, so more keys add nothing.
-- `REDIS_URL` — Coolify's one-click Redis service URL. Reserved for rate-limit state.
+- `REDIS_URL` — Coolify's one-click Redis service URL. Rate-limit state, and the
+  instrument's daily counters (see below). Without it both fall back to nothing: the
+  limiters count in-process, and the instrument does not count at all.
 - `NEXT_TELEMETRY_DISABLED=1`
+- `INSTRUMENT_TOKEN` — **optional, and unset means off.** The key that unlocks
+  `/api/instrument`. Generate one with `openssl rand -hex 32`.
 - `NEXT_PUBLIC_SITE_URL` — the public https origin (e.g. `https://mathewjohnk.com`). Feeds
   metadata, Open Graph, JSON-LD and the sitemap; wrong or unset here means shared links
   and search results point at `localhost`.
@@ -55,3 +59,30 @@ rate limiting), and it is the layer to add if `clientIp`'s single-hop trust assu
 ever needs to change -- Cloudflare's `x-forwarded-for` handling and Traefik's need to
 agree on which hop is the real client. Application-level limits are a backstop, not a
 substitute, for stopping abuse at the edge.
+
+## The instrument
+
+`DIRECTION.md` decision 11. The site counts what it already handled — page views, asks,
+which control did the asking, the stop each answer landed in, what the guard did with it —
+into Redis hashes keyed by UTC day, kept 90 days. Nothing is written to a visitor's device
+and no third party is involved; `app/privacy/page.tsx` says so in the site's own words, and
+that page is the authority on what may be counted.
+
+Read it:
+
+```
+curl -H "Authorization: Bearer $INSTRUMENT_TOKEN" https://mjk.nila.li/api/instrument
+```
+
+or open `https://mjk.nila.li/api/instrument?key=…` in a browser. `&days=90` widens the
+window to the retention limit; `&format=json` returns the reading unformatted.
+
+**With `INSTRUMENT_TOKEN` unset the route answers 404 to everyone**, which is both the
+default and the whole rollback. It answers 404 for a wrong key too, never 401, for the
+reason `app/api/health/route.ts` gives in its own comment: an endpoint that reports whether
+a credential is configured tells a stranger which half of the deployment to attack. Rotate
+the key by editing the variable and redeploying — nothing else stores it.
+
+`proxy.ts` is what counts the page views, and it is the only thing in the request path that
+this feature added. Deleting it stops the denominator and changes nothing else. It is
+excluded from `/api/*` by its own matcher, so Coolify's health probe is not counted.

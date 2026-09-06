@@ -26,11 +26,12 @@ npm install && npm run dev
 
 ## Repo tree
 ```
-app/           routing, layout, globals.css (the design layer), /api/ask + /api/health, metadata routes
+app/           routing, layout, globals.css (the design layer), /api/ask + /api/health + /api/instrument, metadata routes
+proxy.ts       counts document requests, and nothing else — the denominator for the instrument
 components/    mind/ (canvas mount + scroll→progress), stops/ (the nine sections), chat/ (dock, provider, docked answer)
 content/       memories.yaml (the corpus), stops.ts (identity + layout + authored copy), system-prompt.md, site.ts
 evals/         tier-A tests — authored claims, retrieval + routing table, grounding fixtures, limits, the ask route, site
-lib/           mind/ (the three.js scene), ask/ (the answer path), retrieve, grounding/, security/, fallback, provider, corpus/
+lib/           mind/ (the three.js scene), ask/ (the answer path), retrieve, grounding/, security/, instrument/, fallback, provider, corpus/
 scripts/       check-corpus.ts (the gate prebuild and CI run), route-eval.ts, guard-eval.ts
 public/        far-network.json (tier-3 topology, fetched at runtime), media/rd350/, resume.pdf
 reference/     preview.html — the prototype the scene and layout were ported from; PORT_NOTES.md
@@ -53,3 +54,29 @@ Every refusal path (throttled, budget spent, off-topic, provider down) is HTTP 2
 envelope built from corpus text. The model has no layout authority and no structured-output
 requirement; that is what makes free models safe here. `npm run route:eval` and
 `npm run guard:eval` print the routing table and the guard fixtures.
+
+## The instrument
+The site's whole thesis is that visitors will **ask** rather than only scroll, and until
+now nothing checked it: every claim in `PLAN.md` was measured against panel judgement, and
+none against a real visitor. Meanwhile `lib/security/limits.ts` had been running a Redis
+daily counter on `/api/ask` since admission control shipped, and nobody had ever read the
+number it held.
+
+`lib/instrument/counters.ts` reads it, plus four things beside it — page views, the
+**card / chip / typed** split nobody has published for any site, how many questions a
+conversation got, and what the guard did with the answer. Five Redis hashes and two
+HyperLogLogs per UTC day, ninety days, no new dependency and no third party.
+
+**It counts only what the server already handled.** No cookie, no `localStorage`, no
+`sessionStorage`, no beacon, no identifier of any kind — which is also why a *session* is
+unmeasurable here and the report says so rather than calling a request a person.
+`app/privacy/page.tsx` names all of it in the site's own voice; if that page and this code
+ever disagree, the page is right and the code is the bug.
+
+```
+GET /api/instrument?key=$INSTRUMENT_TOKEN[&days=30][&format=json]
+```
+Plain text, one screen, every ratio printed next to the counts it came from and a Wilson
+interval around it. With `INSTRUMENT_TOKEN` unset the route answers **404** — to everyone,
+including its owner. That is the default and the rollback; deleting `proxy.ts` drops the
+denominator and changes nothing a visitor sees.

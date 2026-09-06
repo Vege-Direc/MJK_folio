@@ -36,6 +36,25 @@ export default function PrivacyPage() {
               rate limits — not to identify you.
             </p>
 
+            <p>
+              I do count, though, and you should know what. Not you — the{' '}
+              <span className="text-[color:var(--color-type)]">requests this server answers</span>. How many
+              pages it served today, how many questions were asked, whether a question came from a card, a
+              suggested prompt or the box, which section the answer landed in, and whether the answer
+              survived its own fact-check. Whole numbers in a list, kept for ninety days. Two of them
+              estimate how many <em>different</em> people came, from that same hashed address — a sketch
+              that can say how many and never who, and that cannot be asked whether you were one of them.
+            </p>
+
+            <p>
+              This whole site is a bet that people would rather ask than scroll, and until now I had no
+              way of knowing whether that was true. That is what the counting is for, and it is all it can
+              do: nothing is stored on your device, nothing follows you from one page to the next, nothing
+              goes to anyone else, and there is no profile of you anywhere because there is nothing here to
+              hang one on. I would rather write that out than let three words at the top of this page do
+              work they weren&rsquo;t written for.
+            </p>
+
             <p>If you&rsquo;d rather send nothing anywhere: the résumé PDF works with no chat at all.</p>
           </div>
 
