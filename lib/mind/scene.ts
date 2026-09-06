@@ -848,12 +848,17 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
        * 0.0035 at 64 and 0.0199 at 26. Within 4% on both tiers. It matters here more than
        * on a twig because the camera flies along this curve, close enough to see faceting.
        *
-       * Radius is the secondaries' 0.7x. It is a branch off the spine, not a second
-       * spine, and drawing it at full trunk width would state a symmetry that is not
-       * there — two equal roads is a diagram of a choice, which is the one thing this
-       * must not become.
+       * Radius is 0.5x — the sub-network's depth-0 width, not the secondaries' 0.7x, and
+       * the reason is a contrast measurement rather than taste. It is a branch off the
+       * spine, not a second spine, and drawing it at trunk width would state a symmetry
+       * that is not there. At 0.7x it also crossed the career stop's body paragraph
+       * closely enough to matter: measured on the built page at 1440x900 with the DOM
+       * hidden, the share of that paragraph's background sitting under the 4.5:1 floor
+       * went 2.30% -> 5.91% and the 5th percentile fell 7.04 -> 4.30. See the halo note
+       * in `DESIGN.md`'s rules — the words defend themselves and nothing is laid over
+       * the scene, so the fix has to be in the scene.
        */
-      tubeGeos.push(tubeWithTangent(collateralCurve, Math.max(8, Math.floor(cfg.tubeSeg)), cfg.tubeRadius * 0.7, cfg.tubeRad,
+      tubeGeos.push(tubeWithTangent(collateralCurve, Math.max(8, Math.floor(cfg.tubeSeg)), cfg.tubeRadius * 0.5, cfg.tubeRad,
         nodeSway[COLLATERAL.from], nodeSway[COLLATERAL.to]));
     }
     for (let c = 0; c < subCurves.length; c++){
