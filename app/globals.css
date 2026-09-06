@@ -3299,6 +3299,93 @@ html[data-flying] .answer-layer-in {
     align-self: stretch;
   }
 
+  /*
+   * ── The career rail comes straight after its title, and the paragraph follows it ──
+   *
+   * Measured at 390x664 with the dock at 147px, so a 517px readable band: §02 is 1,386px
+   * and 869px of it — 63% — was below the fold. What a phone showed at the top of the
+   * stop was 53px of padding, the kicker, four lines of title, seven lines of body, 34px
+   * of empty answer slot and a 26px gap: 511px, with the first era caption arriving at
+   * exactly 511 and the band ending at 517. **Every one of the rail's ten rows was under
+   * the dock**, on the component the audit calls the best-executed on the site.
+   *
+   * THE FLIP WAS TRIED FIRST AND IT IS WRONG. TASKS 38's recorded mechanism is that
+   * `.content-zone { order: 1 }` above puts prose first on every phone, and that flipping
+   * it is a one-declaration fix. Screenshotted on this stop, that shows seven rows and
+   * both era captions — and no kicker, no title and no body at all. Two things break.
+   * The § address is the one thing DESIGN.md defends the kicker FOR ("the visitor has to
+   * know where they just landed"), and the flip deletes it from the screen. And the rail
+   * reads across every stop, so it opens on `Engineering 2004–2012 / Education / Trainee
+   * engineer` — a stop titled "A decade in paid media" whose first two visible rows are
+   * an aerospace MSc. With `.tl-summary { display: none }` below 1600px a closed row is a
+   * year and an employer, so the flipped screen is literally a table with no heading.
+   *
+   * So the title leads and the BODY moves, not the kicker and not the title. The title
+   * already is the sentence that introduces the rail — "A decade in paid media across
+   * India and Southeast Asia" — and the paragraph under it is detail about two of the
+   * rows, one of which (Hotstar, IPL and the 25 million concurrent viewers) the rail
+   * carries itself in `hotstar-scale`. Detail belongs after the evidence.
+   *
+   * Measured after: kicker, the whole title, both era captions and three full rows above
+   * the fold, with the fourth cut — which is what a rail should do, promise more by being
+   * cut rather than by being absent.
+   *
+   * `display: contents` is how the body gets past the rail without a second DOM. The
+   * desktop is a two-column grid with `grid-template-rows: 100%`, so a third child would
+   * open an implicit row and break it; dissolving `.content-zone` for the width where it
+   * is a stacked column instead makes its three parts orderable flex items of
+   * `.section-inner` and touches nothing above 900px. What it drops with the box is
+   * `position: relative` and `z-index: 3`; nothing inside this column is absolutely
+   * positioned (the `::before` spine and ticks all belong to `.media-zone`, which keeps
+   * its box), the columns no longer overlap once stacked, and `text-shadow` is inherited
+   * rather than painted, so the halo still reaches every glyph. Re-measured, because the
+   * paragraph now sits over different pixels of a moving scene and the claim is about the
+   * pixels it actually sits on: 13,516 glyph pixels, worst of six animated frames, p95
+   * 10.66:1 before and 10.33:1 after, worst single pixel 7.97 then 6.83. The floor is
+   * 4.5:1. Desktop is 10.67:1 either way, to two decimal places, on every frame.
+   *
+   * `.section-body-wrap` stays whole, and that is deliberate. It carries the authored
+   * paragraph AND `#answer-<stop>`, and an answer replaces the paragraph in place — split
+   * them and SHOW ORIGINAL would restore a paragraph 700px from the answer that hid it.
+   * So a routed answer docks below the rail here; `landingFor` in ChatProvider already
+   * scrolls to whatever is needed to open room under it.
+   *
+   * Keyed on `data-compose` rather than on `#apac` because the rule is about what the
+   * media column IS. Any future stop whose media is the rail wants this; no stop whose
+   * media is a figure does, because one figure under seven lines of body is a different
+   * arithmetic and belongs to its own pass.
+   */
+  .panel[data-compose='timeline'] .section-inner {
+    /*
+     * Zero, and the intervals come back as the elements' own margins — the kicker's 14px
+     * and the title's 22px, which are the authored ones. Left at 26px the gap would be
+     * added to both of those and cost 52px, which is most of a rail row.
+     */
+    gap: 0;
+  }
+
+  .panel[data-compose='timeline'] .content-zone {
+    display: contents;
+  }
+
+  .panel[data-compose='timeline'] .section-kicker {
+    order: 1;
+  }
+
+  .panel[data-compose='timeline'] .section-title {
+    order: 2;
+  }
+
+  .panel[data-compose='timeline'] .media-zone {
+    order: 3;
+  }
+
+  .panel[data-compose='timeline'] .section-body-wrap {
+    order: 4;
+    /* The gap the container gave up, restored on the one edge that still wants it. */
+    margin-top: 26px;
+  }
+
   /* 30.4px against a 16px body is only a 1.9x step; the display face needs more. */
   .section-title {
     font-size: clamp(2.05rem, 8.8vw, 2.8rem);

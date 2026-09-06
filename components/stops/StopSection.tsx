@@ -283,6 +283,18 @@ export default function StopSection({ stop }: { stop: Stop }) {
       // both the glass and that opacity are gone, so only the layout reason is left.)
       data-align={contentSide}
       data-centred={centred ? '' : undefined}
+      /*
+       * What this stop's media column IS, so the stylesheet can compose for it.
+       *
+       * Everything else the CSS needs it already had — which side the words take, and
+       * whether there is a media column at all — but not what is in it, and on a phone
+       * that matters: a stacked column has to be ORDERED, and the right order depends on
+       * whether the media is one figure or a ten-row rail. `data-compose` is the same
+       * authored field the renderer already switches on, published where a stylesheet
+       * can read it, rather than a rule keyed on `#apac` — the id is a routing key and
+       * the corpus's `stopId`, and no stylesheet has ever had an opinion about it.
+       */
+      data-compose={stop.compose}
       className="panel"
     >
       {/*
