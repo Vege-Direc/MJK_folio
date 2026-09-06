@@ -3063,7 +3063,22 @@ html[data-flying] .answer-layer-in {
  */
 .dock-veil {
   position: absolute;
-  inset: 0;
+  /*
+   * It extends 44px ABOVE the dock, and that is the fix rather than a detail.
+   *
+   * This was `inset: 0`, so the box was exactly the dock and the feather below had
+   * nowhere to go but inside it — the top 44px of the dock's own area was where the
+   * gradient was still fading up to transparent. Measured at 390x664: the dock starts at
+   * y 517 and the prompt chip at y 536, so the chip sat 19px inside its own feather, and
+   * a screenshot shows "What have you built?" printed over the ghost letters of
+   * "MruNN-ERP — chat-native ERP" scrolling underneath it. The comment below already said
+   * "feathered across the 44px ABOVE it"; the geometry just never did that.
+   *
+   * With the box extended upward the solid stop lands exactly on the dock's top edge, so
+   * everything the dock draws has opaque ground under it and the fade happens over the
+   * section above. `pointer-events: none` already means the taller box catches nothing.
+   */
+  inset: -44px 0 0 0;
   pointer-events: none;
   /*
    * In pixels from the top edge, not percentages of a height that changes.
