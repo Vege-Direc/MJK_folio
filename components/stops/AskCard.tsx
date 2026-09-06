@@ -78,7 +78,11 @@ export default function AskCard({
         // leave the box showing something the page is not answering.
         if (asking) return;
         setDraft(question);
-        ask(question);
+        // `card` is the reason the instrument exists. Every claim about this mechanism —
+        // that a card is a question that has not been asked yet, that pressing one
+        // teaches what the field is for — has been checked against panel judgement and
+        // never against a visitor. This argument is the only thing that can settle it.
+        ask(question, 'card');
       }}
     >
       {children}

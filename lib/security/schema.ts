@@ -20,6 +20,7 @@
  */
 import { z } from 'zod';
 import { STOP_IDS, type StopId } from '../../content/stops';
+import { ASK_ORIGINS } from '../ask/types';
 
 /** Enough for a 500-character question and four exchanges, with room to spare. */
 export const MAX_BODY_BYTES = 16 * 1024;
@@ -79,7 +80,7 @@ export const askBodySchema = z.object({
    * Absent on an older client, and absent is a fourth answer the report shows as
    * `unknown` rather than quietly folding into `typed`.
    */
-  origin: z.enum(['card', 'chip', 'typed']).optional(),
+  origin: z.enum(ASK_ORIGINS).optional(),
 });
 
 export type AskHistoryTurn = z.infer<typeof historyTurnSchema>;

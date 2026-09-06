@@ -2,9 +2,23 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { STOPS, type StopId } from '@/content/stops';
-import { ROUTE_EVENT, type AskUIMessage, type EnvelopeData, type RouteData } from '@/lib/ask/types';
+import {
+  ROUTE_EVENT,
+  type AskOrigin,
+  type AskUIMessage,
+  type EnvelopeData,
+  type RouteData,
+} from '@/lib/ask/types';
 import { flyTo } from '@/lib/flight';
 
 /**
@@ -32,7 +46,19 @@ type ChatContextValue = {
   answer: Answer | null;
   asking: boolean;
   error: Error | undefined;
-  ask: (question: string) => void;
+  /**
+   * Ask, and say which control did the asking.
+   *
+   * The second argument is the whole of `DIRECTION.md` decision 11 on the client side.
+   * The server cannot infer it — a card, a chip and the dock's own field send byte-identical
+   * bodies — and it is the one number nobody has published for any site: whether a visitor
+   * who asks does it by pressing a card, pressing a chip, or typing a sentence.
+   *
+   * It defaults to `typed` rather than to nothing, because every call site that is not a
+   * card or a chip IS the field, and an optional argument that silently reports `unknown`
+   * when a caller forgets would corrupt the split it exists to measure.
+   */
+  ask: (question: string, origin?: AskOrigin) => void;
   /**
    * What is in the ask field.
    *
@@ -137,6 +163,26 @@ function viewingStop(): StopId | undefined {
  */
 let readerMoved = false;
 let releaseWatch: (() => void) | null = null;
+
+/**
+ * Which control fired the question that is on its way out: a card in the page, a chip in
+ * the dock, or the dock's own field.
+ *
+ * Module scope for the same two reasons `readerMoved` above is — it is one page and one
+ * reader, and holding it in state would re-render the whole tree to record a word nobody
+ * sees. It is also the only place it CAN live: the transport is built once with `[]` deps
+ * and reads this while assembling the body, and React's own lint rule refuses a ref read
+ * from inside that memo, correctly, because it cannot see that the read happens in a
+ * callback invoked later rather than during render.
+ *
+ * Set on every `ask` and never cleared. `sendMessage` returns at its first await, so the
+ * body is assembled some ticks later and any reset written after the call would race the
+ * send it belongs to — every card press would have arrived at the server as `typed`, the
+ * exact number this exists to measure, silently wrong, with nothing on the page to show
+ * for it. Nothing needs clearing: every route into `ask` assigns this, defaulting to
+ * `typed`, so a stale value cannot survive one question.
+ */
+let pendingOrigin: AskOrigin = 'typed';
 
 function watchForReader(): void {
   releaseWatch?.();
@@ -313,6 +359,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               // describe the moment the question was actually asked.
               viewing: viewingStop(),
               previousStopId: envelopeOf(previous)?.stopId,
+              // Which control asked. One of three constants, read at send time and never
+              // stored — see `pendingOrigin` above and `lib/instrument/counters.ts` for
+              // why it is the one number this site did not have.
+              origin: pendingOrigin,
             },
           };
         },
@@ -389,9 +439,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }
 
   const ask = useCallback(
-    (question: string) => {
+    (question: string, origin: AskOrigin = 'typed') => {
       const q = question.trim();
       if (!q || asking) return;
+      // Set before `sendMessage`, and deliberately never cleared after it. See the
+      // declaration for why a reset would race the send it belongs to.
+      pendingOrigin = origin;
       // A new question un-dismisses, including the same question asked again on purpose.
       setDismissed(null);
       void sendMessage({ text: q });

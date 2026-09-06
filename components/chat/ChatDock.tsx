@@ -83,6 +83,22 @@ export default function ChatDock() {
    * trigger survives all three. It writes only when the gap is at least a pixel, so it
    * costs one `getBoundingClientRect` per frame for at most 0.7s and nothing at rest.
    */
+  /*
+   * The suggestion the visitor picked, if the sentence in the field is still it.
+   *
+   * A chip does not send. It writes its text into the field and focuses it, and the
+   * visitor presses Send — which is the right interaction and is also why the origin
+   * cannot be recorded where the chip is pressed. Something has to carry "this sentence
+   * came from a chip" across the gap between the pick and the submit, and this is the
+   * smallest thing that can: one string, compared once.
+   *
+   * Compared rather than invalidated on every keystroke, deliberately. A visitor who
+   * picks a chip and then edits it into their own question has typed, and the comparison
+   * says so with no `onChange` handler to keep in step — one fewer thing to be wrong
+   * about, on the only input on the site.
+   */
+  const [picked, setPicked] = useState<string | null>(null);
+
   const [kbInset, setKbInset] = useState(0);
   useEffect(() => {
     const vv = window.visualViewport;
@@ -158,8 +174,9 @@ export default function ChatDock() {
   const submit = (value: string) => {
     const question = value.trim();
     if (!question || asking) return;
-    ask(question);
+    ask(question, picked !== null && question === picked.trim() ? 'chip' : 'typed');
     setInput('');
+    setPicked(null);
   };
 
   const showInline = answer !== null && !docked;
@@ -224,6 +241,7 @@ export default function ChatDock() {
             frozen={input.length > 0 || asking}
             onPick={(p) => {
               setInput(p);
+              setPicked(p);
               inputRef.current?.focus();
             }}
           />

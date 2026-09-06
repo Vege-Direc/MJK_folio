@@ -1,3 +1,4 @@
+import { ASK_ORIGINS as WIRE_ORIGINS, type AskOrigin as WireAskOrigin } from '../ask/types';
 import { getRedisClient } from '../redis';
 
 /**
@@ -82,9 +83,17 @@ import { getRedisClient } from '../redis';
  *     holds a string a visitor supplied.
  */
 
-/** Which control the visitor used. `unknown` is an older client, or one that lied. */
-export const ASK_ORIGINS = ['card', 'chip', 'typed', 'unknown'] as const;
-export type AskOrigin = (typeof ASK_ORIGINS)[number];
+/**
+ * Which control the visitor used, plus the one value only the server can write.
+ *
+ * The three the client may send are `ASK_ORIGINS` in `lib/ask/types.ts`, which is the
+ * half of the wire contract the browser imports. `unknown` is appended here and nowhere
+ * else: it means the body carried no origin -- an older client, a script, or a request
+ * built by hand. Keeping it out of the wire enum is what makes "the client did not say"
+ * and "the client said it did not know" impossible to confuse in the report.
+ */
+export const ASK_ORIGINS = [...WIRE_ORIGINS, 'unknown'] as const;
+export type AskOrigin = WireAskOrigin | 'unknown';
 
 /**
  * What the visitor ended up reading. Mirrors the envelope's status plus the refusals.
