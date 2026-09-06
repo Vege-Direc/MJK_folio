@@ -48,9 +48,41 @@ const READING_LIGHT_UNIFORMS = /* glsl */ `
   uniform float uSpan;
   uniform float uAmount;
   uniform float uFloor;
+  uniform sampler2D tBloom;
 `;
 
+/**
+ * The bloom add, moved here from `UnrealBloomPass`'s own final pass.
+ *
+ * The stock pass ends by drawing its composited pyramid additively over the whole frame,
+ * and then this pass reads that same frame back and writes it to the screen. Two
+ * full-screen operations on one buffer, where one will do. `BloomPyramidPass` stops before
+ * that blend and hands the texture here instead, which costs one texture fetch on a pass
+ * that was already running and saves 740,610 device pixels of fill on a 390x664 phone.
+ *
+ * It reproduces what the stock blend did, including the part that is easy to miss: the
+ * blend function is `SRC_ALPHA, ONE`, so the add is scaled by the bloom's own alpha.
+ * Sampling at full resolution upsamples the half-resolution pyramid, which is what the
+ * stock full-screen quad did too.
+ *
+ * When bloom is off — no bloom on this tier, or the adaptive controller has shed it —
+ * `tBloom` points at a 1x1 black texture rather than a stale pyramid. That keeps the add
+ * correct with no branch and no shader recompile, and a recompile is the one thing not to
+ * do here: it would land as a hitch on the device that just told us it is struggling.
+ */
+
 const READING_LIGHT_ATTENUATE = /* glsl */ `
+  {
+    // rgb * a, NOT rgb. UnrealBloomPass's blendMaterial is CopyShader with
+    // AdditiveBlending and the Material default premultipliedAlpha:false, which
+    // three.js maps to blendFunc(SRC_ALPHA, ONE) — so the stock pass adds the bloom
+    // scaled by its own alpha. The scene accumulates alpha additively into a half-float
+    // target, so that alpha is routinely far from 1 and dropping it is not a rounding
+    // difference: measured, a plain add of rgb lost a third of the lit coverage at S01 on
+    // desktop (27.4% of the frame over luminance 20, against 15.6%).
+    vec4 b = texture2D( tBloom, vUv );
+    c.rgb += b.rgb * b.a;
+  }
   {
     float x = abs(vUv.x - uAnchor);
     float fall = smoothstep(0.0, uSpan, x);
@@ -67,7 +99,15 @@ export type ReadingLightUniforms = {
   uSpan: { value: number };
   uAmount: { value: number };
   uFloor: { value: number };
+  tBloom: { value: THREE.Texture | null };
 };
+
+/** 1x1 black, so "no bloom" is an add of zero rather than a branch or a recompile. */
+function blackPixel(): THREE.DataTexture {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat);
+  t.needsUpdate = true;
+  return t;
+}
 
 /**
  * The light, folded into the output pass instead of standing in front of it.
@@ -87,14 +127,17 @@ export type ReadingLightUniforms = {
  */
 export class ReadingLightOutputPass extends OutputPass {
   readonly light: ReadingLightUniforms;
+  /** The "bloom is off" texture, kept so `setBloom(null)` is allocation-free. */
+  private readonly noBloom = blackPixel();
 
   constructor() {
     super();
-    const u = this.uniforms as unknown as Record<string, { value: number }>;
+    const u = this.uniforms as unknown as Record<string, { value: unknown }>;
     u.uAnchor = { value: 0 };
     u.uSpan = { value: 0.78 };
     u.uAmount = { value: 0 };
     u.uFloor = { value: 0.58 };
+    u.tBloom = { value: this.noBloom };
     this.light = this.uniforms as unknown as ReadingLightUniforms;
 
     const mat = this.material as THREE.RawShaderMaterial;
@@ -107,6 +150,16 @@ export class ReadingLightOutputPass extends OutputPass {
         `vec4 c = texture2D( tDiffuse, vUv );\n${READING_LIGHT_ATTENUATE}\n\t\t\tgl_FragColor = c;`
       );
     mat.needsUpdate = true;
+  }
+
+  /** Point at a bloom pyramid, or at black when there is none to add. */
+  setBloom(tex: THREE.Texture | null): void {
+    this.light.tBloom.value = tex ?? this.noBloom;
+  }
+
+  override dispose(): void {
+    this.noBloom.dispose();
+    super.dispose();
   }
 }
 

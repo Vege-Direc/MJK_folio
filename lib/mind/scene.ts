@@ -34,6 +34,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { CFG, PALETTE, detectTier, type Tier } from './config';
 import { clamp, makeCurve, smoothstep, tubeWithTangent, UP } from './curves';
 import { anchorAt, ReadingLightOutputPass } from './reading-light';
+import { BloomPyramidPass, bloomInternalsIntact } from './bloom';
 import { buildWaypoints, mulberry32, srand, type Waypoint } from './waypoints';
 
 /** The precomputed tier-3 topology, as `public/far-network.json` stores it. */
@@ -1642,8 +1643,15 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
      * that resolution against a far field this tier does not draw.
      */
     const bloomScale = isMobile ? 0.5 : 1;
+    /**
+     * Whether the bloom's final additive blend has been folded into the output pass.
+     * True unless three.js has moved the internals `BloomPyramidPass` reaches into, in
+     * which case this falls back to the stock pass and the stock chain — one extra
+     * full-screen pass, same picture.
+     */
+    let bloomMerged = false;
     if (cfg.bloom){
-      bloomPass = new UnrealBloomPass(
+      bloomPass = new BloomPyramidPass(
         new THREE.Vector2(Math.max(1, Math.round(viewW * bloomScale)), Math.max(1, Math.round(viewH * bloomScale))),
         cfg.bloomStrength, cfg.bloomRadius, cfg.bloomThreshold
         // Step 6 final co-tune (busier scene: sub-network, contained pulses,
@@ -1654,6 +1662,15 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
         // radius 0.85 (broad soft halo, less banding than a tight kernel). Mobile now
         // runs the same values at half the pyramid resolution — see `bloomScale`.
       );
+      bloomMerged = bloomInternalsIntact(bloomPass);
+      if (!bloomMerged) {
+        console.warn('[mind] three.js bloom internals moved; using the stock pass');
+        bloomPass.dispose();
+        bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(Math.max(1, Math.round(viewW * bloomScale)), Math.max(1, Math.round(viewH * bloomScale))),
+          cfg.bloomStrength, cfg.bloomRadius, cfg.bloomThreshold,
+        );
+      }
       composer.addPass(bloomPass);
     }
 
@@ -1683,6 +1700,10 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
       // the trim measured no worse than deleting the halo outright. Turning the light up
       // would have changed how the scene looks, to pay for a problem that isn't there.
       readingLight.uAmount.value = isMobile ? 0.55 : 0.70;
+      // The bloom add, when it has been merged in. Null (a 1x1 black texel) whenever
+      // there is no pyramid to add: no bloom on this tier, the internals moved, or the
+      // adaptive controller has shed it.
+      if (bloomMerged && bloomPass) (outputPass as ReadingLightOutputPass).setBloom((bloomPass as BloomPyramidPass).bloomTexture);
     }
     composer.addPass(outputPass);
     composer.setSize(viewW, viewH);
@@ -1872,7 +1893,13 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): M
     let lastQualityChange = 0;
 
     function applyQuality(){
-      if (bloomPass) bloomPass.enabled = cfg.bloom && qualityLevel < 1;
+      const on = cfg.bloom && qualityLevel < 1;
+      if (bloomPass) bloomPass.enabled = on;
+      // A disabled pass stops rendering but its target keeps the last pyramid it drew, so
+      // the add has to be switched off with it or the frame keeps a frozen bloom.
+      if (bloomMerged && readingLight) {
+        (outputPass as ReadingLightOutputPass).setBloom(on && bloomPass ? (bloomPass as BloomPyramidPass).bloomTexture : null);
+      }
       resize(viewW, viewH);
     }
 
