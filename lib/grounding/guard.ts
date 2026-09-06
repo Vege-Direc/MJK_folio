@@ -23,8 +23,9 @@
  * get through:
  *
  *   - PRONOUN CARRY-OVER. "It cut setup time in half." names nobody, so it inherits the
- *     entities of the previous ANSWER sentence. Without this, the guard would either
- *     wave through every follow-up sentence or fail every one of them.
+ *     entities of the previous ANSWER sentence -- but only within its own paragraph. See
+ *     `PARAGRAPH` below; the boundary is where this rule stops, and it is the difference
+ *     between a guard that reads an answer and one that reads a run of sentences.
  *   - ENTITY-LESS SENTENCES. If carry-over finds nothing either, the quantity only has to
  *     be licensed by a memory in the top `topLicences` of the licence list. The default
  *     is the whole list, which makes this the weakest rule in the file: a document-
@@ -55,6 +56,42 @@ export type GuardOptions = {
   /** How many of `licences` count as "retrieved for this question". Default: all. */
   topLicences?: number;
 };
+
+/**
+ * A blank line, which is the only shape an answer on this site has -- and, once, the only
+ * place carry-over is allowed to stop.
+ *
+ * WHY THE BOUNDARY IS HERE. `content/system-prompt.md` asks the model to "break where the
+ * subject changes -- a different company, a different project, a different stretch of
+ * years", and then this guard read the whole answer as one flat run of sentences and
+ * carried the last name it had seen straight across that break. An answer that obeyed the
+ * instruction was punished for obeying it.
+ *
+ * MEASURED, 2026-09-06, on ten live answers through the real corpus, the real prompt and
+ * the real free-model path. "Give me the full story of the Paxel report" came back with
+ * every figure true and correctly attributed and lost 22% of itself to nine
+ * `mispaired-quantity` violations. Every one of the nine was a number the corpus states in
+ * a sentence that names nobody -- "208,803 lines shipped across 993 commits." -- bound by
+ * carry-over to "Claude Code", which the model had named in the paragraph above. Across
+ * the ten, the guard removed 11.5% of everything written and 16 of 20 violations were
+ * true content. With the boundary honoured: 9.4% and the Paxel answer 22% -> 7%, on 26/26
+ * fixture rows and with all 55 corpus bodies still guarding clean.
+ *
+ * WHAT THIS COSTS, STATED PLAINLY, because it is a real loosening and not a free one. A
+ * quantity the corpus states without naming anyone -- 19 of the corpus's 107, all of them
+ * in `paxel-numbers`, `photoshoot-numbers` and `photoshoot-how-it-works` -- can now be
+ * attached to a subject named in a PREVIOUS paragraph and pass. "At Taboola I revamped the
+ * APAC Ads Interface." followed by a blank line and "I shipped 208,803 lines across 993
+ * commits." is licensed, and it was not before. It is bounded on both sides: only those 19
+ * numbers, and only when both memories are inside the retrieved `topLicences`. Within a
+ * paragraph the same sentence pair is still caught, which is the shape the model actually
+ * writes and the shape `evals/tier-a/grounding.test.ts` pins.
+ *
+ * Shared with `salvageDetailed`, which already split on exactly this, because a guard and
+ * a salvage that disagree about where a paragraph ends disagree about which sentence a
+ * violation belongs to.
+ */
+const PARAGRAPH = /\n[ \t]*\n\s*/;
 
 /** One authored sentence, with everything it licenses. */
 type LicenceSentence = {
@@ -116,68 +153,72 @@ export function guard(answer: string, licences: Memory[], options: GuardOptions 
 
   const violations: Violation[] = [];
   const checked = { sentences: 0, quantities: 0, entities: 0 };
-  let carried: string[] = [];
 
-  for (const sentence of sentences(answer)) {
-    checked.sentences++;
-    const { known, unknown } = extractEntities(sentence, gazetteer);
-    checked.entities += known.length + unknown.length;
+  for (const paragraph of answer.split(PARAGRAPH)) {
+    // A new paragraph is a new subject; nothing said in the last one carries into it.
+    let carried: string[] = [];
 
-    for (const name of unknown) {
-      violations.push({
-        sentence,
-        kind: 'unknown-entity',
-        detail:
-          `"${name}" appears in none of the ${licences.length} licensed memories. The corpus is the ` +
-          'complete list of names this site may say, so an unrecognised one is a fabrication, not a gap.',
-      });
-    }
+    for (const sentence of sentences(paragraph)) {
+      checked.sentences++;
+      const { known, unknown } = extractEntities(sentence, gazetteer);
+      checked.entities += known.length + unknown.length;
 
-    const entities = known.length ? known : carried;
-    if (known.length) carried = known;
-
-    const quantities = extractQuantities(sentence);
-    checked.quantities += quantities.length;
-
-    for (const quantity of quantities) {
-      const matches = index.filter((l) => l.quantities.some((q) => sameQuantity(quantity, q)));
-
-      if (!matches.length) {
+      for (const name of unknown) {
         violations.push({
           sentence,
-          kind: 'unlicensed-quantity',
-          detail: `${describe(quantity)} is licensed by no sentence in the corpus. Nothing measured it.`,
-          quantity,
+          kind: 'unknown-entity',
+          detail:
+            `"${name}" appears in none of the ${licences.length} licensed memories. The corpus is the ` +
+            'complete list of names this site may say, so an unrecognised one is a fabrication, not a gap.',
         });
-        continue;
       }
 
-      if (!entities.length) {
-        if (!matches.some((l) => top.has(l.memoryId))) {
+      const entities = known.length ? known : carried;
+      if (known.length) carried = known;
+
+      const quantities = extractQuantities(sentence);
+      checked.quantities += quantities.length;
+
+      for (const quantity of quantities) {
+        const matches = index.filter((l) => l.quantities.some((q) => sameQuantity(quantity, q)));
+
+        if (!matches.length) {
           violations.push({
             sentence,
             kind: 'unlicensed-quantity',
+            detail: `${describe(quantity)} is licensed by no sentence in the corpus. Nothing measured it.`,
+            quantity,
+          });
+          continue;
+        }
+
+        if (!entities.length) {
+          if (!matches.some((l) => top.has(l.memoryId))) {
+            violations.push({
+              sentence,
+              kind: 'unlicensed-quantity',
+              detail:
+                `${describe(quantity)} names nobody and is licensed only outside the retrieved memories ` +
+                `(${[...new Set(matches.map((l) => l.memoryId))].join(', ')}).`,
+              quantity,
+            });
+          }
+          continue;
+        }
+
+        const paired = matches.some((l) => l.entities.some((e) => entities.some((a) => entityMatches(a, e))));
+        if (!paired) {
+          const best = matches[0];
+          violations.push({
+            sentence,
+            kind: 'mispaired-quantity',
             detail:
-              `${describe(quantity)} names nobody and is licensed only outside the retrieved memories ` +
-              `(${[...new Set(matches.map((l) => l.memoryId))].join(', ')}).`,
+              `${describe(quantity)} is licensed, but only about ${namesIn(best)} -- not about ` +
+              `${entities.join(', ')}. A real number attached to the wrong subject is still a false claim.`,
+            suggestion: `the corpus licenses ${describe(quantity)} for ${namesIn(best)} (${best.memoryId}), not for ${entities.join(', ')}`,
             quantity,
           });
         }
-        continue;
-      }
-
-      const paired = matches.some((l) => l.entities.some((e) => entities.some((a) => entityMatches(a, e))));
-      if (!paired) {
-        const best = matches[0];
-        violations.push({
-          sentence,
-          kind: 'mispaired-quantity',
-          detail:
-            `${describe(quantity)} is licensed, but only about ${namesIn(best)} -- not about ` +
-            `${entities.join(', ')}. A real number attached to the wrong subject is still a false claim.`,
-          suggestion: `the corpus licenses ${describe(quantity)} for ${namesIn(best)} (${best.memoryId}), not for ${entities.join(', ')}`,
-          quantity,
-        });
       }
     }
   }
@@ -305,7 +346,7 @@ export function salvageDetailed(answer: string, result: GuardResult): Salvage | 
   let redacted = 0;
   let onlySurvivor = '';
 
-  for (const paragraph of answer.split(/\n[ \t]*\n\s*/)) {
+  for (const paragraph of answer.split(PARAGRAPH)) {
     const all = sentences(paragraph);
     total += all.length;
     const kept: string[] = [];

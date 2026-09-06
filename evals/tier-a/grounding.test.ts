@@ -72,6 +72,49 @@ describe('pronoun carry-over', () => {
     const answer = 'At Taboola I revamped the APAC Ads Interface. It cut setup time by half.';
     expect(guard(answer, CORPUS).violations.map((v) => v.kind)).toEqual(['mispaired-quantity']);
   });
+
+  /*
+   * MEASURED, 2026-09-06, on ten live answers: the guard removed 11.5% of everything the
+   * model wrote, and 16 of the 20 violations were true content. Nine of the twenty came
+   * from this one shape -- the corpus states a figure in a sentence naming nobody, and the
+   * guard bound it to whatever the model had named in the paragraph ABOVE. "Give me the
+   * full story of the Paxel report" lost 22% of itself that way, every figure of it true.
+   *
+   * `content/system-prompt.md` asks for a break where the subject changes, so the break is
+   * where the subject stops carrying.
+   */
+  it('stops carrying a subject across a paragraph break, because the prompt asks for one there', () => {
+    const oneParagraph =
+      'I worked on the Paxel assessment with Claude Code. I shipped 208,803 lines across 993 commits.';
+    const twoParagraphs =
+      'I worked on the Paxel assessment with Claude Code.\n\nI shipped 208,803 lines across 993 commits.';
+    expect(guard(oneParagraph, CORPUS).violations.map((v) => v.kind)).toEqual([
+      'mispaired-quantity',
+      'mispaired-quantity',
+    ]);
+    expect(guard(twoParagraphs, CORPUS).violations).toEqual([]);
+  });
+
+  /*
+   * The cost of the rule above, pinned rather than described, so that anyone widening it
+   * further has to walk past this. A figure the corpus states without naming anyone can be
+   * attached to a subject named in an EARLIER paragraph and pass. Nineteen of the corpus's
+   * 107 quantities sit in sentences like that, all of them in the three "here are the
+   * numbers" memories, and it takes both memories being inside `topLicences` to reach.
+   * Inside one paragraph -- which is how a model actually writes a claim about a client --
+   * it is still caught, which is the assertion above this one.
+   */
+  it('records what paragraph scoping gives up: a figure the corpus never attributed', () => {
+    const acrossTheBreak =
+      'At Taboola I revamped the APAC Ads Interface.\n\nI shipped 208,803 lines across 993 commits.';
+    const sameParagraph =
+      'At Taboola I revamped the APAC Ads Interface. I shipped 208,803 lines across 993 commits.';
+    expect(guard(acrossTheBreak, CORPUS).violations).toEqual([]);
+    expect(guard(sameParagraph, CORPUS).violations.map((v) => v.kind)).toEqual([
+      'mispaired-quantity',
+      'mispaired-quantity',
+    ]);
+  });
 });
 
 /**
