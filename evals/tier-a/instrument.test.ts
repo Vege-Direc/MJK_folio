@@ -60,8 +60,11 @@ describe('the origin a client may send', () => {
     expect(parseAskBody({ question: 'q', origin: 42 }).ok).toBe(false);
   });
 
-  it('carries no free text: the whole vocabulary is three constants', () => {
-    expect([...ASK_ORIGINS]).toEqual(['card', 'chip', 'typed']);
+  it('carries no free text: the whole vocabulary is four constants', () => {
+    // `link` is `?ask=<memory-id>` -- an answer that was addressed rather than found. It is
+    // deliberately not folded into `card`: an arrival by link is not evidence that the card
+    // mechanism works, and `DIRECTION.md` decision 11 is the only thing this field is for.
+    expect([...ASK_ORIGINS]).toEqual(['card', 'chip', 'typed', 'link']);
     // The counted set is the wire set plus the one value only the server writes.
     expect([...COUNTED_ORIGINS]).toEqual([...ASK_ORIGINS, 'unknown']);
   });

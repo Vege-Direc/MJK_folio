@@ -53,7 +53,8 @@ export type RouteData = { stopId: StopId; index: number };
 
 /**
  * Which control the visitor used to ask: a card in the page, a suggested chip in the
- * dock, or the dock's own field.
+ * dock, the dock's own field, or an address -- `?ask=<memory-id>` followed into the page
+ * or pasted from somewhere else.
  *
  * `DIRECTION.md` decision 11 calls this "the one number nobody has published for any
  * site", and it is the only thing that can say whether the card-as-question mechanism
@@ -62,13 +63,22 @@ export type RouteData = { stopId: StopId; index: number };
  *
  * It lives here, in the wire contract, rather than beside the counters, because the
  * counter module reaches for Redis and this file is the half of the contract the browser
- * is allowed to import. The server adds a fourth value, `unknown`, for a client that sends
+ * is allowed to import. The server adds one more value, `unknown`, for a client that sends
  * none; there is deliberately no way for a client to send that itself, so "the client did
  * not say" and "the client said it did not know" cannot be confused.
  *
- * Three literals is the whole vocabulary. There is nothing here a visitor can type into.
+ * `link` IS NOT A FOURTH FLAVOUR OF `card`, and keeping them apart is the whole point of
+ * the field. An answer reached by following `?ask=` was not a visitor discovering that a
+ * card is pressable; it was a visitor arriving at an answer somebody else had already
+ * found -- or coming back to their own. Counting those as card presses would inflate
+ * exactly the number `DIRECTION.md` decision 11 exists to settle, in the direction that
+ * flatters the mechanism, and nothing on the page would show that it had happened. The
+ * same value covers the tail link under an answer and a pasted address, because to this
+ * count they are the same event: an answer that was addressed rather than found.
+ *
+ * Four literals is the whole vocabulary. There is nothing here a visitor can type into.
  */
-export const ASK_ORIGINS = ['card', 'chip', 'typed'] as const;
+export const ASK_ORIGINS = ['card', 'chip', 'typed', 'link'] as const;
 export type AskOrigin = (typeof ASK_ORIGINS)[number];
 
 export type AskUIMessage = UIMessage<never, { route: RouteData; envelope: EnvelopeData }>;

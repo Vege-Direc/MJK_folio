@@ -1,8 +1,10 @@
+import AskAddress from '@/components/chat/AskAddress';
 import MindCanvas from '@/components/mind/MindCanvas';
 import ScrollProgress from '@/components/mind/ScrollProgress';
 import FocusIntoView from '@/components/stops/FocusIntoView';
 import StopSection from '@/components/stops/StopSection';
 import { STOPS } from '@/content/stops';
+import { loadMemories } from '@/lib/corpus/load';
 
 /**
  * The page: one canvas, twelve stops, and a scroll listener that tells the canvas where
@@ -15,8 +17,26 @@ import { STOPS } from '@/content/stops';
  * per-frame state in React.
  */
 export default function Home() {
+  /*
+   * The closed set `?ask=<memory-id>` is checked against, resolved here because this is
+   * the last place that can read the corpus without a request.
+   *
+   * A title and not a question, because `cardQuestion` is the one place a title becomes a
+   * question and shipping the finished strings would put a second copy of that rule in the
+   * bundle. Ids and titles only -- no bodies, no tags, nothing a memory says. The whole map
+   * is the same fifty-odd titles the page already prints.
+   *
+   * Read at render rather than through `searchParams`, deliberately: taking the parameter as
+   * a prop would opt `/` out of static rendering for a value only the browser needs, on the
+   * one page whose entire architecture is server-rendered prose that arrives before anything
+   * else does. `AskAddress` reads `location.search` on the client instead, and `/` stays
+   * prerendered.
+   */
+  const titles = Object.fromEntries(loadMemories().map((m) => [m.id, m.title]));
+
   return (
     <>
+      <AskAddress titles={titles} />
       <MindCanvas />
       <ScrollProgress count={STOPS.length} />
       <FocusIntoView />
