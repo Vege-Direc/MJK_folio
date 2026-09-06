@@ -224,17 +224,20 @@ describe('clientIp', () => {
 /* -- lib/fallback.ts -------------------------------------------------------------- */
 
 describe('fallbackBlock', () => {
-  const REASONS: FallbackReason[] = ['budget', 'rate', 'off-topic', 'provider', 'unguarded'];
+  const REASONS: FallbackReason[] = ['budget', 'rate', 'off-topic', 'unknown', 'provider', 'unguarded'];
 
-  it('gives every reason a title, and announces only the refusal', () => {
+  /** The two that speak about the site rather than about MJK. */
+  const REFUSALS: FallbackReason[] = ['off-topic', 'unknown'];
+
+  it('gives every reason a title, and announces only the refusals', () => {
     // A visitor who is rate-limited, or who arrives after the day's budget is spent, still
     // gets a true answer in MJK's own words. Telling them it is a substitute for something
     // better casts doubt on good writing and answers a question they never asked. Only the
-    // deliberate refusal speaks about the site rather than about him.
+    // deliberate refusals speak about the site rather than about him.
     for (const reason of REASONS) {
       const block = fallbackBlock('now', reason);
       expect(block.title.trim().length, `${reason} has no title`).toBeGreaterThan(0);
-      if (reason === 'off-topic') {
+      if (REFUSALS.includes(reason)) {
         expect(block.announced, 'a refusal must announce itself').toBe(true);
         expect(block.kicker?.trim().length ?? 0).toBeGreaterThan(0);
       } else {
@@ -244,7 +247,7 @@ describe('fallbackBlock', () => {
     }
   });
 
-  it('gives the refusal nothing to say beyond the refusal', () => {
+  it('gives a refusal nothing to say beyond the refusal', () => {
     /*
      * The refusal used to carry the first two memories of whatever stop the router had
      * guessed at. "Write me a poem about cats" produced "Not my lane. Ask what I've built."
@@ -252,14 +255,18 @@ describe('fallbackBlock', () => {
      * not raised, under a heading declining to discuss anything.
      *
      * Body AND cites, because citing memories under text that quotes none of them claims a
-     * licence the block does not have.
+     * licence the block does not have. It binds the unknown refusal for a second reason:
+     * that one fires precisely when retrieval scored badly, so whatever it matched is the
+     * least trustworthy prose on the site to staple under "I do not know that one".
      */
-    const block = fallbackBlock('work', 'off-topic');
-    expect(block.body, 'a refusal must not answer a question it just declined').toBe('');
-    expect(block.cites, 'a refusal licenses nothing, so it cites nothing').toEqual([]);
+    for (const reason of REFUSALS) {
+      const block = fallbackBlock('work', reason);
+      expect(block.body, `${reason} must not answer a question it just declined`).toBe('');
+      expect(block.cites, `${reason} licenses nothing, so it cites nothing`).toEqual([]);
+    }
 
     // And every other reason still does carry one, which is the whole point of the split.
-    for (const reason of REASONS.filter((r) => r !== 'off-topic')) {
+    for (const reason of REASONS.filter((r) => !REFUSALS.includes(r))) {
       expect(fallbackBlock('work', reason).body.length, `${reason} must still answer`).toBeGreaterThan(0);
     }
   });
@@ -270,18 +277,24 @@ describe('fallbackBlock', () => {
     expect(block.title).toBe(memoryById(block.cites[0])!.title);
   });
 
-  it('refuses off-topic in the same words the system prompt tells the model to use', () => {
-    // Asserting the invariant, not a literal: the visitor must hear one refusal, whether it came
-    // from the model (which is told this line in content/system-prompt.md) or from this fallback
-    // (which fires before any model call). A previous version of this test hardcoded the string,
-    // so editing the copy in one place left the other stale and only the test went red.
+  it('refuses in the same words the system prompt tells the model to use', () => {
+    // Asserting the invariant, not a literal: the visitor must hear one refusal per case, whether
+    // it came from the model (which is told these lines in content/system-prompt.md) or from this
+    // fallback (which fires before any model call). A previous version of this test hardcoded the
+    // string, so editing the copy in one place left the other stale and only the test went red.
+    //
+    // Both refusals, because there are two cases and they are not interchangeable: declining to do
+    // a visitor's homework, and not knowing something. A model that answers the second in the words
+    // of the first is the defect DIRECTION.md decision 7 exists to remove.
     const prompt = readFileSync(join(process.cwd(), 'content', 'system-prompt.md'), 'utf-8');
-    const title = fallbackBlock('now', 'off-topic').title;
     const normalise = (s: string) => s.replace(/[’']/g, "'").trim();
-    expect(
-      normalise(prompt),
-      `content/system-prompt.md no longer contains the refusal the fallback shows: "${title}"`,
-    ).toContain(normalise(title));
+    for (const reason of REFUSALS) {
+      const title = fallbackBlock('now', reason).title;
+      expect(
+        normalise(prompt),
+        `content/system-prompt.md no longer contains the ${reason} refusal the fallback shows: "${title}"`,
+      ).toContain(normalise(title));
+    }
   });
 
   it('is 100% licensed copy for every answerable stop: body is verbatim, cites are real', () => {

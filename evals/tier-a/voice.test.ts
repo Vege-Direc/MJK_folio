@@ -67,7 +67,7 @@ function visitorCopy(): { where: string; text: string }[] {
   // Fallback titles and kickers are authored here; bodies are corpus prose and exempt,
   // because MJK's own writing is allowed to use any word he likes.
   for (const stopId of ANSWERABLE_STOP_IDS) {
-    for (const reason of ['budget', 'rate', 'off-topic', 'provider', 'unguarded'] as const) {
+    for (const reason of ['budget', 'rate', 'off-topic', 'unknown', 'provider', 'unguarded'] as const) {
       const block = fallbackBlock(stopId, reason);
       if (block.kicker) out.push({ where: `fallback ${reason} kicker`, text: block.kicker });
       // An unannounced block's title is a memory title, i.e. MJK's, so only check ours.

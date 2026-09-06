@@ -14,12 +14,19 @@ import { stopById, type StopId } from '../../content/stops';
 import type { AskUIMessage, EnvelopeData } from './types';
 import { fallbackBlock, type FallbackBlock, type FallbackReason } from '../fallback';
 import { guard, salvageDetailed } from '../grounding/guard';
+import {
+  recordAsk,
+  recordOutcome,
+  recordStop,
+  type AskOrigin,
+  type AskOutcome,
+} from '../instrument/counters';
 // The same splitter the guard licenses by, so the dek is measured in the same units the
 // answer is checked in -- and so a salvaged answer's dek is counted over what survived.
 import { sentences } from '../grounding/text';
 import { askModel, hasApiKey } from '../provider';
-import { retrieve, type RetrievalResult } from '../retrieve';
-import { admit, clientIp, type AdmitResult } from '../security/limits';
+import { isWorkRequest, retrieve, type RetrievalResult } from '../retrieve';
+import { admit, clientIp, hashIp, type AdmitResult } from '../security/limits';
 import { MAX_BODY_BYTES, parseAskBody } from '../security/schema';
 
 /**
@@ -53,6 +60,17 @@ export type AskDeps = {
   salvage: typeof salvageDetailed;
   fallbackBlock: (stopId: StopId | null, reason: FallbackReason, preferIds?: readonly string[]) => FallbackBlock;
   systemPrompt: () => string;
+  /**
+   * The instrument (`DIRECTION.md` decision 11). Three counters, none of which the
+   * visitor's answer depends on, all fire-and-forget. Behind `deps` for the same reason
+   * everything else here is: an instrument nobody has ever read is exactly the thing that
+   * needs a test asserting it observes what it claims to.
+   */
+  instrument: {
+    ask: (opts: { ipHash: string | null; origin: AskOrigin; depth: number }) => void;
+    stop: (stopId: StopId) => void;
+    outcome: (outcome: AskOutcome) => void;
+  };
 };
 
 const SYSTEM_PROMPT_PATH = join(process.cwd(), 'content', 'system-prompt.md');
@@ -66,6 +84,7 @@ export const defaultDeps: AskDeps = {
   salvage: salvageDetailed,
   fallbackBlock,
   systemPrompt: () => readFileSync(SYSTEM_PROMPT_PATH, 'utf-8'),
+  instrument: { ask: recordAsk, stop: recordStop, outcome: recordOutcome },
 };
 
 const json = (body: unknown, status: number) =>
@@ -82,6 +101,12 @@ function stopLabel(stopId: StopId): string {
 }
 
 const DEFAULT_STOP: StopId = 'now';
+
+/**
+ * Where a question he has no answer to goes. The refusal ends "It is better put to me
+ * directly", and §08 is where directly is: the mail link, the resume and LinkedIn.
+ */
+const UNKNOWN_STOP: StopId = 'contact';
 
 /**
  * Model housekeeping that is not an answer.
@@ -353,11 +378,28 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   if (!parsed.ok) {
     return json({ error: 'bad-request', detail: parsed.reason }, parsed.status);
   }
-  const { question, history = [], viewing, previousStopId } = parsed.value;
+  const { question, history = [], viewing, previousStopId, origin } = parsed.value;
+
+  const ip = clientIp(req.headers);
+  /*
+   * The question, counted before admission and before retrieval.
+   *
+   * BEFORE ADMISSION IS THE DECISION HERE. A visitor the limiter turns away still asked,
+   * and an instrument that counted only the ones that got through would report an ask
+   * rate that falls exactly when interest rises -- the single most misleading shape this
+   * number could have. The throttle is recorded separately, as an outcome.
+   *
+   * `depth` is this question's ordinal inside its conversation, which the body already
+   * carries as the length of `history` and which therefore costs no client state at all.
+   * One ask is curiosity; two is the thesis this whole site is built on, and nothing else
+   * here can tell them apart.
+   */
+  const ipHash = ip === 'unknown' ? null : hashIp(ip);
+  deps.instrument.ask({ ipHash, origin: origin ?? 'unknown', depth: history.length + 1 });
 
   // Admission before retrieval: a visitor who is over their limit should not cost a
   // BM25 pass either, and the answer they get is still corpus text.
-  const admitted = await deps.admit(clientIp(req.headers));
+  const admitted = await deps.admit(ip);
   const retrieved = deps.retrieve(question, { viewing });
   const hitIds = retrieved.hits.map((h) => h.memory.id);
   const fallback = (stopId: StopId | null, reason: FallbackReason, detail: string = reason) =>
@@ -367,23 +409,50 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
     );
 
   if (!admitted.ok) {
+    // `unavailable` is the limiter itself failing, not the visitor hitting a ceiling.
+    deps.instrument.outcome(admitted.reason === 'unavailable' ? 'no-model' : 'throttled');
     return fallback(retrieved.stopId, ADMIT_REASON_TO_FALLBACK[admitted.reason], admitted.reason);
   }
 
-  // Refuse only when the question is not about MJK at all. It used to refuse whenever
-  // retrieval was not CONFIDENT, which conflated two different things: "there is nothing
-  // here to say" and "two stops tied". A real question that merely landed between stops
-  // was told "not my lane", which is the rudest thing this site can do and was doing it
-  // to people asking in good faith. Ambiguity is not grounds for a refusal -- the model
-  // still gets real licences, and the guard still checks what it writes.
+  /*
+   * Refuse only when the question is not about MJK at all. It used to refuse whenever
+   * retrieval was not CONFIDENT, which conflated two different things: "there is nothing
+   * here to say" and "two stops tied". A real question that merely landed between stops
+   * was told "not my lane", which is the rudest thing this site can do and was doing it
+   * to people asking in good faith. Ambiguity is not grounds for a refusal -- the model
+   * still gets real licences, and the guard still checks what it writes.
+   *
+   * WHICH REFUSAL, and the distinction is the whole of `DIRECTION.md` decision 7. This one
+   * branch was answering two unrelated questions with the same four words: "review my code"
+   * is a request to do the visitor's work and gets declined, while "do you know Rust?" is a
+   * fair question that MJK has simply not written an answer to. `isWorkRequest` is the only
+   * one of the two that is legible in the question itself, so it decides, and everything
+   * else that could not be answered is treated as something he does not know -- which is
+   * the honest reading of a corpus that came up empty.
+   *
+   * The unknown refusal is routed to `contact` rather than to whatever stop the router was
+   * guessing at, because its second sentence says the question is better put to him
+   * directly and the page flies to the stop in this envelope. Sending it anywhere else
+   * would make that sentence a gesture at nothing.
+   */
   if (!retrieved.topical || !retrieved.stopId || retrieved.stopId === 'hero') {
-    return fallback(retrieved.stopId, 'off-topic');
+    if (isWorkRequest(question)) {
+      deps.instrument.outcome('off-topic');
+      return fallback(retrieved.stopId, 'off-topic');
+    }
+    deps.instrument.outcome('unanswered');
+    return fallback(UNKNOWN_STOP, 'unknown');
   }
 
   const stopId = retrieved.stopId;
   const stop = stopById(stopId);
 
+  // The section the page is about to fly to. `DIRECTION.md` decision 1 is falsified by
+  // exactly this distribution: visitors reaching `work` by asking rather than scrolling.
+  deps.instrument.stop(stopId);
+
   if (!deps.hasApiKey()) {
+    deps.instrument.outcome('no-model');
     return fallback(stopId, 'provider', 'no-api-key');
   }
 
@@ -518,6 +587,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         });
 
       if (failed || !text.trim()) {
+        deps.instrument.outcome('no-model');
         replaceWith(deps.fallbackBlock(stopId, 'provider', hitIds));
         writer.write({ type: 'finish' });
         return;
@@ -525,6 +595,15 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
 
       const verdict = deps.guard(text, licences, { topLicences: 3 });
       if (verdict.ok) {
+        /*
+         * What the visitor ended up reading, as a daily figure rather than a `console`
+         * line nobody greps. Recorded in each branch and not once from `verdict.ok`,
+         * because a failed verdict has two different endings for the reader: salvage kept
+         * most of the answer, or salvage kept nothing and the corpus text replaced it.
+         * Measured on 2026-09-03, salvage was removing 21% of everything the model wrote
+         * and 47% on one question, and nothing in production could have said so.
+         */
+        deps.instrument.outcome('verified');
         // A clean answer normally carries no body: the visitor keeps the prose that
         // streamed in. But the artefact strip happens after the stream, so if the model
         // prefixed its own moderation verdict the visitor has already watched it arrive.
@@ -564,6 +643,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
               `${kept.dropped} sentences dropped, ${kept.redacted} redacted`,
           );
         }
+        deps.instrument.outcome(kept ? 'salvaged' : 'replaced');
         if (kept) {
           const parts: string[] = [];
           if (kept.dropped) parts.push(kept.dropped === 1 ? 'one line removed' : `${kept.dropped} lines removed`);

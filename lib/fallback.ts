@@ -18,9 +18,9 @@
  * The premise was wrong. Corpus prose is not a degraded answer; on this site it is the
  * best answer available, because it is the only text MJK actually wrote. A visitor was
  * never promised a model wrote anything, so presenting his words as the answer conceals
- * nothing. Only one reason still announces itself: `off-topic`, which is a deliberate
- * refusal rather than a failure, and a refusal the visitor must see to understand why
- * they did not get what they asked for.
+ * nothing. Two reasons still announce themselves -- `off-topic` and `unknown` -- because
+ * both are deliberate refusals rather than failures, and a refusal the visitor must see
+ * to understand why they did not get what they asked for.
  *
  * `hero` is authored-only everywhere else in this codebase -- a generated answer may
  * never target it -- and that rule holds here too: a null or `hero` stopId both resolve
@@ -29,7 +29,7 @@
 import type { StopId } from '../content/stops';
 import { memoriesForStop } from './corpus/load';
 
-export type FallbackReason = 'budget' | 'rate' | 'off-topic' | 'provider' | 'unguarded';
+export type FallbackReason = 'budget' | 'rate' | 'off-topic' | 'unknown' | 'provider' | 'unguarded';
 
 export interface FallbackBlock {
   /**
@@ -51,11 +51,47 @@ export interface FallbackBlock {
 const DEFAULT_STOP: StopId = 'now';
 
 /**
- * The one reason that speaks for itself. Quoted from `content/system-prompt.md`'s
- * refusal rather than reworded, so the visitor hears one sentence whether it came from
+ * The two reasons that speak for themselves. Quoted from `content/system-prompt.md`'s own
+ * refusals rather than reworded, so the visitor hears one sentence whether it came from
  * the model or from here; `evals/tier-a/security.test.ts` asserts they cannot drift.
+ *
+ * THEY USED TO BE ONE, AND THAT WAS THE DEFECT. `retrieve` sets `topical: false` for three
+ * different reasons -- a request to do the visitor's own work, a subject the corpus holds
+ * nothing on, and a question with nothing in it to search for -- and this file answered all
+ * three with "Not my lane. Ask what I've built." So "do you know Rust?", which is a fair
+ * question and one a recruiter asks early, was answered as though it had been an
+ * imposition. MJK, on the version that shipped: "if that version doesn't have the answer it
+ * shouldn't make up stuff and it shouldn't act like a machine to the user."
+ *
+ * Declining to do someone's homework and not knowing something are different things, and a
+ * person says them differently. `unknown` is the second one, and every word of it is doing
+ * a job:
+ *
+ *   "I do not know that one" -- said once, plainly, with no apology and no explanation of
+ *   the machinery that failed to find it.
+ *
+ *   "and I am not going to guess" -- the site's actual guarantee, stated as a choice he
+ *   made rather than as a limitation he is stuck with. It is also true: the grounding guard
+ *   is what makes it true, and this is the one place a visitor is told so in his voice.
+ *
+ *   "It is better put to me directly" -- an affordance, and the reason this block routes to
+ *   `contact`: the page flies to §08, where the mail link, the resume and LinkedIn are.
+ *
+ * WHAT IS DELIBERATELY ABSENT IS A PROMISE. The sentence MJK first proposed was "I'll check
+ * and get back to you", and it cannot ship: nothing here reaches an inbox, nothing is
+ * recorded, and nobody reads the question afterwards. It would be a lie the moment it was
+ * written -- and it is the one class of lie this architecture cannot catch, because
+ * `lib/grounding/guard.ts` checks every claim against what has already happened and a
+ * commitment is a claim about the future. `evals/tier-a/promises.test.ts` is the guard that
+ * covers the gap, and it reads this file.
  */
-const REFUSAL = { kicker: '§ NOT HERE', title: 'Not my lane. Ask what I’ve built.' };
+const REFUSALS = {
+  'off-topic': { kicker: '§ NOT HERE', title: 'Not my lane. Ask what I’ve built.' },
+  unknown: {
+    kicker: '§ NOT HERE',
+    title: 'I do not know that one, and I am not going to guess. It is better put to me directly.',
+  },
+} as const;
 
 /**
  * @param preferIds memory ids in priority order (typically the retrieval hits for the
@@ -102,8 +138,8 @@ export function fallbackBlock(
    * the block does not have, and the WebGL layer would pulse cards for a question that was
    * never about them.
    */
-  if (reason === 'off-topic') {
-    return { ...REFUSAL, body: '', cites: [], announced: true };
+  if (reason === 'off-topic' || reason === 'unknown') {
+    return { ...REFUSALS[reason], body: '', cites: [], announced: true };
   }
 
   // Everything else is simply an answer. It takes the leading memory's own title, so it

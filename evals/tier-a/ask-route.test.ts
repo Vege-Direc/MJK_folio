@@ -150,6 +150,27 @@ describe('/api/ask degrades to corpus text, never to an error', () => {
     expect(streamedText(chunks)).toBe('');
   });
 
+  it('says it does not know, rather than that the question was out of line', async () => {
+    /*
+     * The other half of the same branch, and the distinction DIRECTION.md decision 7 turns
+     * on. "Do you know Rust?" is a fair question from a recruiter that the corpus happens
+     * not to answer -- it scores 5.0, well under MIN_TOP_SCORE -- and it used to be met
+     * with "Not my lane. Ask what I've built.", which reads as a rebuke to someone who has
+     * done nothing wrong.
+     *
+     * The route is asserted too, because it is what makes the second sentence true rather
+     * than decorative: the page flies to §08, where the mail link and the resume are.
+     */
+    const deps = depsWith(modelSaying('no'), { askModel: neverCalled });
+    const chunks = await chunksOf(await handleAsk(post({ question: 'do you know rust?' }), deps));
+    const [env] = envelopes(chunks);
+    expect(env.title).toMatch(/^I do not know that one/);
+    expect(env.title, 'a refusal must never promise a reply').not.toMatch(/get back|check|shortly|soon/i);
+    expect(env.stopId).toBe('contact');
+    expect(env.body).toBe('');
+    expect(streamedText(chunks)).toBe('');
+  });
+
   it('a missing API key still answers, with the stop already chosen', async () => {
     const deps = depsWith(modelSaying('no'), { hasApiKey: () => false, askModel: neverCalled });
     const [env] = envelopes(await chunksOf(await handleAsk(post({ question: 'What shipped at Taboola?' }), deps)));

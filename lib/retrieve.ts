@@ -193,6 +193,24 @@ const WORK_REQUEST =
   /\b(write|review|fix|debug|refactor|optimi[sz]e|translate|summari[sz]e|proofread|edit|rewrite|solve|grade|critique)\s+(me\s+)?(my|our|this|these)\b/i;
 
 /**
+ * The same predicate, asked again, because a refusal has to know which kind it is.
+ *
+ * `topical: false` is one field with three causes: a request to do the visitor's work, a
+ * subject the corpus holds nothing on, and a question with nothing in it to search for.
+ * The site answered all three with "Not my lane. Ask what I've built.", so "do you know
+ * Rust?" -- a fair question from a recruiter -- was answered as though it had been an
+ * imposition. Declining to do someone's homework and not knowing something are different
+ * things and a person says them differently.
+ *
+ * Only the first is legible in the question itself, which is why this is the one that gets
+ * exported: everything that is not a work request and still could not be answered is, as
+ * far as this site can tell, something MJK has not written down.
+ */
+export function isWorkRequest(question: string): boolean {
+  return WORK_REQUEST.test(question);
+}
+
+/**
  * Questions about engaging MJK, admitted on their SHAPE rather than their score.
  *
  * WORK_REQUEST's mirror image, and the more important of the two, because this site exists
