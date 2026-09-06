@@ -62,15 +62,20 @@ how this project has already retracted four numbers.
 
 ## Questions only MJK can answer — with a default if he does not
 
-| Question | Option A | Option B | **Default** |
-|---|---|---|---|
-| Asanjo facts: role, dates, stack, outcome, which theme | Supply them → a named case study | Silence | **Hold the website tile; ship the apparel stop, which the corpus already licenses** |
-| Paxel | Keep whole | Drop | **Trim to the judgment quotes; cut the volume numbers** |
-| The intro gate | Build it | Scrap it | **Build eager loading (decision 6) regardless; decide the gate after** |
-| Portrait colour vs `DESIGN.md` | Rule the intro part of the WebGL layer, amend the doc | — | **Neutral white; take no silent exception** |
-| MruNN recording | Real data, names changed | Seeded demo tenant | **Seeded demo** |
-| Contact address | A domain address | Keep as is | **Keep, flagged** |
-| Lead capture | Store questions | Do not | **Do not — decision 7 removed the need** |
+**Answered 2026-09-06.** Nothing here is blocking any more.
+
+| Question | Answer |
+|---|---|
+| Asanjo | **Named, and the arc is his own: imagery first, then contracted to rebuild the storefront.** Shopify 2.0 theme, 309 commits, 31 Mar – 26 Jun 2026, scroll-scrubbed video hero from an AI-generated clip of a real product. Outstanding: which theme is live, and whether "Siddhi" may be named |
+| Paxel | **Keep** |
+| The intro gate | **Build it.** Duration is mine to choose — he proposed 3–5s and has since said 1–2s is fine "depending on how you build it" |
+| Portrait colour | **Cyan is authorised.** Better still, no exception is needed: rule the intro part of the WebGL layer, where cyan is already native |
+| MruNN recording | **Later.** Not blocking |
+| RD 350 photograph | **Fine as they are.** Blocked item 1 closed — stop waiting for a wider frame |
+| Contact address | **Keep** |
+| Fonts | **Left to me** |
+| TallyBridge | **Public on GitHub**, a library he is still working on. Find the URL and link it |
+| Lead capture | **Not needed** — decision 7 removed it |
 
 ## The retraction ledger
 
