@@ -21,6 +21,44 @@ import type { Memory, Section } from '@/lib/corpus/schema';
 export const CARD_SECTIONS = new Set<Section>(['projects', 'capabilities', 'timeline']);
 
 /**
+ * WHO GETS THE BARE MEMORY ID, AND WHO HAS TO PREFIX.
+ *
+ * `AskCard`'s header records the property the whole ask mechanism rests on: "every card's
+ * DOM id IS its memory's id", which is what lets retrieval cite a memory and the page
+ * address the card it came from. That property is only worth anything while the id is
+ * UNIQUE, and it had quietly stopped being: two memories reached `/` twice as a DOM id.
+ *
+ *   `project-mrunn-erp`  §04's chapter tile   AND  §07's card
+ *   `krunch-labs`        §02's timeline row   AND  §03's card
+ *
+ * Both are the same shape. A memory has one home stop and the card on that stop is its
+ * primary rendering; the index tile and the career rail are second views of a memory that
+ * lives elsewhere, and they were claiming the same handle. `document.getElementById` returns
+ * the first match in document order, so both lookups resolved to the SECOND view: asking for
+ * `project-mrunn-erp` gave §04's anchor rather than §07's card, and asking for `krunch-labs`
+ * gave §02's rail row rather than §03's card. Duplicate ids are also invalid HTML, so an
+ * `href="#id"` or an `aria-controls` could land a screen reader somewhere nobody chose.
+ *
+ * The card keeps the bare id, because that is the documented contract and the thing an
+ * answer addresses. The second views prefix. The prefixes live here rather than inline in
+ * the two components for the same reason the card counts do: `evals/tier-a/dom-ids.test.ts`
+ * has to know what the page emits in order to prove it is unique, and a second copy of the
+ * rule is how the two would start disagreeing.
+ *
+ * It will grow rather than shrink -- the index draws a tile per project stop and every
+ * project stop draws cards -- so the rule is written down instead of the two instances being
+ * patched.
+ */
+export const chapterTileId = (memoryId: string) => `index-${memoryId}`;
+
+/**
+ * `tl-row-`, not `tl-`, because the row already has two siblings named `tl-b-<id>` and
+ * `tl-p-<id>`. A bare `tl-` prefix would collide with the button of a memory whose own id
+ * began `b-`, which is a bug waiting for a corpus entry rather than a real constraint today.
+ */
+export const timelineRowId = (memoryId: string) => `tl-row-${memoryId}`;
+
+/**
  * A `cards` stop: one viewport tall, one column, so four is what fits. `apac` and `now`
  * carry far more than four and showing all of them would push a 100svh panel into
  * `overflow: hidden`, which above 900px destroys the excess rather than scrolling it.

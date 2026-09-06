@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { timelineRowId } from './draw-rule';
 import type { TimelineGroup } from './timeline-entry';
 import { periodLabel } from './timeline-entry';
 
@@ -153,11 +154,14 @@ export default function Timeline({ groups }: { groups: TimelineGroup[] }) {
           {group.entries.map((entry) => {
             const open = isOpen(entry.id);
             return (
-              // The row's id IS the memory's id, exactly as the cards do, so a citation
-              // or a pulse can address the row an answer came from.
+              // NOT the bare memory id, and the comment here used to say it was. The rail
+              // reads across every stop, so a memory whose home stop draws it as a card was
+              // rendered twice: `krunch-labs` is §03's card and §02's row, and
+              // `getElementById` returned this row. The card keeps the handle an answer
+              // addresses; the row, which is the second view, prefixes.
               <li
                 className="tl-row"
-                id={entry.id}
+                id={timelineRowId(entry.id)}
                 key={entry.id}
                 data-open={open || undefined}
                 data-active={activeId === entry.id || undefined}

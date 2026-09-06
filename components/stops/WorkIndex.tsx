@@ -2,7 +2,7 @@ import { stopById, type Stop } from '@/content/stops';
 import { memoriesForStop, memoryById } from '@/lib/corpus/load';
 import AskCard from './AskCard';
 import { cardKicker } from './card-kicker';
-import { cardsFrom, firstSentence, WORK_CHAPTERS } from './draw-rule';
+import { cardsFrom, chapterTileId, firstSentence, WORK_CHAPTERS } from './draw-rule';
 
 /**
  * §04's media column: the index of the things he has built.
@@ -47,7 +47,11 @@ function ChapterTiles() {
         // tile. Computed, so it is right by construction and stays right.
         const more = memoriesForStop(chapter.stopId).length - 1;
         return (
-          <a key={chapter.stopId} className="mini-card wi-chapter" id={memory.id} href={`#${stop.id}`}>
+          // NOT the bare memory id. This tile is a second view of a memory that lives on
+          // another stop, where its own card holds `id={memory.id}` -- and `project-mrunn-erp`
+          // was rendered twice as a DOM id because of this line, so `getElementById` for it
+          // returned this anchor rather than §07's card. `chapterTileId` is the rule.
+          <a key={chapter.stopId} className="mini-card wi-chapter" id={chapterTileId(memory.id)} href={`#${stop.id}`}>
             <span className="mk">
               {`§ ${String(stop.index).padStart(2, '0')} · ${more} more`}
             </span>

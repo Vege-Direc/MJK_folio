@@ -1545,6 +1545,37 @@ html[data-flying] .answer-layer-in {
   letter-spacing: 0.18em;
 }
 
+/*
+ * The one mark that separates a tile from a card, and the page already has the grammar.
+ *
+ * A panel's finding: §04's three chapter tiles are visually indistinguishable from the six
+ * cards beneath them, so the index does not read as an index. That is true and it is this
+ * file's doing — `.wi-chapter` carries `.mini-card` on purpose, so the hairline, the accent
+ * eyebrow, the serif title and the clamped description are the same objects a visitor
+ * learned on §03. They should look alike. They should not look IDENTICAL, because they do
+ * different things: a card asks a question and stays where it is, a tile goes somewhere.
+ *
+ * The vocabulary for this is already written down one screen away. `.contact-links a .kl`
+ * carries ` ↗` and its comment says why: the accent rule means "pressable" and the arrow is
+ * "the one thing on screen that means elsewhere". A chapter tile is elsewhere ON THIS PAGE,
+ * so it takes the same device with the honest glyph. The three tiles point at §05, §06 and
+ * §07 from §04, and `WORK_CHAPTERS` is authored, so down is not a guess.
+ *
+ * It goes on the eyebrow rather than the title, and that is the zero-height part. `.mk` is
+ * one short mono line — "§ 05 · 3 more" — with spare width at every measured viewport, while
+ * `.mt` is a serif title that already wraps to two lines on the narrow index column, where
+ * one more glyph could buy a third line and `.panel` above 900px is `overflow: hidden`.
+ * Measured at 1440x900, 1280x720 and 390x664: 0.0px of delta on every tile.
+ *
+ * Off the accessible name, like the contact arrow: the eyebrow already reads the section
+ * number and the count, and the anchor's own href says where it goes.
+ */
+.wi-chapter .mk::after {
+  content: ' ↓';
+  color: var(--color-accent);
+  speak: never;
+}
+
 .wi-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
