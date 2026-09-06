@@ -17,13 +17,14 @@
  */
 import { describe, expect, it } from 'vitest';
 import { ANSWERABLE_STOP_IDS } from '../../content/stops';
-import { retrieve, routeQuestion } from '../../lib/retrieve';
+import { MIN_TOP_SCORE, retrieve, routeQuestion } from '../../lib/retrieve';
 import {
   BUYER_QUESTIONS,
   MIN_ACCURACY,
   OFFER_STOPS,
   OFF_TOPIC_QUESTIONS,
   ROUTING_TABLE,
+  TERSE_QUESTIONS,
 } from './routing-table';
 
 describe('the routing table', () => {
@@ -126,6 +127,41 @@ describe('the field the handler actually reads', () => {
       return result.topical ? [`  ${JSON.stringify(question)} -> ${result.stopId}`] : [];
     });
     expect(admitted, `off-topic questions were admitted:\n${admitted.join('\n')}`).toEqual([]);
+  });
+});
+
+/*
+ * THE SECOND HOLE, and it is the same shape as the first: the suite could print 77/77 while
+ * the site answered "I do not know that one" to a visitor who typed one word.
+ *
+ * Every row of ROUTING_TABLE is a sentence. A raw BM25+ score is a sum over matched terms,
+ * so a table of sentences calibrates a threshold a one-word question cannot reach, however
+ * the threshold is set. MEASURED 2026-09-06: `brunel` retrieved `education` FIRST -- right
+ * memory, right stop -- scored 12.7 against a MIN_TOP_SCORE of 16, and was refused, while
+ * `what did you study` retrieves the same memory at 126.0.
+ *
+ * These rows assert `topical`, not merely `stopId`, because `topical` is what the handler
+ * branches on and the routing was never the thing that was wrong.
+ */
+describe('a visitor who types one word', () => {
+  it('is answered, and about the thing they named', () => {
+    const wrong = TERSE_QUESTIONS.flatMap(({ question, stopId }) => {
+      const result = retrieve(question);
+      if (result.stopId === stopId && result.topical) return [];
+      const why = result.stopId !== stopId ? `routed to ${result.stopId}` : 'refused';
+      return [
+        `  ${JSON.stringify(question)} -> ${why} ` +
+          `(raw ${result.topScore.toFixed(1)}, per term ${result.perTermScore.toFixed(2)})`,
+      ];
+    });
+    expect(wrong, `terse questions the site would turn away:\n${wrong.join('\n')}`).toEqual([]);
+  });
+
+  it('is the low end of the band, or it is not testing anything', () => {
+    // If every terse row cleared MIN_TOP_SCORE on its own, this set would be exercising the
+    // raw threshold and MIN_PER_TERM_SCORE would be untested by it.
+    const needTheClause = TERSE_QUESTIONS.filter((row) => retrieve(row.question).topScore < MIN_TOP_SCORE);
+    expect(needTheClause.length).toBeGreaterThanOrEqual(3);
   });
 });
 

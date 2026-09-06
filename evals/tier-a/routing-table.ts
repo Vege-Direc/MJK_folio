@@ -262,6 +262,32 @@ export const BUYER_QUESTIONS = [
  */
 export const OFFER_STOPS = ['work', 'now', 'contact'] as const;
 
+/**
+ * Questions with almost nothing in them, which is the shape `ROUTING_TABLE` has none of.
+ *
+ * Every row above is a sentence, and a raw BM25+ score is a sum over matched terms, so a
+ * table made only of sentences calibrates a threshold that a one-word question can never
+ * reach. That was not a theory: MEASURED 2026-09-06, `brunel` retrieved `education` first
+ * -- the right memory on the right stop -- scored 12.7 against a `MIN_TOP_SCORE` of 16, and
+ * was answered "I do not know that one, and I am not going to guess." `what did you study`
+ * retrieves the same memory at 126.0. `yamaha` scored 5.5 and `any cricket stuff` 6.2, both
+ * with the correct memory ranked first, both refused.
+ *
+ * A visitor typing one word is asking the clearest question on the site. These are here so
+ * the low end has rows of its own rather than being inferred from rows that are not like
+ * it, and so `MIN_PER_TERM_SCORE` has something to be re-read against.
+ */
+export const TERSE_QUESTIONS: RoutingCase[] = [
+  { question: 'brunel', stopId: 'engineering' },
+  { question: 'yamaha', stopId: 'rd350' },
+  { question: 'any cricket stuff', stopId: 'apac' },
+  { question: 'taboola', stopId: 'apac' },
+  { question: 'jewelai', stopId: 'jewelai' },
+  { question: 'tallybridge', stopId: 'work' },
+  { question: 'asanjo', stopId: 'asanjo' },
+  { question: 'kinnect', stopId: 'apac' },
+];
+
 export const OFF_TOPIC_QUESTIONS = [
   'write my essay',
   "what's the weather",

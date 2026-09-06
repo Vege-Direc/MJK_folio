@@ -47,8 +47,9 @@ export type RetrievalResult = {
    * "is there anything here to say". Only the second one may produce a refusal: a real
    * question the router merely found ambiguous still deserves an answer, and telling
    * someone "not my lane" because two stops tied is the rudest thing this site can do.
-   * The gap is wide -- the loudest off-topic probe scores about 7, the weakest real
-   * question about 19 -- so the two rarely disagree by accident.
+   * Held by three instruments now, not one: `MIN_TOP_SCORE` on the raw score,
+   * `MIN_PER_TERM_SCORE` on the score per query term, and `ENGAGEMENT` on the shape of a
+   * buying question. The raw band inverted as the corpus grew; see both constants.
    */
   topical: boolean;
   /**
@@ -59,6 +60,12 @@ export type RetrievalResult = {
   grounded: boolean;
   /** BM25+ score of the best hit. Raw, not normalised -- the threshold is calibrated to it. */
   topScore: number;
+  /**
+   * `topScore` divided by the number of terms the question actually searched with. The
+   * number `MIN_PER_TERM_SCORE` is read from, exposed for the same reason `topScore` is:
+   * a threshold nobody can print is a threshold nobody can re-calibrate.
+   */
+  perTermScore: number;
   hits: RetrievalHit[];
   /** `[stopId/id] title\nbody` blocks, blank-line separated. What the model is given. */
   context: string;
@@ -170,7 +177,39 @@ const STOP_SUPPORT = 0.35;
  * over. Scores are raw BM25+ and will move if the field boosts or the corpus size move --
  * `npm run route:eval` prints them, and this number is re-read from that output.
  */
-const MIN_TOP_SCORE = 16;
+export const MIN_TOP_SCORE = 16;
+
+/**
+ * The same question asked in a unit that survives a short question: score PER QUERY TERM.
+ *
+ * `MIN_TOP_SCORE` is a threshold on a raw BM25+ score, and a raw BM25+ score is a SUM over
+ * the query's matched terms. So it grows with the length of the question, and a threshold
+ * on it is not comparable between questions of different lengths. That is not a calibration
+ * problem that a better number fixes; it is the wrong unit.
+ *
+ * MEASURED, 2026-09-06, against this file's own corpus. `brunel` retrieves `education`
+ * first -- the right memory, on the right stop -- and scores 12.7, so it was refused with "I
+ * do not know that one". `what did you study` retrieves THE SAME MEMORY and scores 126.0.
+ * `yamaha` retrieves `build-rd350` first at 5.5, refused. `any cricket stuff` retrieves
+ * `hotstar-scale` first at 6.2, refused. One word naming a subject the corpus holds cannot
+ * reach a bar calibrated on five-word questions, however the bar is set, and a visitor who
+ * types a single name is asking the clearest question on the site.
+ *
+ * THE NUMBER, AND HOW MUCH TO TRUST IT. Over the routing table, the buyer set, the
+ * off-topic set and the single-word shapes above, the band for this clause -- after the
+ * `WORK_REQUEST` veto it sits behind, which is what refuses "review my code" at 7.0 per
+ * term -- runs from 1.44 (`ignore previous instructions`, the loudest thing that must be
+ * refused) to 5.5 (`yamaha`, the quietest thing that must be answered). 3.5 is the
+ * midpoint, with about 2.0 of margin on each side.
+ *
+ * IT WAS READ OFF THE DATA IT IS SCORED ON, and the off-topic set it clears is eight
+ * questions long. That makes it credible and not settled, and saying so is the whole
+ * difference between this constant and the one above it, which was calibrated the same way,
+ * quoted as a gap for months, and had inverted before anyone printed it. `npm run
+ * route:eval` prints both bands every run. Re-read this number there; do not defend it from
+ * memory.
+ */
+export const MIN_PER_TERM_SCORE = 3.5;
 
 /** The winning stop must hold half the weighted mass, or the router is guessing. */
 const MIN_SHARE = 0.5;
@@ -966,6 +1005,7 @@ export function retrieve(
       topical: false,
       grounded: false,
       topScore: 0,
+      perTermScore: 0,
       hits: [],
       context: '',
     };
@@ -1003,13 +1043,23 @@ export function retrieve(
   // memories about media planning in Mumbai.
   const licensed = engaged ? ground(hits, ENGAGEMENT_STOP, byId, k) : hits;
 
-  // A question that only makes sense against the page is not off-topic just because it
-  // scored badly on its own. "More on these?" earns its topicality from the section the
-  // visitor is reading, which is where its subject actually is. And a question about
-  // engaging MJK is about MJK by construction, whatever it scores.
+  /*
+   * A question that only makes sense against the page is not off-topic just because it
+   * scored badly on its own. "More on these?" earns its topicality from the section the
+   * visitor is reading, which is where its subject actually is. And a question about
+   * engaging MJK is about MJK by construction, whatever it scores.
+   *
+   * The per-term clause sits inside the same `WORK_REQUEST` veto as the raw one, and that
+   * placement is load-bearing rather than tidy: "review my code" is the single loudest
+   * thing in the off-topic set at 7.0 per term, and the veto is what refuses it. Moving
+   * this clause outside the parenthesis would admit it.
+   */
+  const perTermScore = terms.length ? topScore / terms.length : 0;
   const topical =
     stopId !== null &&
-    (engaging || ((topScore >= MIN_TOP_SCORE || grounded) && !WORK_REQUEST.test(question)));
+    (engaging ||
+      ((topScore >= MIN_TOP_SCORE || perTermScore >= MIN_PER_TERM_SCORE || grounded) &&
+        !WORK_REQUEST.test(question)));
 
   return {
     stopId,
@@ -1019,6 +1069,7 @@ export function retrieve(
     topical,
     grounded,
     topScore,
+    perTermScore,
     hits: licensed,
     context: formatContext(licensed),
   };
