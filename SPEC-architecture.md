@@ -8,6 +8,25 @@ arithmetic against a simulated `stopId` remap; §9 records how, so they can be r
 
 Read §2 before writing any code. Six of its eight traps fail **silently**.
 
+> ## SUPERSEDED IN PART — read this before implementing from §1.2, §3 or §4
+>
+> **The spine ORDER in this file is out of date.** It was written to insert `jewelai`,
+> `apparel` and `mrunn` into the *original* order, and the owner has since approved a
+> different one. The authority is now `DIRECTION.md` decision 1 and `TASKS.md` "50 REOPENED".
+>
+> Approved nine-stop order, shipping first:
+> `hero, origin, apac, now, work, engineering, pivot, rd350, contact`
+>
+> Twelve-stop target it grows into:
+> `hero, origin, apac, now, work, asanjo, jewelai, mrunn, engineering, pivot, rd350, contact`
+>
+> Note also that the third project stop is **`asanjo`**, not `apparel` — the apparel imagery
+> and the Shopify storefront are one engagement for one named client.
+>
+> **Everything else in this file stands**: the traps in §2, the increment order in §3, the
+> routing-vote measurement in §2.5, and the gap list in §5. Only the sequence of stop ids has
+> moved.
+
 ## STATUS
 
 | § | section | state |
