@@ -81,11 +81,24 @@ export const stopPrompts: Partial<Record<StopId, readonly string[]>> = {
     'How do you direct an agent?',
     'Can you do full-stack work?',
   ],
+  /*
+   * All four replaced, and two of them had to be.
+   *
+   * "How does JewelAI read a piece?" and "Does the pipeline ever refuse?" are questions
+   * about JewelAI, and JewelAI is getting a stop of its own. The moment its seven
+   * memories move there, both of these route to that stop instead — correct behaviour,
+   * and a broken promise from a chip that sits on this one. They move with the memories.
+   *
+   * What replaces them addresses the four projects that STAY here and have no section of
+   * their own: TallyBridge, the outreach engine, Artha, and the overview that names them
+   * all. Each was checked against the retriever with `viewing: 'work'` set, which is what
+   * a chip in the dock always sends.
+   */
   work: [
-    'How does JewelAI read a piece?',
-    'Does the pipeline ever refuse?',
-    'Tell me about the outreach engine.',
+    'What have you built?',
+    'Tell me about TallyBridge.',
     'What is Artha?',
+    'Tell me about the outreach engine.',
   ],
   contact: [
     'What do you take on?',

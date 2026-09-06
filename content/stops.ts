@@ -137,14 +137,32 @@ export const STOPS = [
     body: 'Krunch Labs has run out of Singapore since January 2025: multi-agent pipelines, custom ERPs, automation, and the analytics to say whether any of it worked. Most engagements start as one automation and turn into the system around it. I still take paid media work, because I ran that side for a decade.',
   },
   {
-    // What he does, then what he has built. The project stops insert after this one.
+    /*
+     * What he does, then what he has built. The project stops insert after this one.
+     *
+     * ── ON THE BODY ──────────────────────────────────────────────────────────────
+     * It used to be four sentences entirely about JewelAI — "JewelAI Studio never tells
+     * the model in words what a piece looks like…" — printed beside a photograph of a
+     * kaftan, on the stop that has to stand for four projects at once. That copy is
+     * correct and it belongs on the JewelAI stop, where the picture agrees with it.
+     *
+     * What replaces it says what this stop IS. Every clause is `build-overview`: "The
+     * things I have shipped, rather than the jobs I have held" is its opening sentence
+     * verbatim, and "answers questions about me from a corpus it is not allowed to
+     * contradict" is its last. The word `corpus` cannot be printed — `voice.test.ts`
+     * holds every visitor-facing string to the rule that the site never explains its own
+     * machinery — so the same fact is stated in the words a visitor already has.
+     *
+     * The middle sentence is the one line on this stop doing task 34's job: a card is a
+     * question that has not been asked yet, and nothing on the page said so.
+     */
     id: 'work',
     index: 4,
     kicker: '§ 04 — Selected work',
     compose: 'proof',
     align: 'left',
     title: { strong: 'Things I have built.' },
-    body: 'JewelAI Studio never tells the model in words what a piece looks like. It asks for three to five photographs of one piece, shot from different angles, and sends the whole set with every image it generates — because describing a ring in text is how you get a different ring back.',
+    body: 'The things I have shipped, rather than the jobs I have held. Each one below is a question that has not been asked yet — press it and this page answers from what I have written down, which it is not allowed to contradict.',
   },
   {
     /*
