@@ -1,0 +1,198 @@
+/**
+ * The intro gate's own stylesheet.
+ *
+ * WHY IT IS NOT IN `globals.css`. Two reasons, and the second is the real one. It is
+ * owned by another agent this week; and more durably, every rule here is load-bearing for
+ * a criterion rather than for a look — the default is hidden, the dead man's switch is a
+ * keyframe, and the reduced-motion suppression is a second belt over the decision script.
+ * Rules that a page's correctness depends on are easier to keep honest in a file whose
+ * whole subject they are.
+ *
+ * It is imported from `app/layout.tsx`, so it is in the same render-blocking stylesheet
+ * as the rest of the site's CSS and is applied before the overlay is parsed. That
+ * ordering is the whole no-flash mechanism: the overlay's DEFAULT is `display: none`, and
+ * only the synchronous decision script's `data-intro="on"` turns it on.
+ */
+
+/*
+ * Hidden unless the decision script says otherwise, which means a returning visitor, a
+ * hash deep link, reduced motion, and JavaScript that never ran all get nothing — with no
+ * flash, because the element was never displayed rather than displayed and then removed.
+ */
+.intro {
+  display: none;
+}
+
+html[data-intro='on'] .intro {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  /*
+   * Not a scroll lock. Locking the body is the version of this that fights the visitor:
+   * it strands the scroll position, breaks a trackpad fling, and on iOS leaves the page
+   * rubber-banding under a fixed overlay. `touch-action: none` stops the overlay itself
+   * from scrolling anything, and the gate ends on the FIRST wheel, touch or key — so a
+   * visitor who wants to scroll gets to, one gesture later, having lost nothing.
+   */
+  touch-action: none;
+  /*
+   * The dead man's switch, and the reason a duration appears twice in this project.
+   *
+   * If the decision script runs — turning the gate ON — and the client bundle then never
+   * executes, nothing in JavaScript is left to lift it. This keyframe is what guarantees
+   * the gate cannot outlive five seconds under any JavaScript failure.
+   *
+   * It runs from FIRST PAINT, not from the gate's first frame, because that is when a CSS
+   * animation starts and the whole point is that it does not need JavaScript. So it is
+   * not "Y plus a margin": it is "hydration plus Y". 4,600ms against a 2,900ms ceiling
+   * leaves about 1.7s of hydration headroom before it would truncate a healthy run, and
+   * still lands 400ms inside WCAG 2.2.2. `INTRO.EXPIRE_MS` in `lib/mind/intro.ts` is the
+   * same number, and `IntroGate` ends the gate for real on this animation's `animationend`
+   * — hiding the overlay while the page beneath stayed `inert` would be worse than the
+   * failure this guards against.
+   */
+  animation: intro-expire 4600ms linear forwards;
+}
+
+@keyframes intro-expire {
+  0%,
+  95% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/*
+ * The plate the portrait sits on, and the handover.
+ *
+ * Its opacity is driven per frame during the tail while the scene fades up underneath on
+ * its own 700ms ramp — a cross-fade between two things that are the same #0a0a0e where
+ * neither is drawing, so the void stays exactly the void and only what each ADDS to it
+ * changes hands. Same argument as the scene's own reveal, and the same three colours
+ * being one colour is what makes it exact rather than approximate.
+ */
+.intro-ground {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg);
+  will-change: opacity;
+}
+
+.intro-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/*
+ * The words.
+ *
+ * Warm oat on the dark ground, exactly as the DOM is everywhere else on this site: the
+ * particles are the scene's cyan and the type is the page's own colour, which is the
+ * distinction `DESIGN.md` draws and the reason the gate does not need an exception to it.
+ *
+ * Sized well below the hero's `clamp(2.2rem, 4.8vw, 4.4rem)` on purpose. If this sentence
+ * out-measured the hero title it would become the LCP element, and Core Web Vitals would
+ * report an improvement while the site got slower — the metric would be timing a gate
+ * that paints instantly instead of the heading a visitor actually waits for.
+ */
+.intro-copy {
+  position: absolute;
+  left: 50%;
+  top: 74%;
+  transform: translateX(-50%);
+  width: min(30rem, 84vw);
+  text-align: center;
+  /* Painted at full strength from the server HTML. It never animates up. */
+  opacity: 1;
+  transition: opacity 260ms ease-out;
+}
+
+.intro-copy[data-intro-out='yes'] {
+  opacity: 0;
+}
+
+.intro-copy[data-intro-out='fast'] {
+  opacity: 0;
+  transition-duration: 140ms;
+}
+
+.intro-line {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(1.15rem, 2.4vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--color-type);
+  text-wrap: balance;
+}
+
+/*
+ * The skip control.
+ *
+ * Mandatory, and it is the FIRST tab stop while the gate is up because everything under
+ * the overlay is `inert` — including the page's own skip-to-ask link, which goes back to
+ * being first the moment the gate lifts. Visible rather than clipped: WCAG 2.2.1's
+ * reachable satisfaction here is "turn it off", and a control you have to discover by
+ * tabbing is not that. The substantive compliance is still the suppression — reduced
+ * motion, the site's own motion control, and once per visitor — not this button.
+ */
+.intro-skip {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  color: var(--color-type-dim);
+  font-family: var(--font-mono);
+  /* The 11px floor on functional text. Being on the ramp does not exempt a value. */
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.intro-skip:hover {
+  color: var(--color-type);
+  border-color: var(--color-accent);
+}
+
+.intro-skip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  color: var(--color-type);
+}
+
+/*
+ * The second belt, over the decision script's first, and they are deliberately identical.
+ *
+ * The script already declines to start on reduced motion. This is here because the
+ * scene's reduced-motion promise is measured — pixel change 7.88% to 0.01% on a desktop —
+ * and an intro that ignored it would break a promise the site currently keeps. One of
+ * these can be wrong; both being wrong takes two mistakes.
+ *
+ * THE ONE PLACE THE GATE IS STRICTER THAN `lib/motion.ts`, on purpose. That module's
+ * precedence is that an explicit choice outranks the operating system, so a visitor who
+ * turned motion back ON keeps it on. The gate does not take that exception: the OS
+ * setting suppresses it whatever the stored choice says. A visitor cannot have consented
+ * to a full-screen animation they have not seen yet, and the in-page control is about the
+ * ambient scene they stayed for. It also keeps this rule and the decision script exactly
+ * equivalent — if they could disagree, the disagreement would be a hidden overlay holding
+ * an inert page for three seconds, which is the worst failure this file can have.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html[data-intro='on'] .intro {
+    display: none;
+  }
+}
