@@ -18,7 +18,13 @@
  */
 
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { simulateReadableStream } from 'ai';
+import { MockLanguageModelV4 } from 'ai/test';
 import { describe, expect, it } from 'vitest';
+import { defaultDeps, handleAsk, type AskDeps } from '../lib/ask/handler';
+import type { EnvelopeData } from '../lib/ask/types';
 import { loadMemories } from '../lib/corpus/load';
 import { guard, salvageDetailed, type GuardResult } from '../lib/grounding/guard';
 import { extractQuantities, type Quantity } from '../lib/grounding/numbers';
@@ -49,6 +55,64 @@ const flag = (sentence: string, quantity: Quantity): GuardResult => ({
  * against the real salvage, never against this predicate.
  */
 const counted = (q: Quantity) => q.kind === 'count' && q.value <= 12 && /^(?:[a-z]+|\d{1,2})$/i.test(q.raw.trim());
+
+/* -- the answer path, with a model that stops because it ran out of room ------- */
+
+const post = (body: unknown) =>
+  new Request('http://test/api/ask', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9' },
+    body: JSON.stringify(body),
+  });
+
+/** A model that streams `text` and then reports the cap, not a chosen ending. */
+const capped = (text: string): AskDeps => ({
+  ...defaultDeps,
+  hasApiKey: () => true,
+  admit: async () => ({ ok: true }),
+  askModel: () => ({
+    model: new MockLanguageModelV4({
+      doStream: async () => ({
+        stream: simulateReadableStream({
+          chunks: [
+            { type: 'text-start', id: 't1' },
+            { type: 'text-delta', id: 't1', delta: text },
+            { type: 'text-end', id: 't1' },
+            {
+              type: 'finish',
+              finishReason: { unified: 'length', raw: undefined },
+              logprobs: undefined,
+              usage: {
+                inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
+                outputTokens: { total: 600, text: 600, reasoning: undefined },
+              },
+            },
+          ],
+        }),
+      }),
+    }),
+    providerOptions: { openrouter: { models: [] } },
+  }),
+});
+
+type Chunk = { type: string; [k: string]: unknown };
+
+async function chunksOf(res: Response): Promise<Chunk[]> {
+  expect(res.status).toBe(200);
+  const body = await res.text();
+  return body
+    .split('\n')
+    .filter((line) => line.startsWith('data: '))
+    .map((line) => line.slice('data: '.length).trim())
+    .filter((s) => s && s !== '[DONE]')
+    .map((s) => JSON.parse(s) as Chunk);
+}
+
+const envelopes = (chunks: Chunk[]) =>
+  chunks.filter((c) => c.type === 'data-envelope').map((c) => c.data as EnvelopeData);
+
+const streamedText = (chunks: Chunk[]) =>
+  chunks.filter((c) => c.type === 'text-delta').map((c) => String(c.delta ?? '')).join('');
 
 describe('the sentence from the screenshot', () => {
   const OFFENDING = 'Clips run five, ten or fifteen seconds, with motion kept deliberately small.';
@@ -160,5 +224,51 @@ describe('the note the visitor is shown counts what was actually taken', () => {
     });
     expect(kept?.redacted).toBe(2);
     expect(kept?.text).toContain('I ran rollouts and shipped releases in the region.');
+  });
+});
+
+describe('the answer has a ceiling', () => {
+  const PROMPT = readFileSync(join(process.cwd(), 'content', 'system-prompt.md'), 'utf-8');
+  const HANDLER = readFileSync(join(process.cwd(), 'lib', 'ask', 'handler.ts'), 'utf-8');
+
+  it('is named to the model, even though this model does not listen to it', () => {
+    // The prompt used to read "There is no length you are aiming at", which is an explicit
+    // licence for the 5,326-character answer. Removing that is right on its own terms.
+    // A/B'd uncapped at three runs a side, the stated ceiling moved the mean from 4,508 to
+    // 4,586 characters -- no effect -- so the cap below is what actually holds the line.
+    expect(PROMPT).not.toContain('There is no length you are aiming at');
+    expect(PROMPT).toMatch(/five paragraphs/i);
+    expect(PROMPT).toMatch(/350 words/);
+  });
+
+  it('is backed by a cap the request itself carries', () => {
+    // Not a behaviour a mock model can show -- `maxOutputTokens` is enforced by the
+    // provider, not by this repository -- so the assertion is that the request carries it.
+    expect(HANDLER).toMatch(/maxOutputTokens: MAX_OUTPUT_TOKENS/);
+    expect(HANDLER).toMatch(/const MAX_OUTPUT_TOKENS = \d+/);
+  });
+
+  it('backs a truncated answer up to its last full stop before the page sees it', async () => {
+    // What the visitor must never read is the half sentence that was in flight when the
+    // cap fired. The model here stops mid-word, exactly as a cap makes it.
+    const cut = 'I founded Krunch Labs in January 2025 in Singapore. I build systems that do the work inst';
+    const res = await handleAsk(post({ question: 'what is krunch labs' }), capped(cut));
+    const body = envelopes(await chunksOf(res)).at(-1)?.body;
+    expect(body).toBe('I founded Krunch Labs in January 2025 in Singapore.');
+  });
+
+  it('leaves the answer alone when backing up would cost more than half of it', async () => {
+    // One short sentence and then a long one that never lands. Trading three quarters of
+    // an answer for a tidy ending is the worse of the two defects, so the fragment stays
+    // and the visitor keeps what they watched arrive.
+    const cut =
+      'I build systems that do the work instead of describing it. ' +
+      'I would rather delete code than defend it and I read the logs before I trust the dashboard and ' +
+      'I write the failure mode down before I write the feature and I keep the loop short and the surf';
+    const res = await handleAsk(post({ question: 'what is krunch labs' }), capped(cut));
+    const chunks = await chunksOf(res);
+    expect(streamedText(chunks)).toBe(cut);
+    // No rewrite, so the clean answer carries no body and the streamed prose stands.
+    expect(envelopes(chunks).at(-1)?.body).toBeUndefined();
   });
 });

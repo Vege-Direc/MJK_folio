@@ -171,6 +171,74 @@ function stripModelArtefacts(text: string): string {
 }
 
 /**
+ * The ceiling of last resort, and the reason it is not the control.
+ *
+ * MJK sent a screenshot of an answer running far past the viewport, and asked for a limit
+ * in these words: "I agree we can allow text to be quite large but there has to be some
+ * limit." So this is a ceiling, not a squeeze.
+ *
+ * MEASURED FIRST, 2026-09-06, on 20 real answers through the real corpus and the real
+ * system prompt with `z-ai/glm-5.2:free`: 280 to 5,326 characters, median 924, and 19 of
+ * the 20 came in at or under 2,370. The outlier -- "tell me everything about JewelAI
+ * Studio in detail", 5,326 characters, 946 words, 1,069 output tokens -- was not a long
+ * answer so much as a recital: six memory bodies reproduced near-verbatim, one after
+ * another. The same sample gives 4.6 characters to the token, which is how the number
+ * below converts. `finishReason` was `stop` on all 20, so nothing was truncating anything
+ * and the length was the prompt's to give away, which it did in as many words.
+ *
+ * What that costs on the page, from this repo's own measurement rather than mine:
+ * `app/globals.css` records that at 1440x900 a 1,424-character answer overshot the panel
+ * by 87px and that the budget was about 1,100 characters. One desktop screen of answer is
+ * therefore roughly 1,100 characters, and the runaway was about 4.8 of them.
+ *
+ * THE PROMPT WAS SUPPOSED TO BE THE CONTROL, AND IT IS NOT. That was the design -- a
+ * model told a limit COMPOSES to it and lands on an ending, while a cap can only stop
+ * mid-thought -- so `content/system-prompt.md` now names five paragraphs and about 350
+ * words. Then it was A/B tested rather than assumed, on the question that produced the
+ * runaway, uncapped, three runs each: WITHOUT the ceiling 4,729 / 5,597 / 3,197
+ * characters, WITH it 5,211 / 4,373 / 4,174. Mean 4,508 against 4,586. Three runs a side
+ * has no statistical power, but there is no effect here to have power over, and the honest
+ * reading is that this model does not obey a stated length on a "tell me everything"
+ * question. The ceiling stays in the prompt because the sentence it replaced --
+ * "there is no length you are aiming at" -- was an explicit licence for exactly this, and
+ * because a better model may listen. It is not what is holding the line.
+ *
+ * SO THIS IS THE CONTROL, and 600 tokens is chosen from the measured distribution: about
+ * 2,760 characters, two and a half screens, above the p90 of the uncapped sample (2,370
+ * characters, 478 tokens) so that an ordinary answer never meets it, and far below where
+ * the recital went. Re-measured across 19 questions with the cap in place, it fired on 2:
+ * both of the "tell me everything" shape, landing at 2,943 and 2,558 characters once the
+ * trim below had run.
+ *
+ * WHAT HAPPENS AT THE BOUNDARY is the whole reason a cap alone would not do. A cut at 600
+ * tokens lands wherever it lands -- measured, both of those two stopped mid-word.
+ * `toLastSentence` backs the text up to the last full stop and the final envelope carries
+ * the trimmed body, so the visitor never reads a half sentence. It cost 7.0% and 5.8% of
+ * those two answers. If there is no full stop to back up to, or backing up would cost more
+ * than half the answer, the text is left exactly as written: an over-long answer is a
+ * nuisance and a mangled one is a defect, but so is throwing away three quarters of a
+ * true answer to buy a tidy ending.
+ */
+const MAX_OUTPUT_TOKENS = 600;
+
+/**
+ * Back up to the last sentence that actually finished.
+ *
+ * Deliberately not `sentences()` from the grounding splitter, which is the right unit for
+ * licensing and the wrong one here: it normalises whitespace, and the blank line between
+ * paragraphs is the only shape the answer surface has (`.answer-prose` is `pre-wrap`).
+ * This only ever slices, so every paragraph break in front of the cut survives untouched.
+ */
+function toLastSentence(text: string): string {
+  const boundary = /[.!?]["'”’)\]]?(?=\s|$)/g;
+  let end = -1;
+  for (let m = boundary.exec(text); m; m = boundary.exec(text)) end = m.index + m[0].length;
+  if (end < 0) return text;
+  const cut = text.slice(0, end).trimEnd();
+  return cut.length * 2 < text.length ? text : cut;
+}
+
+/**
  * The dek over the answer, chosen once the answer exists.
  *
  * The envelope has to name a title before a word has been generated, and the only thing
@@ -521,6 +589,10 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         instructions,
         messages,
         providerOptions,
+        // The ceiling of last resort. See MAX_OUTPUT_TOKENS: the prompt is what actually
+        // decides the length, and this is here so that a prompt the model ignores cannot
+        // put five screens of recital into one section of the page.
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
         // Deltas arrive from the provider in whatever clumps its own token batching
         // produces, observed on the live site as e.g. " client success and ad" landing
         // as one piece -- so the answer lurched instead of streaming. This re-buffers
@@ -540,27 +612,36 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
 
       const startedAt = Date.now();
       let text = '';
-      let stripped = false;
+      let rewritten = false;
       try {
         const raw = await result.text;
         text = stripModelArtefacts(raw);
-        stripped = text !== raw;
-        if (stripped) console.warn('[api/ask] stripped model housekeeping from the answer');
+        if (text !== raw) console.warn('[api/ask] stripped model housekeeping from the answer');
         const meta = await result.response;
         /*
          * `finishReason` and the output-token count, because without them nobody could
          * answer the first question MJK asked about this feature: "is that because
          * you've put a token limit on output?"
          *
-         * Nothing in this repository sets `maxOutputTokens`, but that is an argument
-         * from absence, and a provider is free to impose its own cap without saying so.
-         * The only evidence that settles it is `finishReason`: `length` means the answer
-         * was cut off mid-thought, `stop` means the model chose to end there. Measured
-         * over 19 real calls on 2026-09-03, every one came back `stop` and none `length`
-         * -- so the brevity is the prompt and the guard, not a cap. That took a rebuild
-         * to find out, which is the reason it is now logged rather than measured again.
+         * There is a cap now -- MAX_OUTPUT_TOKENS -- and that makes this line more
+         * important rather than less. `stop` means the model chose its own ending and the
+         * cap was never in play; `length` means the cap fired and the answer below has
+         * been backed up to its last full stop. Measured over 19 real calls on 2026-09-03
+         * and 20 more on 2026-09-06, every single one came back `stop` -- the second
+         * sample uncapped, which is how the cap's value was chosen. If `length` starts
+         * appearing here, the prompt's ceiling has stopped working and the number wants
+         * re-reading, not raising.
          */
         const [finishReason, usage] = await Promise.all([result.finishReason, result.usage]);
+        if (finishReason === 'length') {
+          const whole = toLastSentence(text);
+          console.warn(
+            `[api/ask] the cap fired at ${MAX_OUTPUT_TOKENS} tokens; ` +
+              `${text.length} chars backed up to ${whole.length} at the last full stop`,
+          );
+          text = whole;
+        }
+        rewritten = text !== raw;
         console.info(
           `[api/ask] ${meta.modelId} answered ${stopId} in ${Date.now() - startedAt} ms ` +
             `finish=${finishReason} out=${usage.outputTokens ?? '?'} chars=${text.length}`,
@@ -605,10 +686,12 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
          */
         deps.instrument.outcome('verified');
         // A clean answer normally carries no body: the visitor keeps the prose that
-        // streamed in. But the artefact strip happens after the stream, so if the model
-        // prefixed its own moderation verdict the visitor has already watched it arrive.
-        // Sending the cleaned text as a body replaces what is on screen; without this the
-        // strip would sanitise the logs and leave the label sitting on the page.
+        // streamed in. But both of the rewrites above happen AFTER the stream, so if the
+        // model prefixed its own moderation verdict, or the cap fired and the last
+        // sentence was cut short, the visitor has already watched that arrive. Sending
+        // the rewritten text as a body replaces what is on screen; without this the strip
+        // would sanitise the logs and leave the label -- or the half sentence -- sitting
+        // on the page.
         writer.write({
           type: 'data-envelope',
           id: 'envelope',
@@ -616,7 +699,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
             ...envelope,
             status: 'verified',
             title: dekFor(text, licences),
-            ...(stripped ? { body: text } : {}),
+            ...(rewritten ? { body: text } : {}),
           },
         });
       } else {
