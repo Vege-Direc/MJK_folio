@@ -91,7 +91,29 @@ export const STOPS = [
      * Southeast Asia, Krunch Labs in Singapore since January 2025).
      */
     lede: 'Krunch Labs, Singapore. Multi-agent pipelines, custom ERPs, and the analytics to say whether any of it worked.',
-    body: 'Before that: aerospace engineering at Brunel, then a decade running paid media across India and Southeast Asia for Hindustan Unilever, Visa, Skechers and Evian. Scroll to travel the mind, or ask it something at the bottom of the page.',
+    /*
+     * The last clause is the hero's closing invitation, and the order of its two halves
+     * is the whole point of it.
+     *
+     * It used to read "Scroll to travel the mind, or ask it something at the bottom of
+     * the page" — the last clause of the last paragraph, offering scroll FIRST and ask
+     * second. The site's measured problem is that visitors scroll it like a normal
+     * website instead of asking it things, at a realistic ask rate of 2-8% of sessions,
+     * and its own hero copy was training exactly that. Asking is named first now, and
+     * where to do it is still named, because the dock is one bar at the foot of a
+     * full-viewport scene and a visitor who has not noticed it cannot use it.
+     *
+     * It is deliberately NOT the animation's sentence. The intro carries "I'm Mathew.
+     * This is my mind — ask it something", which introduces; this closes and invites, and
+     * the two are different jobs. They also reach different people: the gate runs on a
+     * minority of visits — reduced motion, a return visit, a hash deep link, JavaScript
+     * off — so it cannot be the delivery mechanism for either sentence. The hero must
+     * carry its own.
+     *
+     * It carries no factual claim, which is why it passes `claims.test.ts` by
+     * construction rather than by having been checked.
+     */
+    body: 'Before that: aerospace engineering at Brunel, then a decade running paid media across India and Southeast Asia for Hindustan Unilever, Visa, Skechers and Evian. Ask the mind anything from the box at the bottom, or scroll to travel through it.',
   },
   {
     id: 'origin',
