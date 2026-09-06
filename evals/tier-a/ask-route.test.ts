@@ -208,7 +208,7 @@ describe('the tail is the memory the answer used least', () => {
     const seen = new Set(ranked.map((m) => m.id));
     const rest = memoriesForStop(r.stopId!).filter((m) => !seen.has(m.id));
     return [...ranked, ...rest]
-      .filter((m) => m.id !== licences[0]?.id)
+      .filter((m) => m.id !== licences[0]?.id && /[a-z0-9]{4,}/.test(m.title.toLowerCase()))
       .map((m) => ({ id: m.id, title: m.title }));
   }
 
@@ -240,6 +240,24 @@ describe('the tail is the memory the answer used least', () => {
 
   it('has more than one memory to choose between, or this test proves nothing', () => {
     expect(candidatesFor(question).length).toBeGreaterThan(1);
+  });
+
+  /*
+   * The envelope that goes out at ~15ms cannot measure anything -- the answer does not
+   * exist yet -- so its card is chosen by rank alone. It is still on screen for the whole
+   * time a visitor watches an answer arrive, so it is bound by the same rule as the final
+   * one, and it was not: section one offered "Who I am" for those seconds, the single
+   * question on this site that does not come back to the card that asked it.
+   */
+  it('never offers a memory whose question would not come back, not even while streaming', async () => {
+    // "The arc, compressed" is the case this was measured on: `origin` holds "Who I am" as
+    // its last memory, and the rank-only guess reached for exactly that.
+    for (const q of ['Tell me about The arc, compressed.', question]) {
+      const chunks = await chunksOf(await handleAsk(post({ question: q }), depsWith(modelSaying('It is a pipeline.'))));
+      const offered = envelopes(chunks).flatMap((e) => e.cards.map((c) => c.id));
+      const ids = new Set(candidatesFor(q).map((c) => c.id));
+      expect(offered.filter((id) => !ids.has(id)), `\`${q}\` offered a memory outside its candidate set`).toEqual([]);
+    }
   });
 
   it('offers at most one, and never the memory the answer is about', async () => {

@@ -326,8 +326,12 @@ function coverageUnits(answer: string): string[] {
  * anything, and as a next question it would otherwise win every argmin below by default and
  * put the same unmeasurable card under every answer on its stop.
  */
+function contentWords(title: string): string[] {
+  return title.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
+}
+
 function coverageOf(units: readonly string[], title: string): number | null {
-  const words = title.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
+  const words = contentWords(title);
   if (words.length === 0 || units.length === 0) return null;
   const named = words.map((w) => new RegExp(`\\b${w}\\b`));
 
@@ -387,17 +391,29 @@ function cardOf(m: Memory): EnvelopeCard {
  * and the rest of the section follows in the order MJK wrote them, which is deterministic
  * and is a real editorial judgement rather than a leftover of array position.
  *
- * Nothing unanswerable can arrive this way: every memory here has this stop's `stopId`, and
- * `coverageOf` returns `null` for a title with no content words -- "Who I am" is the one in
- * this corpus -- which is also the only stop memory whose own question does not rank itself
- * first. The measurement and the routing agree about it, from opposite directions.
+ * Nothing unanswerable can arrive this way, and the last filter is what makes that
+ * structural rather than incidental. Every memory here has this stop's `stopId`. A title
+ * with no content word of four letters or more is dropped outright -- "Who I am" is the
+ * only one in this corpus -- because coverage cannot be measured for it, and because it is
+ * ALSO the only stop memory whose own question does not rank itself first. The measurement
+ * and the routing agree about it from opposite directions.
+ *
+ * CAUGHT IN A BROWSER, and only in a browser. The filter used to live inside
+ * `nextQuestionFor`, where an unmeasurable memory was skipped by the argmin -- which is
+ * true of the FINAL envelope and was false of the one that goes out at ~15ms, whose card is
+ * chosen by rank alone because the answer does not exist yet. So during the seconds a
+ * visitor is actually watching an answer arrive, section one offered "Who I am": the single
+ * question on this site that does not come back to the card that asked it. Excluding it
+ * here means neither envelope can name it, and there is one rule rather than two.
  */
 function nextQuestionCandidates(licences: readonly Memory[], stopId: StopId): Memory[] {
   const answeredAbout = licences[0]?.id;
   const ranked = licences.filter((m) => m.stopId === stopId);
   const seen = new Set(ranked.map((m) => m.id));
   const rest = memoriesForStop(stopId).filter((m) => !seen.has(m.id));
-  return [...ranked, ...rest].filter((m) => m.id !== answeredAbout);
+  return [...ranked, ...rest].filter(
+    (m) => m.id !== answeredAbout && contentWords(m.title).length > 0,
+  );
 }
 
 /**
