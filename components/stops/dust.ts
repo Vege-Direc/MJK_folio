@@ -26,11 +26,17 @@
  * drawing coming apart and the arrival reads as the next one assembling.
  */
 
-/** Both clouds, flattened. Stride 10, see `PAIR_STRIDE`. */
-export type Dust = { xy: Float32Array; n: number };
+/*
+ * WHAT MOVED, AND WHY NOTHING HERE CHANGED. The canonical ordering and the pairing loop
+ * are now `lib/particles/cloud.ts`, because the intro gate's portrait needs both and must
+ * not fork them. What stayed is everything that assumes the source is SVG path data —
+ * `samplePaths`, and this module's own wave. The exports, the constants and the rendered
+ * result are exactly what they were; `MJK101Figure` imports the same three names from the
+ * same path.
+ */
+import { PAIR_STRIDE, pairClouds, type Dust } from '@/lib/particles/cloud';
 
-/** ax, ay, dx, dy, nx, ny, rx, ry, s, phase */
-const PAIR_STRIDE = 10;
+export type { Dust };
 
 const TAU = Math.PI * 2;
 
@@ -88,89 +94,16 @@ function samplePaths(ds: readonly string[], n: number): Float32Array {
 }
 
 /**
- * Put a cloud in a canonical order so two different clouds can be paired.
+ * Sample both drawings and pair them.
  *
- * Each cloud is first normalised to its own bounding box, because the engine is 199x186 and
- * the aircraft is 282x131 and a raw angle about the centroid would map the aircraft's
- * wingtips onto the engine's cylinder heads. In that normalised space the sort is by coarse
- * angular bin first and radius second, so a particle keeps BOTH its bearing and its depth:
- * the outside of one drawing becomes the outside of the other, and the inside the inside.
- * Sorting on angle alone let particles from deep inside the crankcase land on a wingtip,
- * which reads as scatter rather than as one thing becoming another.
- */
-function order(pts: Float32Array, bins = 64): Uint32Array {
-  const n = pts.length / 2;
-  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (let i = 0; i < n; i++) {
-    const x = pts[i * 2], y = pts[i * 2 + 1];
-    if (x < x0) x0 = x;
-    if (x > x1) x1 = x;
-    if (y < y0) y0 = y;
-    if (y > y1) y1 = y;
-  }
-  const sx = 2 / Math.max(1e-6, x1 - x0), sy = 2 / Math.max(1e-6, y1 - y0);
-  const key = new Float64Array(n);
-  for (let i = 0; i < n; i++) {
-    const u = (pts[i * 2] - x0) * sx - 1;
-    const v = (pts[i * 2 + 1] - y0) * sy - 1;
-    const a = (Math.atan2(v, u) + Math.PI) / TAU;         // 0..1
-    const r = Math.min(1, Math.hypot(u, v) / Math.SQRT2); // 0..1
-    key[i] = Math.floor(a * bins) + r;                    // bin dominates, radius breaks ties
-  }
-  const idx = new Uint32Array(n);
-  for (let i = 0; i < n; i++) idx[i] = i;
-  return idx.sort((a, b) => key[a] - key[b]);
-}
-
-/**
- * Pair the two clouds and precompute everything the frame loop needs.
- *
- * Per particle the loop wants: where it starts, how far it goes, the unit normal to its own
- * chord (that is the direction the wave displaces it), a unit vector away from the cloud
- * centre (that is the direction it breathes), its position along the wave axis, and a phase
- * offset. All of it is fixed for the run, so none of it belongs in the frame loop.
+ * Both halves of what used to be here are `lib/particles/cloud.ts` now: the canonical
+ * ordering that decides which engine particle becomes which aircraft particle, and the
+ * per-particle constants the frame loop below reads out of `xy`. Neither changed in the
+ * move. What changed is that the intro gate's portrait — sampled from tone rather than
+ * from path data, because a face is not its edges — can reach them without a fork.
  */
 export function buildDust(engine: readonly string[], plane: readonly string[], n: number): Dust {
-  const A = samplePaths(engine, n);
-  const B = samplePaths(plane, n);
-  const m = Math.min(A.length, B.length) / 2;
-  const ia = order(A), ib = order(B);
-
-  const xy = new Float32Array(m * PAIR_STRIDE);
-  let cx = 0, cy = 0, minx = Infinity, maxx = -Infinity;
-  for (let i = 0; i < m; i++) {
-    const ax = A[ia[i] * 2], ay = A[ia[i] * 2 + 1];
-    cx += ax;
-    cy += ay;
-    if (ax < minx) minx = ax;
-    if (ax > maxx) maxx = ax;
-  }
-  cx /= m;
-  cy /= m;
-  const span = Math.max(1e-6, maxx - minx);
-
-  for (let i = 0; i < m; i++) {
-    const ax = A[ia[i] * 2], ay = A[ia[i] * 2 + 1];
-    const bx = B[ib[i] * 2], by = B[ib[i] * 2 + 1];
-    const dx = bx - ax, dy = by - ay;
-    const L = Math.hypot(dx, dy) || 1;
-    const rx = ax - cx, ry = ay - cy;
-    const R = Math.hypot(rx, ry) || 1;
-    const o = i * PAIR_STRIDE;
-    xy[o] = ax;
-    xy[o + 1] = ay;
-    xy[o + 2] = dx;
-    xy[o + 3] = dy;
-    xy[o + 4] = -dy / L;                 // unit normal to the chord
-    xy[o + 5] = dx / L;
-    xy[o + 6] = rx / R;                  // unit vector out of the cloud
-    xy[o + 7] = ry / R;
-    xy[o + 8] = (ax - minx) / span;      // position along the wave axis, 0..1
-    // A deterministic hash, not Math.random: the same run twice has to look the same, and
-    // Replay is the whole point of the control in the caption.
-    xy[o + 9] = ((Math.sin(i * 12.9898) * 43758.5453) % 1) * TAU;
-  }
-  return { xy, n: m };
+  return pairClouds(samplePaths(engine, n), samplePaths(plane, n));
 }
 
 export type DustOptions = {
