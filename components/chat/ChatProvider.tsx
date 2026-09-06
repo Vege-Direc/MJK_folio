@@ -20,6 +20,7 @@ import {
   type RouteData,
 } from '@/lib/ask/types';
 import { flyTo } from '@/lib/flight';
+import { HISTORY_ANSWER_MAX } from '@/lib/security/schema';
 
 /**
  * One chat, shared by the dock (input) and the answer (wherever it docks on the page).
@@ -115,7 +116,28 @@ function historyOf(messages: AskUIMessage[]): { q: string; a: string }[] {
     if (messages[i].role !== 'user' || messages[i + 1].role !== 'assistant') continue;
     const q = textOf(messages[i]).trim();
     const env = envelopeOf(messages[i + 1]);
-    const a = (env?.body ?? textOf(messages[i + 1])).trim();
+    /*
+     * Truncated to the schema's own ceiling, and the omission of this was a live defect
+     * that poisoned a session permanently.
+     *
+     * `lib/security/schema.ts` caps `history[].a` at 2000 characters. `MAX_OUTPUT_TOKENS`
+     * is 600, which the handler's own notes record landing at 2,943 and 2,558 characters
+     * on real answers. So any long answer made the NEXT question a 400 — and because
+     * `historyOf` only pushes a pair when both halves exist, the failed turn never entered
+     * the window and never displaced the oversized one. Every later question in that
+     * session carried the same poisoned history. The dock said "Ask again in a moment";
+     * a reload was the only cure.
+     *
+     * It was invisible where it mattered most: `recordAsk` fires after body parsing, so a
+     * 400 counts as neither an ask nor an outcome. The instrument built to answer "does
+     * anyone ask a second question" would have reported that nobody does, and the reason
+     * would have been this line.
+     *
+     * 2000 is the contract rather than a guess. It is also far more than the server uses —
+     * `handler.ts` reduces this to `firstSentence(prior.a)` — but matching the schema keeps
+     * one number in one place instead of two that must agree.
+     */
+    const a = (env?.body ?? textOf(messages[i + 1])).trim().slice(0, HISTORY_ANSWER_MAX);
     if (q && a) pairs.push({ q, a });
     i++;
   }

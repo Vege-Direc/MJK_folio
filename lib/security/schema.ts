@@ -25,6 +25,27 @@ import { ASK_ORIGINS } from '../ask/types';
 /** Enough for a 500-character question and four exchanges, with room to spare. */
 export const MAX_BODY_BYTES = 16 * 1024;
 
+/**
+ * The ceiling on a prior answer the client may send back, exported because the client has
+ * to obey it and used to silently not.
+ *
+ * It was a bare 2000 here and nothing on the sending side knew about it. `MAX_OUTPUT_TOKENS`
+ * is 600, which lands real answers at up to ~2,943 characters, so a long answer made the
+ * next question a 400 — permanently, because the rejected turn never entered the history
+ * window to displace the oversized one. Two numbers that had to agree, in two files, with
+ * nothing asserting the relationship.
+ *
+ * 3000 rather than 2000, and the extra thousand is deliberate belt-and-braces. The client
+ * now truncates to exactly this, so the ceiling should never be met — but a client that
+ * forgets is the failure that just happened, and at 600 tokens the worst case is 3000
+ * characters at five characters a token. Sized so the schema absorbs it instead of ending
+ * the conversation. It costs nothing on the server, which reduces this to
+ * `firstSentence(prior.a)` before it reaches the model.
+ *
+ * `evals/tier-a/security.test.ts` now asserts that the output ceiling cannot outgrow this.
+ */
+export const HISTORY_ANSWER_MAX = 3000;
+
 const historyTurnSchema = z.object({
   q: z
     .string('`history[].q` must be a string.')
@@ -34,7 +55,7 @@ const historyTurnSchema = z.object({
   a: z
     .string('`history[].a` must be a string.')
     .trim()
-    .max(2000, '`history[].a` must be 2000 characters or fewer.'),
+    .max(HISTORY_ANSWER_MAX, `\`history[].a\` must be ${HISTORY_ANSWER_MAX} characters or fewer.`),
 });
 
 export const askBodySchema = z.object({

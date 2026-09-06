@@ -12,7 +12,7 @@ import { ANSWERABLE_STOP_IDS } from '../../content/stops';
 import { memoryById } from '../../lib/corpus/load';
 import { fallbackBlock, type FallbackReason } from '../../lib/fallback';
 import { admit, clientIp, resetLimitsForTests } from '../../lib/security/limits';
-import { MAX_BODY_BYTES, parseAskBody } from '../../lib/security/schema';
+import { HISTORY_ANSWER_MAX, MAX_BODY_BYTES, parseAskBody } from '../../lib/security/schema';
 
 /* -- lib/security/schema.ts --------------------------------------------------- */
 
@@ -64,7 +64,9 @@ describe('parseAskBody', () => {
     const oversizeQ = { q: 'a'.repeat(501), a: 'a' };
     expect(parseAskBody({ question: 'hi', history: [oversizeQ] }).ok).toBe(false);
 
-    const oversizeA = { q: 'q', a: 'a'.repeat(2001) };
+    // From the constant, not a literal. This read `2001` and the ceiling moved under it,
+    // which is the same drift the test below exists to prevent between two files.
+    const oversizeA = { q: 'q', a: 'a'.repeat(HISTORY_ANSWER_MAX + 1) };
     expect(parseAskBody({ question: 'hi', history: [oversizeA] }).ok).toBe(false);
   });
 
@@ -342,5 +344,50 @@ describe('fallbackBlock', () => {
         expect(block.title, `${reason} title contains a digit`).not.toMatch(/\d/);
       }
     }
+  });
+});
+
+/**
+ * The client cannot send back an answer the server will refuse.
+ *
+ * This is a property between two constants in two files, and nothing asserted it. The
+ * server caps `history[].a` at `HISTORY_ANSWER_MAX`; the handler caps generation at
+ * `MAX_OUTPUT_TOKENS`. When the second outgrew the first, a long answer made the NEXT
+ * question a 400 — permanently, because `historyOf` only pushes a pair when both halves
+ * exist, so the rejected turn never entered the window to displace the oversized one.
+ *
+ * It was invisible in the one place built to see it: `recordAsk` runs after body parsing,
+ * so a rejected body counts as neither an ask nor an outcome. The instrument that exists
+ * to answer "does anyone ask a second question" would have answered "no", and this would
+ * have been why.
+ *
+ * `MAX_OUTPUT_TOKENS` is not exported, so it is read from the source. That is deliberate:
+ * exporting it to satisfy a test would put a number on the module's public surface for no
+ * runtime reason, and the point here is that the two files must agree, not that they must
+ * import each other.
+ */
+describe('a long answer cannot poison the next question', () => {
+  const CHARS_PER_TOKEN = 5; // deliberately pessimistic; real English runs ~4
+  const handlerSource = readFileSync(join(process.cwd(), 'lib/ask/handler.ts'), 'utf-8');
+
+  it('caps generation below what the history schema will accept', () => {
+    const declared = /const MAX_OUTPUT_TOKENS = (\d+);/.exec(handlerSource);
+    expect(declared, 'MAX_OUTPUT_TOKENS should be declared in lib/ask/handler.ts').not.toBeNull();
+
+    const worstCaseChars = Number(declared![1]) * CHARS_PER_TOKEN;
+    expect(
+      worstCaseChars,
+      `an answer of ${worstCaseChars} characters cannot be sent back inside a ` +
+        `${HISTORY_ANSWER_MAX}-character field — either lower MAX_OUTPUT_TOKENS or raise ` +
+        'HISTORY_ANSWER_MAX, and check that the client truncates in ChatProvider.historyOf',
+    ).toBeLessThanOrEqual(HISTORY_ANSWER_MAX);
+  });
+
+  it('accepts an answer at the ceiling and refuses one past it', () => {
+    const at = parseAskBody({ question: 'and then?', history: [{ q: 'x', a: 'a'.repeat(HISTORY_ANSWER_MAX) }] });
+    expect(at.ok, 'an answer exactly at the ceiling must be accepted').toBe(true);
+
+    const over = parseAskBody({ question: 'and then?', history: [{ q: 'x', a: 'a'.repeat(HISTORY_ANSWER_MAX + 1) }] });
+    expect(over.ok, 'one character past the ceiling must be refused').toBe(false);
   });
 });
