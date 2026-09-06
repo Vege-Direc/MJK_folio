@@ -16,6 +16,31 @@ Personal site for Mathew John Kondekeril. Long-scroll editorial with a persisten
 ## Palette rule
 Cool inside the mind (cyan filaments, orange pulse — WebGL only). Warm outside (oat + amber — DOM only). They **never touch**.
 
+## When a server lies to you
+
+`npm run dev` is pinned to **3001** and `npm start` to **3000**, so the two can run at once
+and neither can shadow the other. That split exists because of a real failure: a four-hour-old
+server was found on 3000 answering 200 with HTML that rendered perfectly — every section, the
+canvas, the dock — while **every hashed chunk it referenced returned 500**. No client
+JavaScript ran, `data-stop` was never written, and nothing on the page said so.
+
+It was reported as "`next dev` never hydrates". It was not a dev-server bug and it was not in
+this repository.
+
+```
+npm run serve:check                        # the dev port
+npm run serve:check -- http://localhost:3000
+```
+
+**Run it before you believe anything you measure against a server.** The signature to
+recognise by eye: the page renders, sections are present, and yet `data-stop` is unset,
+`--dock-h` is empty and the console shows 500s for `/_next/static/…`. That is not a bug in the
+page. You are talking to a server that cannot serve its own build.
+
+The cause is not established — the obvious theory, that a rebuild strands a running
+`next start`, was tested and is wrong; it re-reads `.next` and self-heals. The check detects
+the condition without claiming to diagnose it.
+
 ## Local dev
 ```
 cp .env.example .env       # fill in OPENROUTER_API_KEY; drop REDIS_URL unless you run Redis
