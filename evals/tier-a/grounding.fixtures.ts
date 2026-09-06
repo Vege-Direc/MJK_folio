@@ -73,6 +73,11 @@ export const MUST_PASS: Fixture[] = [
   { answer: 'I founded Krunch Labs in January 2025 in Singapore.', expect: [], why: 'no quantity at all once the year is excluded' },
   { answer: 'We halved report generation time at Kinnect.', expect: [], why: 'paraphrase: halved (multiple .5) == by half (fraction .5)' },
   { answer: 'Team grew 2 → 5 at Kinnect.', expect: [], why: 'paraphrase: an arrow range == "from two to five"' },
+  {
+    answer: 'It turned raw supplier photos into more than 50 on-brand catalog images across 20-plus products.',
+    expect: [],
+    why: 'the corpus writes "20+ products"; "20-plus" was read as a count of 2 and the sentence was deleted',
+  },
 ];
 
 /**

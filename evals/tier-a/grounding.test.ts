@@ -32,9 +32,9 @@ const TABLE = `\n${renderTable(ROWS)}\n`;
 describe('the fixture table', () => {
   it('is the table it claims to be', () => {
     expect(MUST_FIRE).toHaveLength(7);
-    expect(MUST_PASS).toHaveLength(9);
+    expect(MUST_PASS).toHaveLength(10);
     expect(BENIGN).toHaveLength(10);
-    expect(ROWS).toHaveLength(26);
+    expect(ROWS).toHaveLength(27);
   });
 
   it('lands every row', () => {
@@ -285,6 +285,28 @@ describe('the parts, where the guard would fail quietly', () => {
     expect(extractQuantities('I founded it in January 2025.')).toEqual([]);
     expect(extractQuantities('Four years at Omnicom, from 2013 to 2017.').map((x) => x.value)).toEqual([4]);
     expect(extractQuantities('A company-wide 2FA rollout.')).toEqual([]);
+  });
+
+  /*
+   * The extractor may not invent a smaller number out of a larger one.
+   *
+   * "20-plus products" ran the digit class greedily onto "20", failed the old lookahead on
+   * the hyphen, backtracked to "2" -- where the next character is a digit the old class
+   * allowed -- and reported a count of 2. Nothing licenses a 2, so a true sentence was
+   * removed from a live answer on 2026-09-06. The corpus writes the same fact as "20+
+   * products", so the two spellings have to arrive as one claim.
+   */
+  it.each([
+    ['across 20-plus products', 20],
+    ['30-plus markets', 30],
+    ['across 20+ products', 20],
+    ['100+ users', 100],
+  ])('reads %s as %i and never as its first digit', (text, value) => {
+    expect(extractQuantities(text).map((x) => x.value)).toEqual([value]);
+  });
+
+  it('licenses the corpus’s "20+" against the ordinary English the model writes', () => {
+    expect(sameQuantity(q('across 20-plus products'), q('across 20+ products'))).toBe(true);
   });
 
   it('treats the corpus as a closed world of names', () => {

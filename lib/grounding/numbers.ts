@@ -200,9 +200,31 @@ const PASSES: Pass[] = [
     },
   },
   {
-    // The lookahead keeps "2FA" from being a count of two FAs and "two-factor" from
-    // being a count of two factors: a digit glued to letters is a name, not a number.
-    re: new RegExp(String.raw`\b(${N})(${SCALE})?\+?(?![a-z-])`, 'g'),
+    /*
+     * The lookahead keeps "2FA" from being a count of two FAs and "two-factor" from
+     * being a count of two factors: a digit glued to letters is a name, not a number.
+     *
+     * `0-9` IS IN THE LOOKAHEAD BECAUSE THE ENGINE BACKTRACKS, and that is a defect this
+     * repository has now shipped twice in the same shape. Written `(?![a-z-])`, "20-plus
+     * products" ran `\d[\d,]*` greedily onto "20", failed the lookahead on the hyphen,
+     * backtracked the digit run to "2" -- where the next character is "0", which the old
+     * class allowed -- and reported A COUNT OF 2. "30-plus markets" was a count of 3. It
+     * is the year-with-a-comma bug wearing a different coat: a real number read as a
+     * different, smaller, entirely invented one, and then reported as unlicensed.
+     *
+     * MEASURED, 2026-09-06, on a live answer. `content/memories.yaml` writes "more than 50
+     * on-brand catalog images across 20+ products"; the model wrote the same fact as
+     * "across 20-plus products", the extractor turned that into 2, no sentence in the
+     * corpus licenses a 2, and salvage removed the sentence. Both spellings now read as
+     * the same claim, which is what `sameQuantity` needs in order to say so.
+     *
+     * The cost of the tighter class is under-extraction on hyphenated forms nobody has
+     * written yet -- "20-odd markets" now yields nothing rather than 20. A number the
+     * guard does not see is a number it does not check, which is a real loss; a number it
+     * sees WRONGLY is a true sentence deleted, which is the worse one. Add the form here
+     * when it appears, next to `plus`.
+     */
+    re: new RegExp(String.raw`\b(${N})(${SCALE})?\+?(?:[-\s]plus\b)?(?![a-z0-9-])`, 'g'),
     read: (m, t) => {
       const value = parseNum(m[1]) * scaleOf(m[2]);
       if (!m[2] && isYear(m[1], value)) return [];
