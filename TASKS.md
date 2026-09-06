@@ -2566,6 +2566,46 @@ anywhere except Asanjo.
 
 # Open, not started
 
+## 58. A live image URL hung forever, and only on non-Retina desktops — `done` 2026-09-06
+
+**Symptom.** §06's `GENERATED` tile — the deliverable in "phone snaps in, catalogue image out" —
+rendered as an empty outlined rectangle on every desktop wider than 900px at DPR 1. The panel whose
+whole argument is the output showed the input, an arrow, and nothing. Phones and Retina displays
+were unaffected, which is why it survived every previous pass.
+
+**What it was not.** The first report said the browser selected no candidate. It selects one. The
+served `srcSet` is well formed; `ref-1.jpg` and `generated.jpg` differ only in their smallest
+candidate (256w vs 384w) because Next computes candidate widths from the `46vw` branch of `sizes`
+and ignores the fixed `220px` branch.
+
+**What it was.** The live server never answered exactly one `(image, width)` pair:
+
+| request | before redeploy | after redeploy |
+|---|---|---|
+| `generated.jpg` **w=384** | **hangs — 40s, 40s, 30s, 45s, 4/4** | **200, 0.21s cold / 0.08s warm** |
+| `generated.jpg` w=256 / 640 / 750 / 828 | 200, 0.15–0.37s | 200 |
+| `ref-1.jpg` w=384 | 200, 0.10s | 200 |
+
+A 220px box at DPR 1 picks the smallest candidate ≥ 220, which is 384w — **the one pair the server
+would not serve.** Nothing else on the site requests that pair, so it hid.
+
+**Fix.** The redeploy of `b0ed8c9` cleared it; no code changed. Verified in real Chrome at 1440x900:
+DPR 1 now picks `w=384`, `complete: true`, `naturalWidth: 220` (384 divided by the computed density
+of 1.745, which also confirms the 220px `sizes` value is in effect). DPR 2 picks `w=640`.
+
+**Not proven, and it matters.** *Why* the server hung is unestablished. A stuck in-flight cache key
+is the obvious candidate — it fits a hang that is per-key, permanent, and cleared by a restart — but
+the test that would have shown it is unavailable: Next rejects a cache-busting query on a local
+`url` with a 400. **So this can recur and nothing would catch it.** `scripts/check-serving.ts`
+checks that referenced `/_next/static` assets resolve; it does not request optimiser URLs at all.
+Extending it to fetch each `<img>`'s smallest `srcSet` candidate with a short timeout would have
+caught this in one run — **not built.**
+
+**The real code defect underneath, still unfixed.** `sizes="(max-width: 900px) 46vw, 220px"`
+declares a 220px box whose no-srcSet fallback `src` asks the optimiser for **w=3840**. That is a
+17x overshoot for any client that ignores `srcSet`.
+
+
 ## 32. Re-cut §05's sources — `open`, approved but not done
 
 Three of the five RD 350 frames are portrait inside a 4:3 hero, so `object-fit: cover` discards
