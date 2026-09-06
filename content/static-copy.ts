@@ -113,11 +113,23 @@ export const stopPrompts: Partial<Record<StopId, readonly string[]>> = {
    * Both read well and both would have produced "not my lane" from a control the page
    * itself put on the screen.
    */
+  /*
+   * The four have a LENGTH budget between them as well as one each, and this set was
+   * rewritten after a screenshot rather than after a count.
+   *
+   * `voice.test.ts` holds every suggestion to 40 characters, which is the wrap point of a
+   * single chip in the one-at-a-time row a 320px phone gets. Above 768px the row is a flex
+   * that holds all four, and the first version of this set — 137 characters across the four
+   * — wrapped to a second line at 1440x900. That republishes `--dock-h`, 143px to 168px,
+   * and every one of the twelve sections derives its bottom padding from it: twelve
+   * relayouts, on arriving at one stop. Measured; `asanjo` was the only stop in the file
+   * doing it. 92 characters now, against 94 on `work` and 110 on `jewelai`.
+   */
   asanjo: [
-    'What did you build for Asanjo?',
+    'Who is Asanjo?',
     'What does a supplier photo become?',
-    'What is the pass mark for the critic?',
-    'How many catalogue images were made?',
+    'What is the pass mark?',
+    'What is in the ledger?',
   ],
   jewelai: [
     'How does it read a piece?',
