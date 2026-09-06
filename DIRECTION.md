@@ -1,6 +1,8 @@
 # Direction
 
-The exit artefact for the 2026-09-05/06 research round. Eleven agents, four retractions.
+The exit artefact for the 2026-09-05/06 research round. Seventeen agents; the retraction ledger
+below has thirteen rows and `TASKS.md`'s has twenty-three. This line said "four" until an audit
+counted them — a summary drifting from its own table is exactly what the ledger is for.
 `TASKS.md` holds the evidence; `SPEC-architecture.md` holds the migration; this file holds the
 decisions and is deliberately short.
 

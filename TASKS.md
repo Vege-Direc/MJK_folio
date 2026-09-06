@@ -2728,7 +2728,10 @@ memories are addressed by chips rather than cards.
 
 # The retraction ledger
 
-**Four numbers were retracted this session, plus several corrections to my own claims.** These are
+**Twenty-three entries below, and the summary that used to sit here said "four".** It was written
+when there were four and never updated as the table grew, which is the same defect this ledger
+exists to record — a stated figure drifting from the evidence under it. Count the rows, not the
+sentence. Most are corrections to my own claims rather than borrowed numbers. These are
 the most important entries in this file. Each correction also sits next to what it corrects in the
 task entry above; this table is the index.
 
