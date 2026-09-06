@@ -44,7 +44,7 @@
   body: >
     An open-source project, MIT licensed, that syncs Indian accounting software into a queryable
     database and puts an AI assistant in front of it — 27 MCP tools for plain-English financial
-    queries.
+    queries. It is public at github.com/Vege-Direc/TallyBridge, and I am still working on it.
 
 - id: project-taboola
   section: timeline
