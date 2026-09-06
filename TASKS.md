@@ -2808,7 +2808,7 @@ memories are addressed by chips rather than cards.
 
 # The retraction ledger
 
-**Twenty-nine entries below, and the summary that used to sit here said "four".** It was written
+**Thirty entries below, and the summary that used to sit here said "four".** It was written
 when there were four and never updated as the table grew, which is the same defect this ledger
 exists to record — a stated figure drifting from the evidence under it. **It has since happened
 twice more**, both in `DIRECTION.md`, and R25 records it. Count the rows, not the sentence. Most are corrections to my own claims rather than borrowed numbers. These are
@@ -2846,8 +2846,9 @@ task entry above; this table is the index.
 | R27 | **"The worst single glyph pixel anywhere is 9.00"** (recorded in `f4dccc8`) | **False at two scopes.** **8.04** inside `.section-body` at `origin`, and **1.31** if "anywhere" means the page's text — the `mrunn` card title at 390x664, which is the worst pixel on the site. The finding it belonged to replicates: direction and magnitude hold, with a systematic +0.5 from an aggregate definition. **It is the word "anywhere" that is wrong**, and it is wrong because authored prose was measured and the machinery was not | P2; task 39 |
 | R28 | **"The career rail is below the fold at 390x664, and exactly three stops are media-first"** (`content/stops.ts`, a source comment) | **Both halves false.** `71d612c` put the rail above the paragraph; and `apac` is media-first at 390x664 (rail top 265, paragraph top 987) through a dedicated `.panel[data-compose='timeline']` order block at `globals.css:3500-3531` — **a fourth media-first stop implemented outside `mediaFirstOf`.** A comment that describes a build the build no longer matches | Task 38 |
 | R29 | **"The dock veil is transparent — `background-color: rgba(0,0,0,0)`"** (a panel's own diagnosis) | **Wrong, and the commit that fixed the defect says so.** The veil was not transparent; **its own box was exactly the dock**, so the 44px feather meant to soften the section above had nowhere to go and the prompt chip sat **19px inside its own gradient**. `aaec984` insets it 44px above the dock's top edge. Verified: mean 8-bit luma of the dock's top 44px **25.80 → 15.26 at 390x664**, and — **say this rather than claiming desktop is untouched** — **21.29 → 16.98 at 1440x900**, same rule, unconditional. **One cost remains**: the collision moved up 44px, it did not go away, and section bottom padding still derives from `--dock-h` alone, so at §11's own top the email address renders at roughly half strength inside the feather. Fix: derive bottom clearance from `--dock-h + 44`, or publish a `--veil-h` | The standing list |
+| R30 | **"Six HTTP 400 'Reasoning is mandatory' errors" is a harness artefact** (R22, one row above) | **The retraction was stated more completely than its evidence supported, and this is a retraction of a retraction.** R22 concluded "through the project's real path 8/8 succeeded" and then said n=8 was too small to claim the production path never hits it. It does hit it: **1 of 10 live answer calls on 2026-09-06 returned `Reasoning is mandatory for this endpoint and cannot be disabled`**, through `askModel()` with the project's own `providerOptions` and `reasoning: { enabled: false }`. **n=1, and via `generateText` rather than `streamText`** — the same request body, not the same call — so this is credible and not settled, and it does not restore the six. The handler already survives it: `onError` sets `failed` and the visitor reads corpus prose. What it costs is a model answer, on roughly one question in ten. **The caveat R22 attached was the true part of it; the sentence before the caveat was the part that travelled** | Task 57 |
 
-**Three patterns come out of these twenty-nine, all structural rather than unlucky** —
+**Three patterns come out of these thirty, all structural rather than unlucky** —
 *instrument and moment* (R12, R14, R16, R19, R20, R23), *numbers propagating through briefs*
 (R1, R2), and *a summary drifting from its own table* (R24, R25). They are stated once, with
 what they cost and what they now require, in the section immediately below. **They are not
@@ -2918,7 +2919,7 @@ SVG 24.9ms (inside noise), a looping `stroke-dashoffset` 25.5ms with the worst f
 to 92ms and framerate down 11%.
 
 **7. Every measurement states its instrument and its moment.**
-Six of the twenty-nine retractions — R12, R14, R16, R19, R20, R23 — are measurements taken with
+Six of the thirty retractions — R12, R14, R16, R19, R20, R23 — are measurements taken with
 the wrong instrument or at the wrong moment, and **both of the judge panel's own retractions were
 of this class**: a focus measurement taken 160ms into a smooth scroll, and a contrast reading
 taken with the brightest pixel in a box. One line per measurement makes both visible at write
