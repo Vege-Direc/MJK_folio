@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { setMind } from '@/lib/mind/controller';
+import { sceneRevealing, whenSceneMayBuild } from '@/lib/mind/handover';
 import { isFlying } from '@/lib/flight';
 import { motionReduced, subscribeMotion } from '@/lib/motion';
 import { STOPS } from '@/content/stops';
@@ -39,8 +40,6 @@ export default function MindCanvas() {
     // A type-only import: it erases at compile time and pulls in no chunk.
     let handle: MindHandle | null = null;
     let cancelled = false;
-    let idle = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
 
     /*
      * The effective preference, not the media query.
@@ -140,6 +139,24 @@ export default function MindCanvas() {
          */
         const { createMind, buildWaypoints } = await import('@/lib/mind/scene');
         if (cancelled || !canvas) return;
+        /*
+         * The bytes are fetched as early as this component can ask for them; the BUILD
+         * waits for permission. They are two different costs and they were being treated
+         * as one.
+         *
+         * `createMind` is hundreds of milliseconds of main thread — it builds the near
+         * network, the tube geometry, the node instances and the nebula — and the intro
+         * gate is a full-screen animation whose opening beat runs in that same window.
+         * So the gate holds this line until it reaches its HOLD, the beat where the
+         * portrait is nearly still and dropped frames are least visible, and never holds
+         * the transfer above.
+         *
+         * With no gate on screen — a returning visitor, reduced motion, a hash deep link,
+         * which is most visits — this resolves in the same microtask and nothing is
+         * deferred at all.
+         */
+        await whenSceneMayBuild();
+        if (cancelled || !canvas) return;
         handle = createMind(canvas, {
           reducedMotion: motionReduced(),
           // How many stops there are, and where the camera stands at each, taken from
@@ -163,8 +180,21 @@ export default function MindCanvas() {
           // pivot section (the scroll, already there). One writer, or neither is right.
           // The callback stays on MindOptions for the chat step, which needs to know
           // when the camera has actually landed before it docks an answer.
+          /*
+           * The one signal that means "the picture is arriving", as opposed to
+           * `setMind` below, which only means "the handle exists". The scene fires this
+           * on the frame its opacity ramp starts — after up to 1,200ms of waiting for
+           * the far field — so anything handing the viewport over waits for this and not
+           * for the handle. See MindOptions.onRevealStart.
+           */
+          onRevealStart: sceneRevealing,
           onContextLost: (reason) => {
             console.warn('[mind] webgl %s — the page keeps its dark ground', reason);
+            // No WebGL, or the context went away: nothing is going to fade up, and that
+            // is the same instruction to a waiting gate as the scene arriving. Without
+            // it, every machine without WebGL would hold the intro to its full ceiling
+            // waiting for a reveal that cannot happen.
+            sceneRevealing();
           },
         });
         handle.resize(canvas.clientWidth, canvas.clientHeight);
@@ -178,6 +208,10 @@ export default function MindCanvas() {
         // the whole fallback: a full-viewport rectangle of --color-bg.
         if (canvas) canvas.style.opacity = '';
         console.warn('[mind] scene did not load', err);
+        // Same argument as onContextLost: an intro gate waiting to hand over must be
+        // told the handover will never come, or it holds the page for its whole ceiling
+        // on exactly the visit where the scene chunk 404'd.
+        sceneRevealing();
       }
     }
 
@@ -185,17 +219,32 @@ export default function MindCanvas() {
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('mjk:route', onRoute);
 
-    // requestIdleCallback is still not in Safari as of 26.
-    if ('requestIdleCallback' in window) {
-      idle = window.requestIdleCallback(start, { timeout: 1500 });
-    } else {
-      timer = setTimeout(start, 0);
-    }
+    /*
+     * Eagerly, and this used to be `requestIdleCallback(start, { timeout: 1500 })`.
+     *
+     * WHY THE IDLE CALLBACK HAD TO GO. It was there so nine sections of prose would be
+     * interactive before three.js was even asked for. That reasoning does not survive
+     * looking at when this line actually runs: it is an effect, so React has already
+     * hydrated this tree by the time it executes. The prose is interactive. What the idle
+     * callback was really buying was up to 1,500ms of nothing, on the critical path of the
+     * one asset the page is slowest to get — measured at 140,024 B gzipped for the scene
+     * chunk, about 1.04s of transfer at Fast 3G's 1.6 Mbit/s.
+     *
+     * AND IT IS SELF-DEFEATING UNDER THE INTRO GATE. `requestIdleCallback` cannot fire
+     * during a full-screen animation; only its 1,500ms timeout can. So on precisely the
+     * visit where a gate exists to cover the scene's arrival, the idle callback delayed
+     * the arrival the gate was covering. Asking now, and holding only `createMind` (see
+     * `whenSceneMayBuild` above), separates the transfer from the main-thread cost so the
+     * gate can defer the second without touching the first.
+     *
+     * The window is no longer needed for anything here, so neither is the Safari branch:
+     * `requestIdleCallback` is still not in Safari as of 26, which was the other half of
+     * why that code had two paths.
+     */
+    void start();
 
     return () => {
       cancelled = true;
-      if (idle && 'cancelIdleCallback' in window) window.cancelIdleCallback(idle);
-      if (timer) clearTimeout(timer);
       observer.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       unsubscribeMotion();

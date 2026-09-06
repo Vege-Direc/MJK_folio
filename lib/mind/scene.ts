@@ -88,6 +88,17 @@ export type MindOptions = {
    */
   textSides?: readonly number[];
   onArriveAtStop?: (stopIndex: number) => void;
+  /**
+   * Fires once, on the frame the canvas's opacity ramp actually begins.
+   *
+   * NOT the same event as the caller getting its handle back, and the difference is the
+   * whole reason this exists. `createMind` returns while the canvas is still at
+   * `opacity: 0`; the reveal below then waits up to `T3_GRACE_MS` for the far field and
+   * takes `REVEAL_MS` to fade. Anything that wants to hand the viewport over to the
+   * scene — the intro gate does — has to know when the scene starts being *visible*, and
+   * ending on the handle instead lands the visitor on a black canvas for up to 1,900ms.
+   */
+  onRevealStart?: () => void;
   /** Replaces the prototype's per-500ms write to `#fps`. */
   onFps?: (fps: number) => void;
   /** WebGL unavailable, or the context was lost. The caller shows the fallback. */
@@ -2048,6 +2059,9 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
       if (!revealing) {
         if (!t3Done && now - readyAt < T3_GRACE_MS) return;
         revealing = true;
+        // The one moment anything outside can act on: the picture starts arriving here,
+        // not when `createMind` returned. See `onRevealStart` on MindOptions.
+        opts.onRevealStart?.();
       }
       revealT = clamp(revealT + dt / (REVEAL_MS / 1000), 0, 1);
       // easeOutCubic: quick to legible, slow to settle, so the scene arrives rather
