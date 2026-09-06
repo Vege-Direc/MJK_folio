@@ -534,6 +534,38 @@ html[data-flying] {
   text-shadow: var(--halo);
 }
 
+/*
+ * EXCEPT A BUTTON, AND THAT SENTENCE ABOVE HAS BEEN WRONG SINCE THE CARD BECAME ONE.
+ *
+ * The UA stylesheet's form-control block sets `text-shadow: none` on `button`, `input`,
+ * `select` and `textarea`, and a UA declaration beats inheritance. So the day a card became
+ * a `<button>` so it could be pressed, all twenty-nine of them silently lost the only thing
+ * this site has to keep words legible over the scene. The `.mini-card` reset restored
+ * `font`, `color`, `text-align`, `background`, `border`, `margin` and `padding`, and it was
+ * checked "at 0.0px delta against the div it replaces" — checked on geometry, and a halo is
+ * not geometry.
+ *
+ * Measured on the built page at 390x664, over a lit filament behind §07's first card: the
+ * card's body text read 1.46:1 against the pixels actually behind it, and 10.69% of all card
+ * ink on that viewport was under 4.5:1. Masking the glyphs to sample the background gave
+ * [44,52,60]; masking them AND removing `text-shadow` gave [44,52,60] as well — identical,
+ * because there was no halo there to remove. Forcing a fat shadow onto the same element gave
+ * [8,9,11], which is what proves the property was reachable the whole time and simply unset.
+ *
+ * The corroboration is in the one part of a card that never failed: `.mini-card .mk` is named
+ * in the `--halo-mono` group above, so the eyebrow carries an explicit halo and measured
+ * 10.56:1 at its worst while the title and body beside it measured 1.5:1.
+ *
+ * `inherit`, not `var(--halo)`. Naming the token here would put a second copy of the decision
+ * next to the first and let the two drift — and it would be the WRONG copy for `.mini-card
+ * .mk`, whose halo is the mono one. `inherit` takes whatever the zone is carrying, which is
+ * the sentence above finally being true.
+ */
+.content-zone button,
+.media-zone button {
+  text-shadow: inherit;
+}
+
 .section-title {
   text-shadow: var(--halo-display);
 }
@@ -1321,6 +1353,28 @@ html[data-flying] .answer-layer-in {
   font: inherit;
   color: inherit;
   cursor: pointer;
+  /*
+   * The mark's own halo, and it has to be a box-shadow because a border is not text.
+   *
+   * Every glyph on this page defends itself against the scene with a stacked `text-shadow`.
+   * The one piece of chrome that says a card is pressable had nothing: `text-shadow` does not
+   * touch a border, so the 1px accent rule met a lit filament with no ground under it at all.
+   * Measured at 390x664 before this line: the worst column of rule scored 1.42:1 against the
+   * scene beside it and 3.37% of the sampled rule was under the 3:1 that WCAG 1.4.11 asks of
+   * a control's visual boundary. An affordance that is not visible is not an affordance, and
+   * that is the whole argument for this card being a button in the first place.
+   *
+   * One inset pixel of the page's own background, immediately under the rule, inside padding
+   * the card already has. It costs no layout — an inset shadow paints inside the padding box
+   * — so it is 0px on every stop, which is the constraint that killed every other idea. It
+   * adds no colour: `--color-bg` is the ground the whole page sits on. And it survives both
+   * state changes for free, because hover and open only recolour the border above it.
+   *
+   * Against a bright cluster the accent line and the dark line disagree with the scene in
+   * opposite directions, so one edge of the mark always has contrast even when the other has
+   * none. That is the only way to draw a fixed-colour hairline over a moving image.
+   */
+  box-shadow: inset 0 1px 0 var(--color-bg);
   transition: border-color 0.15s;
 }
 
