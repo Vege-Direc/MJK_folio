@@ -4,6 +4,7 @@ import AnswerPortal from '@/components/chat/AnswerPortal';
 import ChatDock from '@/components/chat/ChatDock';
 import { ChatProvider } from '@/components/chat/ChatProvider';
 import IntroGate from '@/components/mind/IntroGate';
+import { PORTRAIT } from '@/lib/mind/portrait-tone';
 import { SITE } from '@/content/site';
 import { serializeJsonLd } from '@/lib/json-ld';
 import './globals.css';
@@ -142,8 +143,26 @@ const personJsonLdString = serializeJsonLd(personJsonLd);
  * satisfaction — "turn it off before encountering it" — and the skip control is the
  * backstop rather than the compliance.
  */
+/**
+ * The gate does not run while the portrait is the synthetic placeholder, and this is a
+ * refusal rather than a warning.
+ *
+ * `IntroGate` logs to the console when `PORTRAIT.placeholder` is true, which tells a
+ * developer and nobody else. This branch auto-deploys, so a console warning would have put
+ * a generated head in front of every first-time visitor with "I'm Mathew" written beside
+ * it. A face that is not his, captioned with his name, is a misrepresentation of a real
+ * person whatever the intent — so the decision is made here, before the overlay can paint,
+ * and `?intro=1` still forces it for review.
+ *
+ * Deleting this line is part of shipping the photograph, not a separate chore:
+ * `scripts/make-portrait.ts` sets `placeholder: false`, and then this evaluates to `false`
+ * and disappears from the emitted script on its own.
+ */
+const INTRO_NEEDS_FORCING = PORTRAIT.placeholder;
+
 const INTRO_DECISION = `(function(){try{
 var d=document.documentElement,f=location.search.indexOf('intro=1')>-1;
+if(${INTRO_NEEDS_FORCING ? 'true' : 'false'}&&!f)return;
 if(document.visibilityState==='hidden')return;
 var m=null;try{m=localStorage.getItem('mjk:motion')}catch(e){}
 if(m==='calm')return;
