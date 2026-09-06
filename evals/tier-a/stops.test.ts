@@ -53,6 +53,35 @@ describe('STOPS', () => {
     expect(stopById('hero').index).toBe(0);
   });
 
+  /*
+   * `lib/mind/waypoints.ts` gives the LAST vantage a nine-unit pullback, and the
+   * condition it uses is `i === n - 1` — positional, and it has never known the word
+   * `contact`. That pullback is what took the final frame's whole-frame luminance from
+   * 127.6 to 92.2 and stopped the one screen a visitor is asked to act on reading as a
+   * different website. Append a stop after `contact` and it is lost with no throw, no
+   * log and no other failing test: the only symptom is a brighter screenshot nobody
+   * takes. So the coupling between a copy file and a camera path is asserted here rather
+   * than remembered.
+   */
+  it('ends on contact, because the last vantage gets the pullback', () => {
+    expect(STOPS.at(-1)?.id).toBe('contact');
+  });
+
+  /*
+   * `§ 05 — Engineering` is an address, and an address that disagrees with where the
+   * thing actually is is worse than no address. Nothing else checks it: `kicker` and
+   * `index` are two hand-authored fields that duplicate the same fact, and a reorder
+   * edits both. They drifted apart silently until this line existed.
+   */
+  it('numbers its kickers in page order', () => {
+    // hero is the masthead and carries a name, not a number.
+    for (const stop of STOPS.slice(1)) {
+      expect(stop.kicker, `${stop.id} is index ${stop.index}`).toMatch(
+        new RegExp(`^§ ${String(stop.index).padStart(2, '0')} — `),
+      );
+    }
+  });
+
   it('never lets a generated answer target hero', () => {
     // hero is authored-only. A model that can route to it can overwrite the one piece
     // of copy nobody reviews on the way past.
