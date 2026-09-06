@@ -640,7 +640,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
           console.warn(
             `[api/ask] salvage kept ${kept.text.length} of ${text.length} chars ` +
               `(-${Math.round((100 * (text.length - kept.text.length)) / text.length)}%), ` +
-              `${kept.dropped} sentences dropped, ${kept.redacted} redacted`,
+              `${kept.dropped} sentences dropped, ${kept.redacted} numbers redacted`,
           );
         }
         deps.instrument.outcome(kept ? 'salvaged' : 'replaced');

@@ -189,7 +189,15 @@ export type Salvage = {
   text: string;
   /** Sentences removed outright. */
   dropped: number;
-  /** Sentences kept with an unbacked count removed from them. */
+  /**
+   * Unbacked counts removed from sentences that were otherwise sound.
+   *
+   * Counted in NUMBERS, not in sentences, because that is the unit the visitor is told
+   * about: `lib/ask/handler.ts` renders this as "two numbers removed". It used to count
+   * sentences, so an answer that lost two numbers from one sentence said "one number
+   * removed" -- a small lie on the one line of the page whose entire job is to say
+   * exactly what was taken.
+   */
   redacted: number;
 };
 
@@ -208,10 +216,69 @@ function escapeRegExp(s: string): string {
 }
 
 /**
+ * A comma or a coordinator on either side of a number makes it an ITEM IN A SERIES, and a
+ * series item cannot be deleted -- the punctuation that joined it stays behind.
+ *
+ * "to", "than" and "between" are here for the same reason as the comma: "more than three
+ * rollouts" and "between three and five markets" both leave a hole a reader can see.
+ */
+const SERIES_BEFORE = /(?:,|\b(?:and|or|nor|to|than|between)\b)\s*$/i;
+const SERIES_AFTER = /^(?:and|or|nor|to|than|through)\b/i;
+
+/**
+ * Remove counted words, or refuse to.
+ *
+ * THIS IS THE ONE THE LIVE SITE GOT WRONG. It used to be one `String.replace` of the word
+ * and any space after it, and nothing else -- correct for the shape it was written for,
+ * "three rollouts"
+ * loses a determiner and reads as prose -- and wrong for every other position a number can
+ * sit in. MJK's screenshot is the proof: the model wrote "Clips run five, ten or fifteen
+ * seconds, with motion kept deliberately small", two counts were removed, and the page
+ * printed "Clips run , or fifteen seconds". A site whose single strongest claim is that it
+ * checks what it says cannot afford to look like it cannot write, so a redaction that
+ * leaves a scar is worse than the sentence being gone.
+ *
+ * So the removal is only permitted from DETERMINER position, and that is decided at the
+ * seam rather than by a list of shapes:
+ *
+ *   - the number counted a noun the sentence actually names (`unit`),
+ *   - what precedes it is a word and a space, never a comma or a coordinator,
+ *   - what follows it is a word, never punctuation and never a coordinator.
+ *
+ * Sentence-initial numbers fail the second test on purpose: "Five clips run" would lose
+ * its capital and open lowercase. Everything that fails returns null, and the caller drops
+ * the sentence -- which costs a true clause and buys a page that always reads as English.
+ */
+function redactCounts(sentence: string, quantities: readonly Quantity[]): string | null {
+  let text = sentence;
+
+  for (const quantity of quantities) {
+    const found = new RegExp(`\\b${escapeRegExp(quantity.raw.trim())}\\b\\s*`, 'i').exec(text);
+    if (!found || !quantity.unit) return null;
+
+    const before = text.slice(0, found.index);
+    const after = text.slice(found.index + found[0].length);
+    const determiner =
+      /[A-Za-z0-9)\]'"]\s$/.test(before) &&
+      !SERIES_BEFORE.test(before) &&
+      /^[A-Za-z]/.test(after) &&
+      !SERIES_AFTER.test(after);
+    if (!determiner) return null;
+
+    text = before + after;
+  }
+
+  return text.replace(/\s{2,}/g, ' ').trim();
+}
+
+/**
  * Rescue what is true.
  *
- * A sentence whose only fault is a counted word loses the word and stays. Every other
- * violating sentence is dropped. The remainder is returned only if it is still an answer
+ * A sentence whose only fault is a counted word loses the word and stays -- but only when
+ * the word can be lifted out without leaving a mark; see `redactCounts`, which is where
+ * the live site's "Clips run , or fifteen seconds" came from. Every other violating
+ * sentence is dropped, and so is one whose redaction would not read as English. The
+ * remainder is returned only if it is still an answer
  * rather than a fragment: at least half the sentences survive, and either two are left or
  * the one that is left is long enough to carry a thought on its own. Otherwise null, and
  * the caller should show the licensed memory text rather than a shrug.
@@ -250,16 +317,13 @@ export function salvageDetailed(answer: string, result: GuardResult): Salvage | 
         continue;
       }
       const onlyCounts = faults.every((v) => v.kind === 'unlicensed-quantity' && v.quantity && isCountedWord(v.quantity));
-      if (!onlyCounts) {
+      const trimmed = onlyCounts ? redactCounts(sentence, faults.map((v) => v.quantity!)) : null;
+      if (trimmed === null) {
         dropped++;
         continue;
       }
-      let text = sentence;
-      for (const v of faults) {
-        text = text.replace(new RegExp(`\\b${escapeRegExp(v.quantity!.raw.trim())}\\b\\s*`, 'i'), '');
-      }
-      kept.push(text.replace(/\s{2,}/g, ' ').trim());
-      redacted++;
+      kept.push(trimmed);
+      redacted += faults.length;
     }
 
     keptCount += kept.length;
