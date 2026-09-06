@@ -25,7 +25,7 @@ how this project has already retracted four numbers.
 | 8 | ~~Finish the phone~~ **DONE, 8 commits.** Bloom won the fork; composer stays | Hero **3.16% → 8.84%**, contact **6.10% → 23.35%**. Mobile now exceeds desktop at both |
 | 9 | **Asanjo as one engagement** — storefront and the catalogue imagery that fills it | The only named, checkable, end-to-end work on the site |
 | 10 | **Animate only the return edge and the token** in the workflow chart | +803 bytes, zero JS, zero dependencies |
-| 11 | **Expose the Redis ask-counter** as a private, cookie-free aggregate | The instrument already exists and has never been read |
+| 11 | ~~Expose the Redis ask-counter~~ **DONE — `b77edcb`, `9367f5d`, `9a543be`, `efb1ec5`, `369e22d`, `decb406`.** `GET /api/instrument`, plain text, `INSTRUMENT_TOKEN` | The instrument already existed and had never been read. It now counts views, asks, **card/chip/typed**, depth, stop and outcome — and on its first live run it caught itself rendering an unreachable store as a site nobody had visited |
 | 12 | **Make rule 24 a build gate** in `check-corpus.ts` | 54 memories, 8 cards, ~36 bodies in no HTML at all |
 
 ## What would prove each wrong, and what undoing costs
@@ -42,7 +42,7 @@ how this project has already retracted four numbers.
 | 8 | Contrast fell? It did not — **10.50 → 10.28 mobile**, floor 4.5 | Per-commit revert; each step separate. Take budget from `nebulaPoints`, never `secondaryPerNode` |
 | 9 | Asanjo asking not to be named after all | Delete two memories |
 | 10 | A judge panel finding the motion says nothing | Two CSS rules |
-| 11 | Nothing. It is a counter that already runs | Delete an endpoint |
+| 11 | Nothing. It is a counter that already runs | **Unset `INSTRUMENT_TOKEN`** — the route 404s to everyone, owner included. Delete `proxy.ts` to drop the denominator. Neither touches a line the visitor sees |
 | 12 | The gate proving unsatisfiable at memory grain | One script check |
 
 ## Collisions, preserved rather than averaged
@@ -101,3 +101,21 @@ how this project has already retracted four numbers.
 Instrument: the Redis counter already running in `lib/security/limits.ts`. Nobody has published
 that split for any site, and it is the only thing that can settle whether this site is what it
 claims to be.
+
+**Built.** `GET /api/instrument?key=$INSTRUMENT_TOKEN`. Read it with
+`curl -H "Authorization: Bearer $INSTRUMENT_TOKEN" https://mjk.nila.li/api/instrument`.
+
+One correction to the ask above, made rather than assumed: **a session is not measurable
+here and the report does not pretend otherwise.** A session needs a device identifier, and
+the privacy page's "No cookies" rules out both a cookie and a `sessionStorage` flag
+(ePrivacy Art 5(3) covers storage, not merely cookies). What is measured instead is *page
+views* — document requests the server already served, crawlers bucketed separately — and a
+per-day HyperLogLog of the address hash the limiter already computes, which estimates
+distinct visitors and can say how many, never who. Both are named as approximations on the
+page that prints them.
+
+**Do not read a first week of it as evidence.** Every ratio carries a Wilson interval and
+says outright when the band is too wide to separate 2% from 8%, which at this site's traffic
+will be true for some time. The instrument's job is to stop the guessing eventually, not to
+replace one unattributed number with a thinly-sourced one — which is exactly how the
+`5–15%` figure got onto the retraction list above.
