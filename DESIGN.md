@@ -95,3 +95,25 @@ scrolling particle field. Deviation is deliberate; do not "fix" it back.
 
 Unchanged and non-negotiable. Cyan `#3ecfff` and orange `#ff8a3d` exist only inside the
 WebGL layer. The DOM is warm oat and amber. They never meet.
+
+### The one amendment, and it is deliberate — the intro gate
+
+The opening gate draws its portrait in the scene's cyan on a 2D canvas, which is not the
+WebGL layer as the rule above defines it. The owner authorised cyan for it; this is what
+that authorisation actually costs, written down rather than taken quietly.
+
+**The gate is ruled part of the scene layer, not an exception to the rule.** Everything
+about it belongs to the scene except its rendering API: the ground is `#0a0a0e`, the
+marks are `PALETTE.node` and `PALETTE.particle`, they composite additively exactly as the
+scene's materials do, and the dissolve at the end is free precisely because the portrait's
+shoulder dots and the scene's nebula dust are the same mark. It is on a 2D canvas for one
+reason, and it is a good one: **the three.js chunk is the thing it exists to cover.** A
+load screen cannot be drawn by the thing that is loading.
+
+**The type in the gate stays warm oat.** `--color-type` on `--color-bg`, the same as the
+DOM everywhere else. So the distinction the rule is really protecting — the words are warm
+and the scene is cool — is intact inside the gate as well as around it. Nothing here
+licenses cyan on a DOM element that carries text.
+
+The scope is the gate and nothing else: `components/mind/intro.css` and the marks
+`lib/mind/intro.ts` draws. Any other DOM use of cyan is still the thing this rule forbids.
