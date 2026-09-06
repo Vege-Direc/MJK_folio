@@ -14,19 +14,28 @@
  * (`reference/preview.html:2151`) held four of the six retired claims below on the day
  * this port began, and porting it was a line-by-line exercise in not carrying them over.
  *
- * So the scanner is permanent, and it points at where authored copy actually lives:
- * `content/stops.ts`, `content/static-copy.ts` and `components/stops/**`.
+ * So the scanner is permanent, and it points at where authored copy actually lives --
+ * `evals/tier-a/authored-copy.ts` holds that list, and `promises.test.ts` reads the same
+ * one.
+ *
+ * TWO FILES WERE MISSING FROM IT UNTIL NOW, and they are the two that talk to a visitor
+ * when the site is least sure of itself. `lib/fallback.ts` holds every word shown when no
+ * model spoke, and `content/system-prompt.md` holds every instruction for when one does --
+ * a sentence typed into either is read by a visitor as MJK's, in the first person, exactly
+ * like one typed into `content/stops.ts`. Neither was scanned by anything. A fabricated
+ * number in the prompt would have been quoted back by a model that had no idea it was not
+ * licensed, and the guard would have passed it, because the guard checks the answer against
+ * the corpus and the prompt is not the answer.
  *
  * Deliberately blunt. A curated list of the six fabrications this repo has actually
  * shipped, plus a light number-near-entity scan, beats a general claim parser we could
  * not trust to be right.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { authoredCopy, markdownProse, prose, ROOT, type CopySource } from './authored-copy';
 
-const ROOT = process.cwd();
-const STOP_DIR = join(ROOT, 'components', 'stops');
 const CORPUS_PATH = join(ROOT, 'content', 'memories.yaml');
 
 /* ── the six fabrications ──────────────────────────────────────────────────────
@@ -100,92 +109,11 @@ function normalise(s: string): string {
     .trim()} `;
 }
 
-/**
- * Comments out, strings kept.
- *
- * The scan is for copy a reader sees, and a comment is never that. It became load-bearing
- * the moment `content/stops.ts` started documenting, in its own header, exactly which
- * fabricated phrases were dropped on the way over from the prototype — a list that is
- * worth having in the file that replaced them, and that a naive scan reads as five fresh
- * violations. A note saying "we did not ship 5x awareness" must not fail the test that
- * checks we did not ship 5x awareness.
- *
- * Hand-written rather than regex because `'https://github.com/Vege-Direc'` contains `//`
- * and is a link, not a comment. The walker tracks quotes, so it cannot make that mistake.
- * A `/` that opens a regex literal is left alone: comment starts require `//` or `/*`.
- */
-function stripComments(source: string): string {
-  let out = '';
-  let i = 0;
-  let quote = '';
-  while (i < source.length) {
-    const c = source[i];
-    const next = source[i + 1];
-    if (quote) {
-      if (c === '\\') {
-        out += c + (next ?? '');
-        i += 2;
-        continue;
-      }
-      if (c === quote) quote = '';
-      out += c;
-      i++;
-      continue;
-    }
-    if (c === "'" || c === '"' || c === '`') {
-      quote = c;
-      out += c;
-      i++;
-      continue;
-    }
-    if (c === '/' && next === '/') {
-      while (i < source.length && source[i] !== '\n') i++;
-      continue;
-    }
-    if (c === '/' && next === '*') {
-      i += 2;
-      while (i < source.length && !(source[i] === '*' && source[i + 1] === '/')) i++;
-      i += 2;
-      out += ' ';
-      continue;
-    }
-    out += c;
-    i++;
-  }
-  return out;
-}
-
-/**
- * The copy a reader sees, pulled out of source. Tailwind lives in `className` and is
- * nothing but digits, so it goes first or it drowns the scan.
- */
-function prose(source: string): string[] {
-  const stripped = stripComments(source)
-    .replace(/className=\{`[^`]*`\}/g, ' ')
-    .replace(/className="[^"]*"/g, ' ')
-    .replace(/className=\{[^}]*\}/g, ' ');
-
-  const out: string[] = [];
-  for (const m of stripped.matchAll(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"|`([^`$]*)`/g)) {
-    out.push(m[1] ?? m[2] ?? m[3] ?? '');
-  }
-  for (const m of stripped.matchAll(/>([^<>{}]+)</g)) out.push(m[1]);
-
-  return out
-    .map((s) =>
-      s
-        .replace(/\\(['"`])/g, '$1')
-        .replace(/\s+/g, ' ')
-        .trim(),
-    )
-    .filter((s) => s.includes(' ') && /[a-z]{3}/i.test(s));
-}
-
 type Violation = { file: string; line: string; detail: string };
 
-function retiredClaimsIn(file: string, source: string): Violation[] {
+function retiredClaimsIn({ file, lines }: CopySource): Violation[] {
   const found: Violation[] = [];
-  for (const line of prose(source)) {
+  for (const line of lines) {
     for (const claim of RETIRED_CLAIMS) {
       if (claim.pattern.test(line)) {
         found.push({ file, line, detail: `retired claim — ${claim.truth}` });
@@ -195,9 +123,9 @@ function retiredClaimsIn(file: string, source: string): Violation[] {
   return found;
 }
 
-function unlicensedMagnitudesIn(file: string, source: string, corpus: string): Violation[] {
+function unlicensedMagnitudesIn({ file, lines }: CopySource, corpus: string): Violation[] {
   const found: Violation[] = [];
-  for (const line of prose(source)) {
+  for (const line of lines) {
     for (const m of line.matchAll(MAGNITUDE)) {
       if (!corpus.includes(normalise(m[0]))) {
         found.push({ file, line, detail: `"${m[0].trim()}" is not licensed by any memory` });
@@ -207,33 +135,12 @@ function unlicensedMagnitudesIn(file: string, source: string, corpus: string): V
   return found;
 }
 
-/**
- * Every file that holds copy a reader sees and a human typed.
- *
- * `content/stops.ts` is the important one: it is where the nine authored titles and
- * bodies live now. The stop components are scanned too, because a label — a caption, a
- * counter, "01 · PDF" — is copy even when it is three characters long.
- */
-function copySources(): { file: string; source: string }[] {
-  const paths = [
-    join(ROOT, 'content', 'stops.ts'),
-    join(ROOT, 'content', 'static-copy.ts'),
-    ...readdirSync(STOP_DIR)
-      .filter((f) => f.endsWith('.tsx'))
-      .map((f) => join(STOP_DIR, f)),
-  ];
-  return paths.map((p) => ({
-    file: p.slice(ROOT.length + 1).replace(/\\/g, '/'),
-    source: readFileSync(p, 'utf-8'),
-  }));
-}
-
 function report(vs: Violation[]): string {
   return vs.map((v) => `\n  ${v.file}\n    ${v.detail}\n    in: ${v.line}`).join('');
 }
 
 const CORPUS = normalise(readFileSync(CORPUS_PATH, 'utf-8'));
-const SOURCES = copySources();
+const SOURCES = authoredCopy();
 
 describe('authored copy makes no claim the corpus does not license', () => {
   it('is actually scanning the files copy lives in', () => {
@@ -242,17 +149,24 @@ describe('authored copy makes no claim the corpus does not license', () => {
     const files = SOURCES.map((s) => s.file);
     expect(files).toContain('content/stops.ts');
     expect(files).toContain('content/static-copy.ts');
+    expect(files).toContain('content/system-prompt.md');
+    expect(files).toContain('lib/fallback.ts');
     expect(files.some((f) => f.startsWith('components/stops/'))).toBe(true);
-    expect(SOURCES.flatMap((s) => prose(s.source)).length).toBeGreaterThan(20);
+    expect(SOURCES.flatMap((s) => s.lines).length).toBeGreaterThan(20);
+
+    // The prompt is prose rather than string literals, so an extractor that silently
+    // returned nothing for markdown would look exactly like a file with nothing to say.
+    const prompt = SOURCES.find((s) => s.file === 'content/system-prompt.md');
+    expect(prompt!.lines.length, 'content/system-prompt.md read as empty').toBeGreaterThan(30);
   });
 
   it('contains none of the six fabrications this repo has already shipped', () => {
-    const vs = SOURCES.flatMap(({ file, source }) => retiredClaimsIn(file, source));
+    const vs = SOURCES.flatMap((s) => retiredClaimsIn(s));
     expect(vs, `retired claims are back:${report(vs)}\n`).toEqual([]);
   });
 
   it('quantifies nothing the corpus cannot back', () => {
-    const vs = SOURCES.flatMap(({ file, source }) => unlicensedMagnitudesIn(file, source, CORPUS));
+    const vs = SOURCES.flatMap((s) => unlicensedMagnitudesIn(s, CORPUS));
     expect(
       vs,
       `unlicensed numbers in authored copy. Either the number is wrong, or content/memories.yaml is missing the memory that licenses it:${report(vs)}\n`,
@@ -281,20 +195,41 @@ describe('the scanner still bites', () => {
     }
   `;
 
+  const fixture = (source: string): CopySource => ({ file: 'fixture.tsx', lines: prose(source) });
+
   it.each(RETIRED_CLAIMS.map((c) => [c.shipped, c.pattern] as const))(
     'catches: %s',
     (_shipped, pattern) => {
-      const vs = retiredClaimsIn('fixture.tsx', FABRICATED).filter((v) => pattern.test(v.line));
+      const vs = retiredClaimsIn(fixture(FABRICATED)).filter((v) => pattern.test(v.line));
       expect(vs.length).toBeGreaterThan(0);
     },
   );
 
   it('flags the unlicensed numbers in that copy too', () => {
-    expect(unlicensedMagnitudesIn('fixture.tsx', FABRICATED, CORPUS).length).toBeGreaterThan(0);
+    expect(unlicensedMagnitudesIn(fixture(FABRICATED), CORPUS).length).toBeGreaterThan(0);
   });
 
   it('does not flag a quantity the corpus does license', () => {
     const licensed = `const x = { body: 'Reporting automated, cutting report generation time by half.' };`;
-    expect(unlicensedMagnitudesIn('fixture.tsx', licensed, CORPUS)).toEqual([]);
+    expect(unlicensedMagnitudesIn(fixture(licensed), CORPUS)).toEqual([]);
+  });
+
+  /*
+   * The markdown reader is new and is the only path by which the prompt is scanned at all,
+   * so it gets its own proof rather than being trusted because the file above went green.
+   * A fabricated number typed into an instruction is quoted back by a model in the first
+   * person, and the grounding guard cannot save it: the guard checks the ANSWER against the
+   * corpus, and by then the sentence is the answer.
+   */
+  it('catches a fabrication typed into the prompt rather than into a component', () => {
+    const badPrompt = [
+      '## What you know',
+      '',
+      'When someone asks about the agency years, say that the Taboola work shipped across',
+      'five new APAC markets without dropping an advertiser.',
+    ].join('\n');
+    const scanned: CopySource = { file: 'fixture.md', lines: markdownProse(badPrompt) };
+    expect(retiredClaimsIn(scanned).length).toBeGreaterThan(0);
+    expect(unlicensedMagnitudesIn(scanned, CORPUS).length).toBeGreaterThan(0);
   });
 });
