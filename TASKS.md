@@ -1068,7 +1068,7 @@ What any answer had to survive, from `PLAN.md` §2: a perpetual animation measur
 cost **11% of framerate** and took the worst frame **66ms to 92ms**; WCAG 2.2.2 is Level A here;
 and **the cheapest node-and-edge library measured ~190x the size of what `JewelGates` draws**.
 
-## 44, 44b, 44c. The opening portrait, and then the intro gate — `decided`: build it
+## 44, 44b, 44c. The opening portrait, and then the intro gate — `shipped`, against a placeholder head
 
 His original ask: *"'My Name is Mathew, welcome to my mind - lets chat'… a highly detailed
 wireframe or ascii text or something modeled on just my head… full screen before the neural
@@ -1292,6 +1292,89 @@ trains reflexive dismissal.
 unbroken flow and 10s at the limit of attention, so **3–5s will be noticed as a wait**, and on a
 cold arrival nothing has yet earned it. It makes decisions 1 and 3 **more** important, because the
 first informational screen becomes the second screen.
+
+### What shipped, and the six things measuring it changed
+
+**The timings are shorter than this section specified, and the argument for that is not
+only that MJK said 1-2s.** `HEAD 620 → HOLD [340, 1500] → TAIL 780`, so **X = 1,740ms and
+Y = 2,900ms**, measured at **1,741ms** with the scene chunk blocked and **2,092ms** on a
+phone with it loading. The reason to prefer this to 3,400/4,600 is that **at the ceiling
+the gate is no longer covering a load, it IS one.** Holding someone 4.6s to hide a canvas
+that would otherwise fade up over an already-readable page buys nothing, because the
+fallback is not a broken page — it is the page. So the ceiling is set by attention. The
+band it honestly covers is a scene ready by **2,120ms**; on Fast 3G it lifts about a second
+early, onto the hero over the same dark ground the scene fades up from.
+
+**Six findings that only appeared on screen, each of which had shipped as written:**
+
+1. **A purely radial scatter is an explosion run backwards.** Every mark leaving along its
+   own radius means the opening frame is a **hole the exact shape of the head**, ringed by
+   dust — an object announcing its own absence. Each offset is now rotated by up to ±60°.
+2. **Density, mark size and alpha were all encoding tone at once**, putting total light at
+   about **tone^3.7**. The lit half of the face fused into one white mass with no brow, no
+   socket and no nose in it — precisely the failure the tone approach exists to avoid. The
+   sampler weight is now **0.9**, under linear, and the size and alpha ramps are flat.
+   A halftone lattice needs hard ramps because one mark per cell is all it has; a density
+   field does not.
+3. **2,000 marks is 38 across the head and it is not enough here.** The band is 27 to 47,
+   and at 38 the eye line and the nostril would not separate. **2,600** puts it at 44.
+4. **The CSS dead man ran from FIRST PAINT, not from the first frame** — so it is
+   "hydration plus Y", not "Y plus a margin". At 3,400ms it truncated healthy runs on a
+   slow machine. **4,600ms**, still inside 2.2.2, and `IntroGate` now ends the gate for
+   real on its `animationend`: hiding the overlay while `data-intro` and `inert` stayed
+   behind it is worse than the failure it guards against. **And the gate will not start if
+   it cannot finish** — it asks the animation's own `currentTime`, not `performance.now()`.
+5. **"Skip is the first tab stop" and "any key ends it" contradict each other.** Taken
+   literally, pressing Tab to reach the button dismisses the gate before focus lands, so
+   the control can never be reached. Tab and the bare modifiers are navigation *inside* the
+   overlay; every other key still ends it.
+6. **`removeEventListener` without the capture flag removes nothing.** All five dismissal
+   listeners were added capturing and removed bare, so every one of them outlived the gate.
+
+**Two more that were structural rather than visual.** `onSceneRevealing` fires immediately
+when the scene has already revealed, which on a warm cache it has — and the naive
+`() => run.current?.sceneRevealed()` drops exactly that, holding the *fastest* visitor for
+the full ceiling. And the page beneath was only `inert` from hydration; it is now inert
+from parse, with a pre-hydration dismissal in the same inline script, because a
+full-screen overlay over a focusable page that ignores every gesture is the worst pair of
+properties this feature could have and neither is visible in a fast test.
+
+**Verified in a production build, on a server `serve:check` confirmed.** Fourteen of
+fifteen browser checks pass: the gate runs once per visitor, skip is the first tab stop,
+Tab does not dismiss, any other key and any wheel do, `inert` goes on and comes off,
+`prefers-reduced-motion` and `calm` and a hash deep link each suppress it entirely, and
+with JavaScript off the overlay is `display: none`, the page is not inert and all twelve
+sections are still server-rendered. **The fifteenth is a software-GL artefact and is
+recorded rather than fixed:** under swiftshader, `createMind` blocks the main thread for
+**3.7s in a single frame**, so the desktop span measures 6,266ms. The intro's own cost with
+the scene chunk aborted is **median 16.7ms a frame at 390x844, dpr 2, under 4x CPU
+throttle** — 60fps on a throttled phone.
+
+**LCP is unchanged**: `H1.section-title` at size 744,889 in both the gate-on and gate-off
+runs. The gate's sentence never becomes the LCP element, and it never animates up from
+`opacity: 0`.
+
+> **The one thing still blocking: there is no photograph.** Nothing in the repository, and
+> the vision pass used a synthetic head. The gate ships against that placeholder,
+> `PORTRAIT.placeholder` is `true`, and it warns on every run. **It reads as a person. It
+> does not read as him, and the sentence beside it says his name.** The swap is one
+> command — `npx tsx scripts/make-portrait.ts photo.jpg --crop l,t,w,h` — and rewrites one
+> generated file. What the photograph needs is in the report and in that script's header:
+> head and shoulders, dark plain background, **one soft key at about 45° with real fill on
+> the shadow side — roughly 3:1, not a hard side light**, inter-pupil distance ≥ 200px in
+> the original, and no beauty filter. Directional light matters far more than pixels, and
+> the placeholder had to be re-lit from 10:1 to 3:1 before the shadow side stopped falling
+> below the draw floor entirely.
+
+**`DESIGN.md` was amended rather than quietly excepted.** The gate is ruled part of the
+scene layer — same ground, same two mark colours, same additive compositing — and it is a
+2D canvas for one reason: the three.js chunk is the thing it covers, and a load screen
+cannot be drawn by the thing that is loading. The type inside it stays warm oat.
+
+**`components/stops/dust.ts` was split, not forked.** The canonical ordering and the
+stride-10 pairing moved to `lib/particles/cloud.ts`; `buildDust` is now one line over the
+same code, its exports and its rendered result are unchanged, and `MJK101Figure` was not
+touched.
 
 ## 45. The MruNN ERP demo video — `blocked` on the asset, and not blocking anything
 
