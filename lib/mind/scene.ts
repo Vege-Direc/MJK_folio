@@ -35,14 +35,33 @@ import { CFG, PALETTE, detectTier, type Tier } from './config';
 import { clamp, makeCurve, smoothstep, tubeWithTangent, UP } from './curves';
 import { anchorAt, ReadingLightOutputPass } from './reading-light';
 import { BloomPyramidPass, bloomInternalsIntact } from './bloom';
-import { buildWaypoints, mulberry32, srand, type Waypoint } from './waypoints';
+import { mulberry32, srand, type Waypoint } from './waypoints';
+
+/**
+ * Re-exported so the caller that must supply `MindOptions.waypoints` can reach the
+ * generator without a second dynamic import — `waypoints.ts` pulls in three.js, so
+ * importing it from `MindCanvas` directly either hoists three into the entry bundle
+ * (static) or splits this module's async chunk in two (dynamic). Both were measured.
+ */
+export { buildWaypoints } from './waypoints';
 
 /** The precomputed tier-3 topology, as `public/far-network.json` stores it. */
 export type FarNetwork = { nodes: number[][]; edges: number[][] };
 
 export type MindOptions = {
-  /** Nine by default — one per stop in content/stops.ts. */
-  waypoints?: Waypoint[];
+  /**
+   * The camera path: one vantage per stop in content/stops.ts.
+   *
+   * Required, and required deliberately. This used to read `waypoints?: Waypoint[]`
+   * with `createMind` falling back to `buildWaypoints(9)`, and `MindCanvas` never
+   * passed it — so the literal nine WAS the scene, whatever `STOPS` held. Nothing
+   * threw when they disagreed: `ScrollProgress` would have mapped every section onto
+   * an eight-segment camera path, `pulse(i)` is guarded `i < M` and drops an
+   * out-of-range index without a word, and `textSides` past the ninth entry is never
+   * read. Omitting this is now a type error, which is the only version of this that
+   * cannot drift.
+   */
+  waypoints: Waypoint[];
   /** Live: pass the current value and call `setReducedMotion` when it changes. */
   reducedMotion?: boolean;
   /** Pin the quality tier. Omitted, it is detected once from the machine. */
@@ -157,10 +176,10 @@ function inertHandle(stops: number): MindHandle {
   };
 }
 
-export function createMind(canvas: HTMLCanvasElement, opts: MindOptions = {}): MindHandle {
+export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHandle {
   const doc = canvas.ownerDocument;
   const maybeView = doc.defaultView;
-  const waypoints = opts.waypoints ?? buildWaypoints(9);
+  const waypoints = opts.waypoints;
   const M = waypoints.length;
   if (!maybeView) return inertHandle(M);
   // A const with a non-nullable annotation: TS keeps narrowing out of hoisted function

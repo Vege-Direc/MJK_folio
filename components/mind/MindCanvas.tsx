@@ -105,10 +105,30 @@ export default function MindCanvas() {
               .then((r) => (r.ok ? (r.json() as Promise<FarNetwork>) : null))
               .catch(() => null)
           : null;
-        const { createMind } = await import('@/lib/mind/scene');
+        /*
+         * `buildWaypoints` comes through `scene.ts`, not from `@/lib/mind/waypoints`
+         * directly, and the reason is bundling rather than taste.
+         *
+         * It cannot be a static import at the top of this file: `waypoints.ts` imports
+         * three.js, and hoisting it would drag the 563 KB three chunk into the entry
+         * bundle — the exact cost this component's dynamic import exists to avoid.
+         * Nor can it be a second `await import(...)` beside this one: measured on the
+         * production build, that splits the scene's async chunk in two (497,069 +
+         * 75,408 bytes in place of one 563,413) and buys the scene a second request
+         * for no reason. One specifier, one chunk, and the module that requires the
+         * waypoints is the one that publishes the way to build them.
+         */
+        const { createMind, buildWaypoints } = await import('@/lib/mind/scene');
         if (cancelled || !canvas) return;
         handle = createMind(canvas, {
           reducedMotion: motionReduced(),
+          // How many stops there are, and where the camera stands at each, taken from
+          // the authored stop table rather than from a literal inside the scene.
+          // `scene.ts` used to default to `buildWaypoints(9)` and nothing passed this,
+          // so the nine was the scene no matter what `content/stops.ts` said — and the
+          // two disagreeing threw nothing. Same argument as `textSides` below: one
+          // source, and the scene has no opinion about how many stops exist.
+          waypoints: buildWaypoints(STOPS.length),
           // Where each stop puts its words, so the reading light can sit on that side.
           // Read from the authored stop table rather than guessed at: `align` is the
           // same field the DOM lays the columns out with, so the light and the type
