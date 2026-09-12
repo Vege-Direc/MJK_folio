@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 import { SITE } from '@/content/site';
 
@@ -16,9 +18,26 @@ export const contentType = 'image/png';
  * ttf/otf/woff only — Google's CSS endpoint serves woff2 to modern browsers, so the
  * fetch below sends a legacy User-Agent to get the woff variant instead.
  *
- * If the fetch fails (offline build, blocked egress), we fall back to no custom fonts.
- * Satori's built-in fallback still renders every character, just without the serif/mono
- * distinction — better than failing the build over an OG image.
+ * IF THE FETCH FAILS THIS ROUTE USED TO TAKE THE DEPLOY WITH IT. The paragraph that
+ * stood here said falling back to no custom fonts was "better than failing the build over
+ * an OG image", and it was untrue in two separate ways for as long as it stood. Coolify
+ * build 1314 died on 2026-09-12 with "Cannot read properties of undefined (reading
+ * split)" out of the prerender, on a commit that built here without complaint, because
+ * this machine could reach fonts.googleapis.com that minute and the build container could
+ * not.
+ *
+ * The first fault: the style below read `fontFamily: mono ? 'JetBrains Mono' : undefined`,
+ * and satori sees the key as present and splits it. A style property set to `undefined` is
+ * not a style property that is absent, so the two spreads below omit the key instead.
+ *
+ * The second, which the first was hiding: satori has no font of its own. With an empty
+ * list it stops at "No fonts are loaded. At least one font is required to calculate the
+ * layout." Next ships Geist inside `next` for exactly this, so it is read off disk when
+ * the network has given nothing. This route is prerendered, so that read happens at build
+ * time and never when a visitor asks for the image.
+ *
+ * Verified the way the sentence this replaces never was: force both fetches to return
+ * null, delete `.next`, run the build, watch it pass.
  */
 async function loadGoogleFont(family: string, weight: number): Promise<ArrayBuffer | null> {
   try {
@@ -37,6 +56,18 @@ async function loadGoogleFont(family: string, weight: number): Promise<ArrayBuff
   }
 }
 
+/** The font Next bundles for `ImageResponse`. Read from disk, so no network can lose it. */
+async function bundledFont(): Promise<ArrayBuffer | null> {
+  try {
+    const buf = await readFile(
+      join(process.cwd(), 'node_modules', 'next', 'dist', 'compiled', '@vercel', 'og', 'Geist-Regular.ttf'),
+    );
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+  } catch {
+    return null;
+  }
+}
+
 export default async function Image() {
   const [fraunces, mono] = await Promise.all([
     loadGoogleFont('Fraunces', 600),
@@ -47,6 +78,11 @@ export default async function Image() {
     fraunces ? { name: 'Fraunces', data: fraunces, weight: 600 as const, style: 'normal' as const } : null,
     mono ? { name: 'JetBrains Mono', data: mono, weight: 500 as const, style: 'normal' as const } : null,
   ].filter((f): f is NonNullable<typeof f> => f !== null);
+
+  if (!fonts.length) {
+    const geist = await bundledFont();
+    if (geist) fonts.push({ name: 'Geist', data: geist, weight: 500 as const, style: 'normal' as const });
+  }
 
   return new ImageResponse(
     (
@@ -64,7 +100,7 @@ export default async function Image() {
         <div
           style={{
             display: 'flex',
-            fontFamily: mono ? 'JetBrains Mono' : undefined,
+            ...(mono ? { fontFamily: 'JetBrains Mono' } : {}),
             fontSize: 22,
             letterSpacing: 6,
             textTransform: 'uppercase',
@@ -77,7 +113,7 @@ export default async function Image() {
           style={{
             display: 'flex',
             marginTop: 40,
-            fontFamily: fraunces ? 'Fraunces' : undefined,
+            ...(fraunces ? { fontFamily: 'Fraunces' } : {}),
             fontSize: 62,
             lineHeight: 1.28,
             color: '#f5f3ee',
