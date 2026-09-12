@@ -63,7 +63,10 @@ export const stopPrompts: Partial<Record<StopId, readonly string[]>> = {
     'How did the pivot to media happen?',
     'What is the pattern?',
     'How do you learn something new?',
-    "What's your approach to something new?",
+    // Was "What's your approach to something new?", which is the third way of asking the
+    // two above it on a stop that holds two memories. `pivot-how-it-happened` carries the
+    // doctorate and nothing was asking for it.
+    'What happened at IIT Bombay?',
   ],
   apac: [
     'What actually shipped at Taboola?',

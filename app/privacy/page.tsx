@@ -26,14 +26,14 @@ export default function PrivacyPage() {
               Questions you type into the dock leave this server and go to{' '}
               <span className="text-[color:var(--color-type)]">OpenRouter</span>, a third-party inference
               provider based in the US, so a model can generate an answer. From there they may be processed
-              by whichever model provider OpenRouter routes the request to — I don&rsquo;t run the model, so
-              I don&rsquo;t control that hop.
+              by whichever model provider OpenRouter routes the request to. I don&rsquo;t run the model, so I
+              don&rsquo;t control that hop.
             </p>
 
             <p>
               Nothing is logged next to your name, because I don&rsquo;t ask for one. The only thing kept is
               a hashed form of your IP address, held in Redis for up to 24 hours, and only to enforce
-              rate limits — not to identify you.
+              rate limits, never to identify you.
             </p>
 
             <p>
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
               pages it served today, how many questions were asked, whether a question came from a card, a
               suggested prompt or the box, which section the answer landed in, and whether the answer
               survived its own fact-check. Whole numbers in a list, kept for ninety days. Two of them
-              estimate how many <em>different</em> people came, from that same hashed address — a sketch
+              estimate how many <em>different</em> people came, from that same hashed address: a sketch
               that can say how many and never who, and that cannot be asked whether you were one of them.
             </p>
 
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
             </a>
           </div>
           <p className="mt-10 text-sm text-[color:var(--color-type-dim)]">
-            Questions about any of this, or a request about your own data — that email reaches me directly.
+            Questions about any of this, or a request about your own data: that email reaches me directly.
           </p>
         </div>
       </div>

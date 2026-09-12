@@ -81,7 +81,7 @@ export const STOPS = [
     kicker: 'MATHEW JOHN KONDEKERIL · SINGAPORE',
     compose: 'hero',
     align: 'left',
-    title: { strong: 'I build AI systems', muted: 'for people who have a business problem, not an AI problem.' },
+    title: { strong: 'I build AI systems', muted: 'for people who have a business problem rather than an AI problem.' },
     /*
      * `lede` is the introduction the hero was missing, and it is a separate field
      * rather than a longer `body` so the three jobs can be typeset apart: the tagline
@@ -113,7 +113,7 @@ export const STOPS = [
      * It carries no factual claim, which is why it passes `claims.test.ts` by
      * construction rather than by having been checked.
      */
-    body: 'Before that: aerospace engineering at Brunel, then a decade running paid media across India and Southeast Asia for Hindustan Unilever, Visa, Skechers and Evian. Ask the mind anything from the box at the bottom, or scroll to travel through it.',
+    body: 'Before that: aerospace engineering at Brunel, then a decade running paid media across India and Southeast Asia for Hindustan Unilever, Visa, Skechers and Evian. Ask the mind anything from the box at the bottom, or scroll.',
   },
   {
     id: 'origin',
@@ -122,7 +122,7 @@ export const STOPS = [
     compose: 'plain',
     align: 'right',
     title: { strong: 'I wanted to fly', muted: 'fighter jets.' },
-    body: 'I flew alone for the first time before I was ten, Trivandrum to Cochin, and cried most of the way. The crew kept me busy with a bag of chocolates, and then I was in the cockpit, looking at the instruments and the clouds through the windscreen. I have wanted to fly ever since, and I have not made it happen yet.',
+    body: 'I flew alone for the first time before I was ten, Trivandrum to Cochin, and cried most of the way. The crew kept me busy with a bag of chocolates, then walked me to the cockpit. The pilot, the instruments, the clouds through the windscreen. I have wanted to fly ever since, and I have not made it happen yet.',
   },
   {
     /*
@@ -296,7 +296,7 @@ export const STOPS = [
     align: 'right',
     mediaFirst: true,
     title: { strong: 'An ERP you talk to,', muted: 'that still renders a form when a form is the right tool.' },
-    body: 'Purchase orders, invoices and stock queries, through a Mastra multi-agent system on Telegram and the web. No data change ships without a human sign-off. I built it because every ERP I have used makes the person translate their intent into a form.',
+    body: 'Purchase orders, invoices and stock queries, through a Mastra multi-agent system on Telegram and the web. No data change ships without a human sign-off. I built it because every ERP I’ve used forces the human to translate their intent into a form.',
   },
   {
     /*
@@ -358,7 +358,7 @@ export const STOPS = [
      * corroborated by `engineering-what-stuck` (Brunel, 2011 to 2012) and
      * `pivot-how-it-happened` (period 2012-2013), which licenses every remaining clause.
      */
-    body: 'In 2012, out of Brunel, I could not find design work in India — the market wanted computation and CFD, and I had specialised in design. My doctorate proposal at IIT Bombay was turned down. A family referral got me the interview at Omnicom; I started in May 2013 and was confirmed as a senior planner six months later.',
+    body: 'In 2012, out of Brunel, I could not find design work in India: the market wanted computation and CFD, and I had specialised in design. My doctorate proposal at IIT Bombay was turned down. A family referral got me the interview at Omnicom; I started in May 2013 and was confirmed as a senior planner six months later.',
   },
   {
     /*
@@ -371,7 +371,7 @@ export const STOPS = [
     compose: 'carousel',
     align: 'left',
     title: { strong: 'I rebuilt a 1986 Yamaha RD 350', muted: 'as a cafe racer of my own design.' },
-    body: 'The bike was my uncle’s. I rode it to work in Mumbai until it broke down, then took the gap between two Omnicom jobs — June to December 2014 — and rebuilt it at home in Kerala, bare frame to finished bike. I taught myself as I went: the seat, the tank, the handlebar and the headlight bracket were all made in-house, by trial and error. It is the proof that I can imagine something and get there with my own hands.',
+    body: 'The bike was my uncle’s. I rode it to work in Mumbai until it broke down, then took the gap between two Omnicom jobs, June to December 2014, and rebuilt it at home in Kerala, bare frame to finished bike. I taught myself as I went: the seat, the tank, the handlebar and the headlight bracket were all made in-house, by trial and error. It is the proof that I can imagine something and get there with my own hands.',
   },
   {
     /*
