@@ -48,7 +48,7 @@ kept and both are labelled.
 | 20 | The engine figure | `done` — `f78b9ea` | Shipped › the defect table |
 | 21 | The section must match the question | `done`, one half deferred | Shipped |
 | 22 | JewelAI on the page | `done` in part, rest folded into decision 2 | Shipped |
-| 23 | Workflow charts | `done` — closed by `JewelGates` | Shipped |
+| 23 | Workflow charts | **built, then orphaned** — `JewelGates` lost its only caller in the reorder and renders nowhere | Open |
 | 24 | Generative UI, extended | `done` — and it produced **rule 24** | Shipped |
 | 25 | Vector detail and the particle field | `done`, one visual judgement open | Shipped |
 | 26 | More apparel pairs | `done` — `d509124`, one pair → four | Shipped |
@@ -71,7 +71,7 @@ kept and both are labelled.
 | 40 | §07 is one column for four projects | `decided` — decision 2 | Decided |
 | 41 | JewelAI as three photographs → image → video | `decided` — confirmed by 53 | Decided |
 | 42 | The two websites he built | `spec'd`; one recommendation withdrawn by 54c | Decided |
-| 43 | Animated workflow diagrams | `decided` — decision 10 | Decided |
+| 43 | Animated workflow diagrams | `decided` — decision 10, **and task 23 above it is not on the page at all** | Decided |
 | 44 / 44b / 44c | The opening portrait, then the intro gate | **`shipped` against a placeholder head**, `f01c7f3`…`648275c`; the real photograph is in flight | Decided |
 | 45 | The MruNN ERP demo video | `blocked` on the asset; not blocking anything | Blocked |
 | 45b | MruNN has no clients yet | `answered` — it changed the architecture | Answered |
@@ -98,7 +98,7 @@ kept and both are labelled.
 | — | Decision 1b / 2, the twelve-stop spine and the §04 index | `done` — `1fd2ca4`, `195663c`, `b5659c4`, `30552e6`, `50c7d2e`. **The two routes are not built** | Decided |
 | — | Decision 16, no thirteenth stop | `decided` — the claim goes in §03 prose; the diagram's home is a route | Decided |
 | — | Decision 17, the case study demonstrates rather than describes | `decided` | Open › 57 |
-| — | The card affordance, `?ask=`, the answer tail, the real portrait | **`doing`** — agents R1, R2, Q1 | In flight |
+| — | The card affordance, `?ask=`, the answer tail, the real portrait | R1 done; `?ask=` done; **the answer tail renders on 2 stops of 12**; the portrait is blocked on MJK | Open |
 
 ---
 
@@ -177,7 +177,7 @@ Three references in, an image and a video out.
 — which is what task 37 then found insufficient, and what decision 2 fixes by giving JewelAI
 its own stop.
 
-## 23. Workflow charts — `done`, and the earlier answer was overturned
+## 23. Workflow charts — built, then orphaned by the reorder. **Not on the page**
 
 MJK: *"Think if makes sense to show some of these softwares as workflow charts to make it
 easier to understand what I built?"*
@@ -190,9 +190,23 @@ blind second description, the anatomy audit, the scored judge and its **7-of-10 
 failure fed back for exactly one retry. The apparel pipeline has five named agents and a critic
 with a pass mark. **A chart became licensable where it was not.**
 
-**Shipped:** `JewelGates.tsx`, **24 inline paths, 1.4 kB**, server-rendered, zero JavaScript,
-drawn as a vertical lane with three exits because branching is what prose is bad at. Task 23 is
-closed; animating it is task 43.
+**Built:** `JewelGates.tsx`, **24 inline paths, 1.4 kB**, server-rendered, zero JavaScript,
+drawn as a vertical lane with three exits because branching is what prose is bad at.
+
+> **IT HAS NOT BEEN ON THE PAGE SINCE 2026-09-06, and this entry said "shipped" for six days.**
+> `WorkFigure.tsx` was its only caller -- one state of the §07 state machine -- and the
+> twelve-stop reorder deleted `WorkFigure` and replaced it with `WorkIndex`. `knip` has
+> reported the file unused ever since. The commit that orphaned it is `1fd2ca4`, whose message
+> quotes MJK asking *"where are the workflow flow charts we discussed?"*: the change made to
+> answer him is the change that took them off the page.
+>
+> He has now asked three times -- 2026-09-03 ("you didn't answer my earlier question on showing
+> the software builds as flow charts"), 2026-09-04, and 2026-09-06. **Decision 16 gives it a
+> home: it swaps into §06 under conditions.** `PLAN.md` §4.7 prices that at **134px short at
+> 1280x720** and rule-24 reach **29 → 27 against a floor of 29**, which is why it was not just
+> dropped back in. Neither number has been re-taken since §06 became a stop of its own.
+
+Animating it is task 43, and animating something nothing renders is not the next move.
 
 ## 24. Generative UI, extended — `done`, and it produced the rule the site is now judged by
 
@@ -2516,12 +2530,16 @@ percentages are not real traffic.
 Nothing below is finished; do not read a status into it, and do not take these files without
 checking their own `## STATUS` blocks in the session scratchpad under `research/`.
 
-| Agent | Task | What it is doing | Files it holds |
-|---|---|---|---|
-| **Q1** | **44** | The real photograph into the intro gate portrait, replacing the placeholder head | `scripts/make-portrait.ts`, `lib/mind/`, `components/mind/`, `app/layout.tsx` |
-| **R1** | — | Make `.mini-card` read as a pressable question — the affordance, not the mechanism | `app/globals.css`, `components/stops/*` |
-| **R2** | — | `?ask=<memory-id>` and the answer tail: the lowest-coverage neighbour as the next question | `lib/ask/*`, `components/chat/*`, `evals/` |
-| **R3** | — | This consolidation | `TASKS.md`, `DIRECTION.md`, `PLAN.md`, `README.md`, `SPEC-architecture.md` |
+> **NOTHING IS IN FLIGHT. This table listed four agents from the 2026-09-06 session for six
+> days after every one of them had stopped.** Re-checked 2026-09-12, against the code rather
+> than against the table:
+
+| Was | Task | Where it actually got to |
+|---|---|---|
+| **Q1** | **44** | **Not done, and not startable.** `scripts/make-portrait.ts` is unused (`knip`); the gate still runs a placeholder head. Blocked on MJK item 10, the photograph |
+| **R1** | — | **Done.** `.mini-card` has `cursor: pointer` and hover/focus states, and §04's body now reads "Press any one below" |
+| **R2** | — | **Half done.** `?ask=` ships in `AskAddress.tsx`. The answer tail does not: `nextQuestionFor` computes the lowest-coverage neighbour, puts it on the wire, and `AnswerBlock` renders it only where `compose === 'plain'` — **two stops of twelve.** On the other ten it is computed and thrown away |
+| **R3** | — | Done; this file |
 
 **Finished this round, and their evidence is filed below rather than here:** L1 (38), L2
 (50 REOPENED), M1 (decisions 7 and 12), M2 (decision 11), M3 (the first consolidation),
