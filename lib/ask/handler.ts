@@ -585,7 +585,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   if (!parsed.ok) {
     return json({ error: 'bad-request', detail: parsed.reason }, parsed.status);
   }
-  const { question, history = [], viewing, previousStopId, origin } = parsed.value;
+  const { question, history = [], viewing, origin } = parsed.value;
 
   const ip = clientIp(req.headers);
   /*
@@ -705,15 +705,27 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
    * its own prior commitment rather than as material. The model already has no authority
    * over layout. It should have none over subject either.
    *
-   * So: an exchange that happened somewhere else is dropped outright, because a new
-   * section is a new subject. One that happened here survives as a single line inside the
-   * instructions, trimmed to its first sentence, labelled as context rather than topic --
-   * never as a turn, and never in `messages`, which now holds exactly one entry.
+   * So: an exchange survives as a single line inside the instructions, trimmed to its
+   * first sentence, labelled as context rather than topic -- never as a turn, and never in
+   * `messages`, which holds exactly one entry.
+   *
+   * IT USED TO BE DROPPED OUTRIGHT when the new question routed to a different section,
+   * on the reasoning that a new section is a new subject. That belt was fastened over a
+   * suspender. What caused the defect above was the FULL answer replayed as an `assistant`
+   * turn; compressing it to one labelled line inside the instructions is what fixed it,
+   * and the gate on top was never the load-bearing half. What the gate cost is the thing
+   * MJK is actually asking for: a visitor who asks about JewelAI, then about pricing, then
+   * comes back, is a stranger every time, because consecutive questions rarely land on the
+   * same section. Two exchanges, whatever they were about -- that is roughly the last two
+   * minutes, which is what a person remembers of a conversation they are having.
+   *
+   * `previousStopId` is still accepted on the wire and no longer read here.
    */
-  const sameSubject = previousStopId === stopId;
-  const prior = sameSubject ? history.at(-1) : undefined;
-  const priorLine = prior
-    ? `\n\n---\nEarlier in this conversation, for continuity only. The subject of THIS question is the memories above, not this exchange.\nThey asked: ${prior.q}\nYou answered: ${firstSentence(prior.a)}`
+  const recent = history.slice(-2).filter((h) => h.q.trim() && h.a.trim());
+  const priorLine = recent.length
+    ? `\n\n---\nEarlier in this conversation, for continuity only. The subject of THIS question is the memories above, not these exchanges.\n${recent
+        .map((h) => `They asked: ${h.q}\nYou answered: ${firstSentence(h.a)}`)
+        .join('\n')}`
     : '';
 
   const instructions = `${deps.systemPrompt()}\n\n---\nRelevant memories:\n${retrieved.context}${priorLine}`;

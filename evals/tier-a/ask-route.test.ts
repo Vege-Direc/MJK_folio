@@ -494,3 +494,85 @@ describe('/api/ask never lets a fabrication reach the page as prose', () => {
     expect(last.note).toMatch(/one number removed/);
   });
 });
+
+/*
+ * The site used to forget the previous question whenever the subject changed.
+ *
+ * The gate was `previousStopId === stopId`, and consecutive questions rarely land on the
+ * same section, so a visitor who asked about JewelAI, then about rates, then came back was
+ * a stranger every time. What caused the original defect -- an answer about section seven
+ * arriving on section six -- was the full prior answer replayed as an `assistant` turn, and
+ * the fix for that was compressing it to one labelled line. The gate on top was a second
+ * belt, and it cost the site its memory.
+ */
+describe('the last two exchanges reach the model, whatever they were about', () => {
+  /** A mock that records everything it was handed, and answers with one licensed word. */
+  function capturing() {
+    const seen: string[] = [];
+    const model = new MockLanguageModelV4({
+      doStream: async (options) => {
+        seen.push(JSON.stringify(options));
+        return {
+          stream: simulateReadableStream({
+            chunks: [
+              { type: 'text-start', id: 't1' },
+              { type: 'text-delta', id: 't1', delta: 'Yes.' },
+              { type: 'text-end', id: 't1' },
+              {
+                type: 'finish',
+                finishReason: { unified: 'stop', raw: undefined },
+                logprobs: undefined,
+                usage: {
+                  inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
+                  outputTokens: { total: 2, text: 2, reasoning: undefined },
+                },
+              },
+            ],
+          }),
+        };
+      },
+    });
+    return { model, seen };
+  }
+
+  it('carries two, across two different sections', async () => {
+    const { model, seen } = capturing();
+    await chunksOf(
+      await handleAsk(
+        post({
+          question: 'what is your stack',
+          history: [
+            { q: 'tell me about jewelai studio', a: 'JewelAI Studio is a multi-service platform. It does more.' },
+            { q: 'what do you charge', a: 'I scope the work first. Then I quote it.' },
+          ],
+        }),
+        depsWith(model),
+      ),
+    );
+    expect(seen[0]).toContain('tell me about jewelai studio');
+    expect(seen[0]).toContain('what do you charge');
+  });
+
+  it('takes the first sentence of each and no more, so neither can outweigh the material', async () => {
+    const { model, seen } = capturing();
+    await chunksOf(
+      await handleAsk(
+        post({
+          question: 'tell me about the bike',
+          history: [
+            { q: 'what shipped at taboola', a: 'Payments in Korea and Indonesia. The second sentence must not travel.' },
+          ],
+        }),
+        depsWith(model),
+      ),
+    );
+    expect(seen[0]).toContain('Payments in Korea and Indonesia.');
+    expect(seen[0]).not.toContain('must not travel');
+  });
+
+  it('says nothing about a conversation that has not happened', async () => {
+    const { model, seen } = capturing();
+    await chunksOf(await handleAsk(post({ question: 'who are you' }), depsWith(model)));
+    expect(seen[0]).not.toContain('Earlier in this conversation');
+  });
+});
