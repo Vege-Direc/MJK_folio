@@ -100,6 +100,44 @@ const STOPWORDS = new Set([
 ]);
 
 /**
+ * Irregular past tenses, which no suffix rule can reach.
+ *
+ * The suffix rules below strip `-s`, `-ing` and `-ed`. English's commonest verbs do not
+ * take `-ed`, so every one of them indexes as two unrelated words, and the corpus and the
+ * visitor pick different halves. MEASURED over content/memories.yaml: `built` appears 16
+ * times and `build` 12, `ran` 9 and `run` 5, `taught` 6 and `teach` none.
+ *
+ * This shipped as a misroute on the question the site exists to win. A visitor typed "can
+ * you build a website" and was flown to a 1986 motorcycle. `build-overview` is the memory
+ * that answers it -- titled "What I have built", tagged `built` -- and it does not contain
+ * the word "build" at all, so it scored nothing. `rd350-the-build` is titled "Building the
+ * RD 350" and says "build" six more times in its body, so it owns the word outright and
+ * wins every question that contains it. The answer was about websites and the camera flew
+ * to a cafe racer.
+ *
+ * Present tense on the left of the arrow, because that is what a question is written in
+ * and a stem only has to be consistent, not correct. Pairs are here on corpus evidence and
+ * not on completeness: `lead`/`led` is deliberately absent, because `leads` is a noun this
+ * corpus means something by ("real estate leads") and collapsing the two would merge a
+ * sales term with a management one. `found` is absent for the same reason -- it is both
+ * the past of `find` and the present of founding a company.
+ */
+const IRREGULAR = new Map(
+  Object.entries({
+    built: 'build',
+    rebuilt: 'rebuild',
+    made: 'make',
+    ran: 'run',
+    taught: 'teach',
+    grew: 'grow',
+    spent: 'spend',
+    sold: 'sell',
+    won: 'win',
+    sent: 'send',
+  }),
+);
+
+/**
  * A plural / `-ing` / `-ed` normaliser, and nothing more. MiniSearch has no stemmer of its
  * own, and a real one (Porter) over a 30-memory corpus costs more in false conflations
  * than it buys in recall. The three suffixes below are the ones an English question
@@ -110,6 +148,8 @@ const STOPWORDS = new Set([
  * a consistent wrong stem costs nothing while an inconsistent right one costs a match.
  */
 function stem(word: string): string {
+  const irregular = IRREGULAR.get(word);
+  if (irregular) return irregular;
   if (word.length <= 3) return word;
   if (/[^aeiou]ies$/.test(word)) return `${word.slice(0, -3)}y`;
   if (/(?:ss|sh|ch|x|z)es$/.test(word)) return word.slice(0, -2);
@@ -327,8 +367,33 @@ const ENGAGEMENT = new RegExp(
  *
  * `for my|our|us` is what makes it a brief rather than a question about his work, so "can
  * you help me understand the RD 350" stays on the RD 350 where it belongs.
+ *
+ * THE SECOND SHAPE, added after MJK watched the live site answer "can you build a website"
+ * on the section about a motorcycle. That question has no `for my` in it, so the first
+ * branch never saw it, and the score branch could not help either: a request is written in
+ * the verbs this corpus is built out of, so it always scores well enough to be believed.
+ * The score does not measure what the visitor wants, and on this shape of question it
+ * measures which memory happens to own the verb.
+ *
+ * "Can you build X" and "do you build X" are different questions and English already marks
+ * the difference. A modal asks for a commitment and the answer is a conversation about the
+ * work, so it belongs at the desk. The plain present tense asks what he does for a living
+ * and the answer is the work itself, so it stays wherever the corpus puts it -- which is
+ * why `do` is deliberately absent below.
+ *
+ * `help`, `do`, `take` and `handle` are absent for the same reason. They are in ENGAGEMENT
+ * because a prospect uses them, but "can you help me understand the RD 350" uses them too,
+ * and only the construction verbs are unambiguous about who the thing being built is for.
  */
-const BRIEF = /\b(build|make|create|develop|design|automate|integrate|fix|rebuild|set\s+up)\b[^?]{0,80}\bfor\s+(my|our|us)\b/i;
+const BRIEF = new RegExp(
+  [
+    /\b(build|make|create|develop|design|automate|integrate|fix|rebuild|set\s+up)\b[^?]{0,80}\bfor\s+(my|our|us)\b/,
+    /\b(can|could|would|will)\s+(you|u)\s+(build|make|create|develop|design|automate|integrate|migrate|modernis|moderniz|rebuild|fix|set\s+up)\b/,
+  ]
+    .map((r) => r.source)
+    .join('|'),
+  'i',
+);
 
 /** Where a brief lands. Section 08 is titled "Brief me"; this is what it is for. */
 const ENGAGEMENT_STOP: StopId = 'contact';

@@ -254,6 +254,23 @@ export const BUYER_QUESTIONS = [
   'could you send me a proposal',
   'do you work with startups',
   'can you take on a retainer',
+  /*
+   * The shape this list was missing, found by MJK on the live site rather than here.
+   *
+   * Every row above either scores badly enough for ENGAGEMENT to rescue it or says "for my
+   * restaurant" out loud. A bare request does neither. "Can you build a website" scored
+   * 20.5 -- clear of MIN_TOP_SCORE, so the engagement clause stood down -- and the vote
+   * went to a 1986 motorcycle, because `rd350-the-build` says "build" seven times and was
+   * the only memory in the corpus that matched the word at all.
+   *
+   * They are here without a possessive on purpose. That is how a prospect actually opens,
+   * and the possessive was doing all the work.
+   */
+  'can you build a website',
+  'can you build a mobile app',
+  'can you make me an app',
+  'will you build an ai agent',
+  'do you build websites',
 ];
 
 /**

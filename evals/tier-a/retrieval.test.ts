@@ -42,6 +42,31 @@ describe('query tokenisation', () => {
   it('strips punctuation and normalises plurals against the same tokeniser the index uses', () => {
     expect(tokenize('Agents, agents — "agents"!')).toEqual(['agent', 'agent', 'agent']);
   });
+
+  /*
+   * The suffix rules cannot reach an irregular past tense, so the corpus and the visitor
+   * were using different words for the same verb. `build-overview` is titled "What I have
+   * built" and tagged `built`, and it did not match the query "build" at all -- which is
+   * how "can you build a website" was answered on the section about a motorcycle.
+   */
+  it('collapses the irregular past tenses the corpus is actually written in', () => {
+    for (const [past, present] of [
+      ['built', 'build'],
+      ['made', 'make'],
+      ['ran', 'run'],
+      ['taught', 'teach'],
+      ['won', 'win'],
+    ]) {
+      expect(tokenize(past), `"${past}" must index as "${present}"`).toEqual(tokenize(present));
+    }
+  });
+
+  // `leads` is a noun this corpus means something by, and `found` is the present tense of
+  // founding a company. Collapsing either onto its homograph merges two subjects.
+  it('leaves the pairs that are not one verb alone', () => {
+    expect(tokenize('led')).not.toEqual(tokenize('leads'));
+    expect(tokenize('found')).not.toEqual(tokenize('find'));
+  });
 });
 
 describe('retrieval', () => {
