@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <main className="px-8 md:px-16 py-40 pb-48">
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 md:col-span-2 font-mono text-[11px] tracking-[0.2em] text-[color:var(--color-type-dim)] uppercase">
-          § 09 — Privacy
+          § 12 — Privacy
         </div>
         <div className="col-span-12 md:col-span-10 max-w-3xl">
           <h1 className="font-serif text-[clamp(2rem,4.5vw,4rem)] leading-[1.05] text-[color:var(--color-type)] tracking-[-0.01em]">
@@ -20,7 +20,7 @@ export default function PrivacyPage() {
           </h1>
 
           <div className="mt-12 space-y-6 text-lg text-[color:var(--color-type-muted)] leading-relaxed">
-            <p>No account. No cookies. No analytics. This page exists because you might ask, not because a form required it.</p>
+            <p>No account to make, no cookie set, no analytics script. I wrote this page because you might ask.</p>
 
             <p>
               Questions you type into the dock leave this server and go to{' '}
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
             </p>
 
             <p>
-              I do count, though, and you should know what. Not you — the{' '}
+              I do count, though, and you should know what. Not you: the{' '}
               <span className="text-[color:var(--color-type)]">requests this server answers</span>. How many
               pages it served today, how many questions were asked, whether a question came from a card, a
               suggested prompt or the box, which section the answer landed in, and whether the answer

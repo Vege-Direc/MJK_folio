@@ -164,4 +164,60 @@ describe('visitor-facing copy never explains the machine', () => {
     // than a style, and the site would have nowhere honest to explain itself.
     expect(privacy).toMatch(/OpenRouter|rate limit|Redis/i);
   });
+
+  /*
+   * The § numbers are an address, and two rooms cannot share one.
+   *
+   * The privacy page printed `§ 09 — Privacy` while `stops.ts` printed `§ 09 — Pivot`. A
+   * visitor who uses the numbers to say where they were is sent to the wrong place, and
+   * the numbers are on the page precisely so they can be used that way.
+   */
+  it('gives the privacy page a section number no stop is already using', () => {
+    const privacy = readFileSync(join(process.cwd(), 'app', 'privacy', 'page.tsx'), 'utf-8');
+    const taken = new Set(STOPS.flatMap((s) => /§\s*(\d+)/.exec(s.kicker)?.[1] ?? []));
+    const mine = /§\s*(\d+)\s*—/.exec(privacy)?.[1];
+    expect(mine, 'the privacy page has stopped printing a § number').toBeDefined();
+    expect(taken.has(mine!), `§ ${mine} is already a stop`).toBe(false);
+  });
+});
+
+/*
+ * The rule above has always had a hole the size of every answer on the site.
+ *
+ * `visitorCopy()` reads the strings this repo AUTHORS. It does not read the corpus, on
+ * the reasoning that MJK's own writing may use any word he likes -- which is true of the
+ * page, where his prose is printed as he wrote it, and false of the chat, where his prose
+ * is handed to a model as the material for an answer and comes back paraphrased.
+ *
+ * So the site printed the one word this file names first. MJK asked "can you build a
+ * website"; the top hit was `build-overview`, whose last sentence read "answers questions
+ * about me from a corpus it is not allowed to contradict"; and the answer came back
+ * saying "corpus". The model did nothing wrong. It was quoting its material.
+ *
+ * Only the fields that actually reach the model are checked -- title and body -- and only
+ * the terms that have no ordinary meaning in a first-person account of a career. `memory`
+ * is deliberately absent: "one of my earliest memories is flying alone as a child" is a
+ * sentence this corpus is entitled to.
+ */
+describe('the corpus does not teach the model our vocabulary', () => {
+  const OURS: RegExp[] = [
+    /corpus/i,
+    /retriev(al|ed|es)/i,
+    /envelope/i,
+    /grounding/i,
+    /the guard/i,
+    /checked against/i,
+    /the dock/i,
+  ];
+
+  it('keeps our words out of the text an answer is built from', () => {
+    const found: string[] = [];
+    for (const m of loadMemories()) {
+      for (const pattern of OURS) {
+        const hit = pattern.exec(`${m.title} ${m.body}`);
+        if (hit) found.push(`${m.id}: "${hit[0]}"`);
+      }
+    }
+    expect(found, `the model is handed our vocabulary and will repeat it: ${found.join(' / ')}`).toEqual([]);
+  });
 });

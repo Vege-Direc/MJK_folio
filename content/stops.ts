@@ -180,8 +180,11 @@ export const STOPS = [
      * holds every visitor-facing string to the rule that the site never explains its own
      * machinery — so the same fact is stated in the words a visitor already has.
      *
-     * The middle sentence is the one line on this stop doing task 34's job: a card is a
-     * question that has not been asked yet, and nothing on the page said so.
+     * The middle sentence is the one line on this stop doing task 34's job: nothing on the
+     * page said that a card is pressable, or that pressing it asks a question. It said so
+     * as a figure of speech -- "a question that has not been asked yet" -- until MJK asked
+     * for the prose to stop sounding written by a model, and a figure standing where a
+     * plain instruction would do is the first thing that goes.
      */
     id: 'work',
     index: 4,
@@ -205,7 +208,7 @@ export const STOPS = [
     compose: 'index',
     align: 'left',
     title: { strong: 'Things I have built.' },
-    body: 'The things I have shipped, rather than the jobs I have held. Each one below is a question that has not been asked yet — press it and this page answers from what I have written down, which it is not allowed to contradict. The first three have a section of their own, immediately below.',
+    body: 'The things I have shipped, rather than the jobs I have held. Press any one below and this page answers it from what I have written down, which it is not allowed to contradict. The first three have a section of their own, immediately below.',
   },
   {
     /*
