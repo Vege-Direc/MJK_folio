@@ -550,6 +550,32 @@
     go-to-market engine for Artha. And this site, which answers questions about me from what I have
     written down, and is not allowed to contradict it.
 
+- id: site-this-one
+  section: projects
+  stopId: work
+  title: This site
+  tags: [site, website, portfolio, nextjs, threejs, built]
+  period: 2026
+  body: >
+    The site you are reading is one of the things I have built. Next.js and TypeScript, with a
+    three.js scene running behind the sections and a chat that answers as me. It is self-hosted and
+    it runs on free models through OpenRouter. I built it with AI agents, the scene included, which
+    is the same way I work on a client system.
+
+- id: site-how-it-answers
+  section: projects
+  stopId: work
+  title: How this site answers a question
+  tags: [site, website, architecture, agents, checking]
+  period: 2026
+  body: >
+    The section is chosen before the model says a word. A search over my written record picks it,
+    and the page starts moving there while the first token is still in flight. The model writes
+    prose and nothing else: it does not choose the section, the layout, the images or the links.
+    Every number and every name it writes is checked back against the record, and a sentence that
+    cannot be matched is taken out before you see it. Where the record holds nothing, the site says
+    so rather than guessing.
+
 - id: who-i-am
   section: story
   stopId: origin

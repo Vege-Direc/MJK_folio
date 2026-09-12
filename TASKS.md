@@ -2850,7 +2850,25 @@ corpus, and that a refusal is built from that corpus rather than from the model.
 capability claim with the evidence running underneath it. Task 56's closing paragraph is its honest
 brief.
 
-**Where it now stands.** Ten memories are drafted and **none are approved**; eighteen questions
+**TWO ARE NOW IN, approved by MJK on 2026-09-12 and merged.** `site-this-one` and
+`site-how-it-answers`, both on `work`. He asked the question that found the hole: if someone
+asks "can you build a website", can it talk about the one they are reading? **It could not.**
+The corpus held three clauses about this build across 55 memories, so the live answer spent its
+second sentence on all of them and padded the remaining three paragraphs -- which is where "I do
+not use templates or no-code platforms", the one untrue sentence in it, came from. The padding
+and the fabrication were the same hole. Measured before: "what is this site" scored **6.2** and
+landed on the METHOD memory; "tell me about this site" **5.2** on `cap-ai-agents`. After:
+**34.8 on `site-this-one`**, and "can you build a website" reaches `work` with it first at
+**41.4** instead of reaching the desk with one clause. Four new routing rows, 85/86.
+
+**Two deliberate omissions, both from the cautions below.** No test or line counts in either body,
+because a body quoting "422 tests" goes stale on the next push with nothing to catch it. And no
+separate "built with a swarm and a judging panel" memory -- `how-i-work-with-agents` carries that
+claim with Paxel's measurement behind it, and a self-reported second version would weaken the one
+with evidence. It is one clause inside `site-this-one` instead.
+
+**The other eight are still drafted and still unapproved**, and the drafts from the original
+session are gone with its scratchpad. Eighteen questions eighteen questions
 for MJK are written, of which the one that matters most cannot be answered by anyone else —
 *what did this build teach you that you now charge for?* Two placements are costed: `stopId:
 work` ships today because §04 is already an index, or a dedicated `site` stop, which touches

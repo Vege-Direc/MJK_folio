@@ -38,6 +38,15 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'which awards have you won',
     'what did paxel say about your engineering',
     'who assessed your agent orchestration',
+    // The artefact the visitor is standing in. Before `site-this-one` and
+    // `site-how-it-answers` existed, "what is this site" scored 6.2 and landed on the
+    // METHOD memory, and "tell me about this site" scored 5.2 on `cap-ai-agents`. The
+    // corpus held three clauses about this build and a visitor asking about the thing in
+    // front of them got the worst answers on the site.
+    'what is this site',
+    'how does this site work',
+    'tell me about this website',
+    'can you build a website like this one',
   ),
 
   /*
