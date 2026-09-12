@@ -72,7 +72,7 @@ kept and both are labelled.
 | 41 | JewelAI as three photographs → image → video | `decided` — confirmed by 53 | Decided |
 | 42 | The two websites he built | `spec'd`; one recommendation withdrawn by 54c | Decided |
 | 43 | Animated workflow diagrams | `decided` — decision 10, **and task 23 above it is not on the page at all** | Decided |
-| 44 / 44b / 44c | The opening portrait, then the intro gate | **`shipped` against a placeholder head**, `f01c7f3`…`648275c`; the real photograph is in flight | Decided |
+| 44 / 44b / 44c | The opening portrait, then the intro gate | **`done`** — `f01c7f3`…`648275c`, and **his own photograph went in on 2026-09-06 in `4d4ed6a`**. `PORTRAIT.placeholder` is `false` | Shipped |
 | 45 | The MruNN ERP demo video | `blocked` on the asset; not blocking anything | Blocked |
 | 45b | MruNN has no clients yet | `answered` — it changed the architecture | Answered |
 | 46 | How many stops the site should have | `done` — **twelve, built**; decision 16 held the line at twelve | Decided |
@@ -1244,7 +1244,7 @@ What any answer had to survive, from `PLAN.md` §2: a perpetual animation measur
 cost **11% of framerate** and took the worst frame **66ms to 92ms**; WCAG 2.2.2 is Level A here;
 and **the cheapest node-and-edge library measured ~190x the size of what `JewelGates` draws**.
 
-## 44, 44b, 44c. The opening portrait, and then the intro gate — `shipped`, against a placeholder head
+## 44, 44b, 44c. The opening portrait, and then the intro gate — `done`, against his own photograph
 
 His original ask: *"'My Name is Mathew, welcome to my mind - lets chat'… a highly detailed
 wireframe or ascii text or something modeled on just my head… full screen before the neural
@@ -1530,9 +1530,20 @@ throttle** — 60fps on a throttled phone.
 runs. The gate's sentence never becomes the LCP element, and it never animates up from
 `opacity: 0`.
 
-> **The one thing still blocking: there is no photograph.** Nothing in the repository, and
+> **CLOSED 2026-09-06 in `4d4ed6a`, "The head is his, and the wall behind it had to be taken
+> out by colour".** `lib/mind/portrait-tone.ts` now carries `placeholder: false`, the source
+> line `../portrait.jpeg — the owner's own frame, kept outside the repository`, a real crop of
+> `891,62,228,304` and a head box of `0.5,0.528,0.351,0.354`. 37.3% of cells above the draw
+> floor, mean tone 0.151. The warning in `IntroGate.tsx` fires only when `placeholder` is
+> true, so it no longer fires.
+>
+> **The paragraph below stood for six days after that and was quoted twice to MJK on
+> 2026-09-12 as a thing still blocked on him.** It is kept, struck, because the failure was
+> reading this file instead of the code — the same failure as task 23's "shipped".
+>
+> ~~The one thing still blocking: there is no photograph. Nothing in the repository, and
 > the vision pass used a synthetic head. The gate ships against that placeholder,
-> `PORTRAIT.placeholder` is `true`, and it warns on every run. **It reads as a person. It
+> `PORTRAIT.placeholder` is `true`, and it warns on every run.~~ **It reads as a person. It
 > does not read as him, and the sentence beside it says his name.** The swap is one
 > command — `npx tsx scripts/make-portrait.ts photo.jpg --crop l,t,w,h` — and rewrites one
 > generated file. What the photograph needs is in the report and in that script's header:
@@ -2536,7 +2547,7 @@ checking their own `## STATUS` blocks in the session scratchpad under `research/
 
 | Was | Task | Where it actually got to |
 |---|---|---|
-| **Q1** | **44** | **Not done, and not startable.** `scripts/make-portrait.ts` is unused (`knip`); the gate still runs a placeholder head. Blocked on MJK item 10, the photograph |
+| **Q1** | **44** | **Done, on 2026-09-06 in `4d4ed6a`.** `placeholder: false`; his own frame. `scripts/make-portrait.ts` reads unused to `knip` because it is a one-shot generator run by hand, which is not the same as unfinished |
 | **R1** | — | **Done.** `.mini-card` has `cursor: pointer` and hover/focus states, and §04's body now reads "Press any one below" |
 | **R2** | — | **Half done.** `?ask=` ships in `AskAddress.tsx`. The answer tail does not: `nextQuestionFor` computes the lowest-coverage neighbour, puts it on the wire, and `AnswerBlock` renders it only where `compose === 'plain'` — **two stops of twelve.** On the other ten it is computed and thrown away |
 | **R3** | — | Done; this file |
@@ -2570,7 +2581,7 @@ table; they are repeated here so this file is not misread as still waiting.
 | 7 | **The hero's name label**, which is a genuine eyebrow | Open in `DESIGN.md`. Task 44 may answer it by accident: a portrait would give his name its own presence rather than leaving it a caption on someone else's sentence |
 | 8 | **Facts about the two websites** — what he actually did, when, on what stack, whether the client may be named, and any outcome he can stand behind | **SUPERSEDED by 12 and 14.** Asanjo is named; ad-symphony still has nothing |
 | 9 | **Whether the Shopify preview link may be published** (`asanjokutch.org/?preview_theme_id=186809876844`) | **ANSWERED by 54c: the theme is not live, and the live storefront is not his design.** The site must not link either as his work. A screen recording replaces it |
-| 10 | **A proper photograph of his head**, if task 44 goes ahead. The frame he sent is a full-body seated shot in which the head is roughly **130x200 pixels**, IED ~54px against an ISO floor of 90 | **STILL OPEN, and it now blocks a build**: the gate is approved. Measure the phone original's pupils before anything is designed |
+| 10 | ~~A proper photograph of his head~~ | **CLOSED 2026-09-06 — the frame he sent was used.** `4d4ed6a` cropped the head out of `portrait.jpeg` and took the wall out by colour; `placeholder: false`. It was below the ISO floor and was made to work anyway. **This row said "STILL OPEN, and it now blocks a build" for six days and was quoted to him twice on 09-12.** A better-lit head-and-shoulders frame would still improve it, and nothing is waiting on one |
 | 11 | **The MruNN ERP screen recording** (task 45). Useful to know in advance whether it can show real data or needs a seeded demo tenant — the site names no client, and an ERP screen is full of client names | **ANSWERED: later, not blocking** |
 | 12 | ~~May the apparel client be named?~~ | **ANSWERED 2026-09-05: "The client for apparel and website is Asanjo, we can name them no issues."** See 54b |
 | 13 | ~~Does the lead-capture decision change?~~ | **WITHDRAWN 2026-09-05** — mine to withdraw. The requirement is that the site must not fabricate and must not sound like a machine; the promise to follow up was my reading of his example, not his requirement. See 51b |
