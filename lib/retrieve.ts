@@ -360,40 +360,52 @@ const ENGAGEMENT = new RegExp(
  * A brief: something the visitor wants built, for themselves.
  *
  * The one case where engagement OVERRIDES a confident score rather than merely surviving a
- * poor one. "Can you build a WhatsApp ordering bot for my restaurant?" scores 20.4 -- well
- * clear of MIN_TOP_SCORE -- and votes for `rd350`, because the corpus is full of building
- * things and the loudest builder in it is a 1986 motorcycle. A prospect arriving with a
- * brief was being flown to a photograph of a cafe racer.
+ * poor one. "Can you build a WhatsApp ordering bot for my restaurant?" scores well clear of
+ * MIN_TOP_SCORE and votes for `rd350`, because the corpus is full of building things and
+ * the loudest builder in it is a 1986 motorcycle. A prospect arriving with a brief was
+ * being flown to a photograph of a cafe racer.
  *
  * `for my|our|us` is what makes it a brief rather than a question about his work, so "can
- * you help me understand the RD 350" stays on the RD 350 where it belongs.
+ * you help me understand the RD 350" stays on the RD 350 where it belongs. That possessive
+ * is strong enough to override any score at all, which is why this one has no other test in
+ * front of it.
+ */
+const BRIEF = /\b(build|make|create|develop|design|automate|integrate|fix|rebuild|set\s+up)\b[^?]{0,80}\bfor\s+(my|our|us)\b/i;
+
+/**
+ * The same thing said without a possessive, which is how a prospect actually opens.
  *
- * THE SECOND SHAPE, added after MJK watched the live site answer "can you build a website"
- * on the section about a motorcycle. That question has no `for my` in it, so the first
- * branch never saw it, and the score branch could not help either: a request is written in
- * the verbs this corpus is built out of, so it always scores well enough to be believed.
- * The score does not measure what the visitor wants, and on this shape of question it
- * measures which memory happens to own the verb.
+ * Added after MJK watched the live site answer "can you build a website" on the section
+ * about a motorcycle. There is no "for my" in that sentence, so BRIEF never saw it, and the
+ * score branch could not help either: a request is written in the verbs this corpus is
+ * built out of, so it always scores well enough to be believed. On this shape of question
+ * the score is not measuring the subject, it is measuring which memory owns the verb.
  *
  * "Can you build X" and "do you build X" are different questions and English already marks
- * the difference. A modal asks for a commitment and the answer is a conversation about the
- * work, so it belongs at the desk. The plain present tense asks what he does for a living
- * and the answer is the work itself, so it stays wherever the corpus puts it -- which is
- * why `do` is deliberately absent below.
+ * the difference. A modal asks for a commitment, so the answer is a conversation and it
+ * belongs at the desk. The plain present tense asks what he does for a living, so the
+ * answer is the work itself and it stays wherever the corpus puts it. That is why `do` is
+ * deliberately absent below, and why `help`, `take` and `handle` are too -- they are in
+ * ENGAGEMENT because a prospect uses them, and "can you help me understand the RD 350" uses
+ * them as well.
  *
- * `help`, `do`, `take` and `handle` are absent for the same reason. They are in ENGAGEMENT
- * because a prospect uses them, but "can you help me understand the RD 350" uses them too,
- * and only the construction verbs are unambiguous about who the thing being built is for.
+ * ON ITS OWN THIS OVER-REACHES, and the measurement is the reason it is paired with the
+ * anchor test at the call site rather than trusted alone. "Can you fix the RD 350
+ * yourself?" (129.1 on `rd350`), "can you make a ring" (68.0 on `jewelai`) and "would you
+ * design another bike" (327.1) are all modal requests aimed at things he has already built,
+ * and all three went to the desk. A score threshold cannot separate them either: the
+ * requests that must reach the desk run up to 57.0 ("can you create a chatbot") and the
+ * questions that must not start at 68.0, which is eleven points of band and no more.
+ *
+ * The anchor set is the honest instrument, and it already exists for `contextDependent`.
+ * Anchors are drawn from ids, titles and tags -- the places an author NAMES something -- so
+ * "ring", "cafe", "racer", "bike", "350" and "mjk" are anchors and "website", "app",
+ * "chatbot", "dashboard" and "logo" are not. "Website" does appear once, in the body of one
+ * memory, and that is exactly the distinction: it is a word this corpus uses, not a thing
+ * this corpus is about.
  */
-const BRIEF = new RegExp(
-  [
-    /\b(build|make|create|develop|design|automate|integrate|fix|rebuild|set\s+up)\b[^?]{0,80}\bfor\s+(my|our|us)\b/,
-    /\b(can|could|would|will)\s+(you|u)\s+(build|make|create|develop|design|automate|integrate|migrate|modernis|moderniz|rebuild|fix|set\s+up)\b/,
-  ]
-    .map((r) => r.source)
-    .join('|'),
-  'i',
-);
+const REQUEST =
+  /\b(can|could|would|will)\s+(you|u)\s+(build|make|create|develop|design|automate|integrate|migrate|modernis|moderniz|rebuild|fix|set\s+up)\b/i;
 
 /** Where a brief lands. Section 08 is titled "Brief me"; this is what it is for. */
 const ENGAGEMENT_STOP: StopId = 'contact';
@@ -1094,12 +1106,26 @@ export function retrieve(
   const { stopId: voted, share } = vote(hits, prior);
 
   /*
-   * A buyer overrides the vote in two cases, and only two: the corpus had nothing to go on,
-   * or the question is a brief. Everything else an engagement question asks -- "do you build
-   * multi agent systems", "how do i hire you" -- already scores well and already votes for
-   * the right stop, and this must not take those away from it.
+   * A buyer overrides the vote in three cases, and only three: the corpus had nothing to go
+   * on, the question is a brief, or it is a bare request for something the corpus has never
+   * named. Everything else an engagement question asks -- "do you build multi agent
+   * systems", "how do i hire you" -- already scores well and already votes for the right
+   * stop, and this must not take those away from it.
+   *
+   * The third clause is two tests because neither works alone. REQUEST says the visitor
+   * asked for a commitment; the anchor test says the thing they asked for is not something
+   * MJK has written a title or a tag about. "Can you build a website" passes both and goes
+   * to the desk. "Can you make a ring" passes the first and fails the second, because the
+   * ring is his -- it is the artefact §06 is built around -- and that question is about the
+   * work. Same test `contextDependent` uses, same reason: an anchor is a name.
    */
-  const engaged = engaging && (voted === null || topScore < MIN_TOP_SCORE || BRIEF.test(question));
+  const named = tokenize(question).some((t) => anchors.has(t));
+  const engaged =
+    engaging &&
+    (voted === null ||
+      topScore < MIN_TOP_SCORE ||
+      BRIEF.test(question) ||
+      (REQUEST.test(question) && !named));
   const stopId = engaged ? ENGAGEMENT_STOP : voted;
 
   // Routing to the right place while passing the licences from the wrong one is a defect

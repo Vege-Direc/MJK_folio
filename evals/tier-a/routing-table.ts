@@ -196,6 +196,20 @@ export const ROUTING_TABLE: RoutingCase[] = [
     'what do you do off the clock',
   ),
 
+  /*
+   * Modal requests aimed at things he has ALREADY BUILT.
+   *
+   * The mirror of the five bare requests in BUYER_QUESTIONS, and they are here because the
+   * fix for those over-reached on its way in. "Can you build X" is a request and belongs at
+   * the desk; "can you make a ring" is the same grammar pointed at the artefact section six
+   * is built around, and it is a question about the work. Score cannot separate the two --
+   * the requests run up to 57.0 and these start at 68.0 -- so the anchor set does, on the
+   * rule that an anchor is a name an author wrote into an id, a title or a tag.
+   */
+  ...cases('rd350', 'can you fix the rd 350 yourself', 'can you build a cafe racer', 'would you design another bike'),
+  ...cases('jewelai', 'can you make a ring'),
+  ...cases('engineering', 'can you build the MJK-101'),
+
   // -- contact: brief me ----------------------------------------------------
   ...cases(
     'contact',
