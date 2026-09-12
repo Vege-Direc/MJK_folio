@@ -224,6 +224,22 @@ function stripModelArtefacts(text: string): string {
 const MAX_OUTPUT_TOKENS = 600;
 
 /**
+ * How long the provider gets before the page gives up on it.
+ *
+ * There was no limit at all: no `abortSignal`, no `maxDuration`, nothing. A provider that
+ * accepted the connection and then stopped sending left the dock saying "Answering" and a
+ * caret blinking, for as long as the visitor was willing to watch. On free OpenRouter
+ * models that is not a remote possibility.
+ *
+ * 30 seconds because the measured end-to-end generation runs in single-digit seconds and
+ * the two "tell me everything" answers that met the token cap took the longest; this is
+ * well clear of a slow answer and well inside anyone's patience for a dead one. When it
+ * fires, `onError` sets `failed` and the existing `provider` fallback prints corpus prose,
+ * which is the same path a refused key already takes.
+ */
+const PROVIDER_TIMEOUT_MS = 30_000;
+
+/**
  * Back up to the last sentence that actually finished.
  *
  * Deliberately not `sentences()` from the grounding splitter, which is the right unit for
@@ -468,6 +484,21 @@ function nextQuestionFor(answer: string, candidates: readonly Memory[]): Envelop
     }
   }
   return pick ? [cardOf(pick)] : [];
+}
+
+/**
+ * Enough of a prior answer to remember what was said, plus the question it ended on.
+ *
+ * A clarifying question is the LAST sentence of an answer by construction, and
+ * `firstSentence` takes the first, so the one sentence the visitor is actually replying to
+ * was the one sentence guaranteed not to travel. The site could ask "what is it for?",
+ * read "a restaurant ordering bot", and have no idea what that was an answer to.
+ */
+function priorGist(text: string): string {
+  const trimmed = text.trim();
+  const first = firstSentence(trimmed);
+  const asked = /(?:^|[.!?]\s)([^.!?]{3,160}\?)\s*$/.exec(trimmed)?.[1]?.trim();
+  return asked && !first.includes(asked) ? `${first} … ${asked}` : first;
 }
 
 /** Enough of a prior answer to remember what was said, far too little to anchor on. */
@@ -724,7 +755,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
   const recent = history.slice(-2).filter((h) => h.q.trim() && h.a.trim());
   const priorLine = recent.length
     ? `\n\n---\nEarlier in this conversation, for continuity only. The subject of THIS question is the memories above, not these exchanges.\n${recent
-        .map((h) => `They asked: ${h.q}\nYou answered: ${firstSentence(h.a)}`)
+        .map((h) => `They asked: ${h.q}\nYou answered: ${priorGist(h.a)}`)
         .join('\n')}`
     : '';
 
@@ -752,6 +783,7 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
         // decides the length, and this is here so that a prompt the model ignores cannot
         // put five screens of recital into one section of the page.
         maxOutputTokens: MAX_OUTPUT_TOKENS,
+        abortSignal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
         // Deltas arrive from the provider in whatever clumps its own token batching
         // produces, observed on the live site as e.g. " client success and ad" landing
         // as one piece -- so the answer lurched instead of streaming. This re-buffers

@@ -570,6 +570,26 @@ describe('the last two exchanges reach the model, whatever they were about', () 
     expect(seen[0]).not.toContain('must not travel');
   });
 
+  /*
+   * A clarifying question is the last sentence of an answer, and the prior line took the
+   * first, so the one sentence the visitor is replying to was the one guaranteed not to
+   * travel. The site could ask "what is it for?", read "a restaurant ordering bot", and
+   * have no idea what that was an answer to.
+   */
+  it('carries a question the site asked, because that is what the next answer replies to', async () => {
+    const { model, seen } = capturing();
+    await chunksOf(
+      await handleAsk(
+        post({
+          question: 'a restaurant ordering bot',
+          history: [{ q: 'can you build a website', a: 'Yes, websites are part of the work. What is it for?' }],
+        }),
+        depsWith(model),
+      ),
+    );
+    expect(seen[0]).toContain('What is it for?');
+  });
+
   it('says nothing about a conversation that has not happened', async () => {
     const { model, seen } = capturing();
     await chunksOf(await handleAsk(post({ question: 'who are you' }), depsWith(model)));
