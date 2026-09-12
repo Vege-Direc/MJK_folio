@@ -2564,7 +2564,164 @@ anywhere except Asanjo.
 
 ---
 
-# Open, not started
+# Done, recorded here rather than in the defect table
+
+## 59. A prospect asked if I build websites and was shown a motorcycle — `done` 2026-09-12
+
+**Symptom.** MJK recorded the live site. He typed "can you build a website"; the answer was correct
+prose about building websites, printed under `§ 10 — The RD 350`, over a photograph of a 1986 Yamaha
+cafe racer. He asked whether the site needs an intent gate. **It does not, and the reason is task 56
+plus one measurement: the router had already identified the intent correctly and let a search score
+overrule it.**
+
+**Reproduced before anything was touched**, and all four wrong ones score the same:
+
+| question | routed to | score |
+|---|---|---|
+| can you build a website | `rd350` | 20.5 |
+| can you build me a website | `rd350` | 20.5 |
+| can you build a mobile app | `rd350` | 20.5 |
+| do you build websites | `rd350` | 20.5 |
+| can you help me understand the rd 350 | `rd350` | 129.1 (correct) |
+
+Four different questions, one score. 20.5 is what the verb "build" is worth on its own, because the
+object contributed nothing at all.
+
+**Defect one: the tokeniser could not reach an irregular past tense.** `stem()` strips `-s`, `-ing`
+and `-ed`. English's commonest verbs take none of those, so each indexed as two unrelated words and
+the corpus and the visitor picked different halves. Measured over `memories.yaml`: **`built` 16
+against `build` 12, `ran` 9 against `run` 5, `taught` 6 against `teach` none.** So `build-overview`
+— the memory titled *"What I have built"*, tagged `built`, whose body is the list of every shipped
+thing — **did not match the query "build" at all**, while `rd350-the-build` (titled "Building the RD
+350", six more uses in its body) owned the word outright and won every question containing it. An
+`IRREGULAR` map of ten pairs now runs in front of the suffix rules. **`lead`/`led` and `find`/`found`
+are deliberately absent**: "leads" is a noun this corpus means something by, and "found" is the
+present tense of founding a company.
+
+**Defect two: a score was deciding something a score cannot measure.** `ENGAGEMENT` saw the question
+correctly — "can you build" matched its scope branch on the first try. But the override behind it
+fires only when the score is *weak*, and a request is written in the verbs this corpus is built out
+of, so a request always scores well enough to be believed. `BRIEF`, the one clause that overrides a
+confident score, required `for my|our|us`, and a bare request has no possessive in it. **The one
+shape that escaped was the one a prospect actually types.** `BRIEF` gained a second branch: a modal
+plus a construction verb. *"Can you build X"* asks for a commitment and goes to the desk; *"do you
+build X"* asks what he does for a living and stays with the work, which is why `do` is not in it.
+`help`, `take` and `handle` are out for the same reason — "can you help me understand the RD 350"
+uses them too.
+
+**After.** All five requests reach `contact`. The RD 350 question stays at 129.1. Five new rows in
+`BUYER_QUESTIONS`, two new tokeniser tests, **421 tests passing**.
+
+**One row now misses, and it is not being re-expected to make this green.** *"Do you build multi
+agent systems"* moved `now` → `work`, because `build-overview` now matches "build" through a title
+that reduces to a single token, which BM25 weights heavily. The table wants the capability stop; the
+corpus now puts the answer on the stop that names three multi-agent systems. **76/77 = 98.7%, bar is
+90%.** This question has changed stops twice. It is a judgement call between two defensible answers
+and it is MJK's.
+
+**Against task 56.** The gateway study's own negative result — *"overriding BM25 when it is topical
+but unconfident changed zero rows"* — is confirmed here: every misroute above was `topical: true`
+and unconfident, so a confidence-based override would have been the wrong instrument. The gateway
+would also not have helped, because it replaces `vote()` and `vote()` was not what failed. **Task
+56's recommendation, BM25 plus a vector topicality gate, is still the open item and is still
+unbuilt.**
+
+---
+
+## 60. The language was too AI, and the corpus was teaching it — `done` 2026-09-12
+
+MJK: *"the language itself seems too AI."* Audited against the `humanizer` rulebook
+(github.com/blader/humanizer, 25 numbered patterns drawn from Wikipedia's *Signs of AI writing*),
+with **his own 55 memory bodies as the voice sample** rather than a general idea of good prose. The
+rulebook's own rule is that a writing sample overrides its patterns, including the one about dashes.
+
+**The sample, measured. 4,463 words, 233 sentences.**
+
+| | MJK | the live answer to "can you build a website" |
+|---|---|---|
+| proper nouns / 100w | **13.4** | **2.3** |
+| verbless sentences | ~a quarter | **0** |
+| em dashes / 100w | **0.31** | 1.13 |
+| numbers / 100w | 2.45 | **0** |
+| contractions / 100w | 0.13 | 0 |
+| `not X but Y` | **never** | — |
+| `rather than` | **14 times** | — |
+| `serves as` / `represents` / `-ing` riders | **zero** | present |
+
+**177 words to deliver one fact the visitor did not already have, and one sentence that was not
+true.** *"I do not use templates or no-code platforms"* appears nowhere in the corpus. **The guard
+could not catch it**: it checks quantities and entities, and a denial of something nobody mentioned
+contains neither. That sentence is humanizer §5, *arguing with no one*, now banned by name in the
+prompt — **the voice tell and the fabrication were the same defect.**
+
+**The word "corpus" reached the live site, and it is the one word this repo has a test against.**
+`voice.test.ts` names it first in its MACHINERY list and bans it from every authored string. The
+cause was not a missing guard: **line 550 of `memories.yaml` ended `build-overview` with "answers
+questions about me from a corpus it is not allowed to contradict", and that memory was the top hit
+for the question.** The model quoted its material correctly. `stops.ts:208` had already rewritten the
+same sentence for the page and left the corpus alone. **The rule covered the strings we write and not
+the ones we hand the model.** Now tested: no memory title or body may carry the vocabulary. `memory`
+is deliberately excluded — *"one of my earliest memories is flying alone as a child"* is a sentence
+this corpus is entitled to.
+
+**System prompt**, gaining what the audit found missing, ranked by likelihood in answers about a
+career and some software: **name things** (13.4 against 2.3 is the largest gap and the one that
+decides whether an answer sounds like him); no closer that restates the paragraph above it; three
+abstractions are not a list; do not answer something nobody asked; no `-ing` riders; "is" and not
+"serves as"; a short sales-vocabulary list; **one em dash an answer**; and **length follows the
+question, so a yes is a yes.** The absolute contraction ban is gone — he writes "I'm" and "I've"
+about one time in five, `who-i-am` opens *"I'm Mathew John Kondekeril"*, and the rule had already
+cost something: `stops.ts:296` had rewritten his *"every ERP I've used"* as *"I have used"*.
+
+**Page copy**, same measurement before and after:
+
+| | before | after | sample |
+|---|---|---|---|
+| `stops.ts` dashes / 100w | 0.66 | **0.00** | 0.31 |
+| privacy page dashes / 100w | 1.20 | **0.00** | 0.31 |
+
+Twelve edits, most of them putting his own words back where the page had paraphrased them: the hero's
+*"not an AI problem"* became *"rather than an AI problem"*, which is his phrasing in `what-i-do-now`;
+§01's participle became his own verbless line *"The pilot, the instruments, the clouds through the
+windscreen"*; §07's *"makes the person"* became *"forces the human to"*. The privacy page lost its
+row of fragments and its clipped negative (*"not to identify you"* → *"never to identify you"*), and
+stopped calling itself § 09, which `stops.ts` was already using for Pivot. **Alt text and figure
+captions were read and left alone — the densest, most concrete prose on the site needed nothing.**
+
+**`pivot` offered four questions and three of them were the same question.** Two memories, and "What
+is the pattern?", "How do you learn something new?" and "What's your approach to something new?" all
+ask it. The third is now *"What happened at IIT Bombay?"*, which `pivot-how-it-happened` answers at
+198.4.
+
+**Not built, and named so it is not forgotten:** nothing measures AI tells in a *generated* answer.
+The authored copy is CI-gated and the prose a visitor actually reads is governed by prompt text
+alone. A live sampling script in the shape of `guard-eval.ts` would close it.
+
+---
+
+## 61. The site forgot the previous question whenever the subject changed — `done` 2026-09-12
+
+The gate was `previousStopId === stopId` in `handler.ts`, and consecutive questions rarely land on
+the same section, so a visitor who asked about JewelAI, then about rates, then came back was a
+stranger every time. **The third question could never see the first**, because only `history.at(-1)`
+was ever read.
+
+It was a belt over a suspender. What caused the defect the gate was added for — an answer about §07
+arriving on §06 — was the **full prior answer replayed as an `assistant` turn**, several thousand
+characters in the recency-privileged slot. Compressing it to one labelled line inside the
+instructions is what fixed that, and it is still doing so. **Two exchanges now travel, whatever they
+were about, one sentence each.** Three tests.
+
+**Still open, from the same audit, worst first:** the site cannot ask a clarifying question back, and
+could not read the answer if it did, because `firstSentence` takes the *first* sentence and a
+question back is the last. There is no timeout on the provider call anywhere in the repo, so a hung
+provider leaves a caret blinking forever. The guard silently rewrites prose the visitor has already
+read, measured at 21% of model output. The one contextual next-question is computed and then
+discarded on ten of twelve sections, because it renders only where `compose === 'plain'`. A refusal
+flies the camera to §11, away from whatever the visitor was reading. **"Ask again in a moment." is
+the only sentence on the site not in his voice, and it hides the question that produced it.**
+
+---
 
 ## 58. A live image URL hung forever, and only on non-Retina desktops — `done` 2026-09-06
 
@@ -2666,6 +2823,8 @@ and it holds, worst stop **10.60:1**, see "Decision 2 — the re-measurement"); 
 viewport"*; the §02 figure sequence; the two-rule 2px radius system; the per-frame carousel crops;
 the §05 before/after. **And one addition from the vision pass: the scene's near trunks — the only
 part of the mobile scene that was still working before tasks 47/48.**
+
+# Open, not started
 
 ## 57. The site itself as a piece of work — `spec'd`, and nothing in it is approved
 
