@@ -90,7 +90,7 @@ export const STOPS = [
      * (name, the two engineering degrees, the decade of paid media across India and
      * Southeast Asia, Krunch Labs in Singapore since January 2025).
      */
-    lede: 'Krunch Labs, Singapore. Multi-agent pipelines, custom ERPs, and the analytics to say whether any of it worked.',
+    lede: 'I run Krunch Labs in Singapore. Multi-agent pipelines, custom ERPs, and the analytics to say whether any of it worked.',
     /*
      * The last clause is the hero's closing invitation, and the order of its two halves
      * is the whole point of it.
@@ -161,7 +161,7 @@ export const STOPS = [
     compose: 'cards',
     align: 'right',
     title: { strong: 'Building the systems', muted: 'I used to run.' },
-    body: 'Krunch Labs has run out of Singapore since January 2025: multi-agent pipelines, custom ERPs, automation, and the analytics to say whether any of it worked. Most engagements start as one automation and turn into the system around it. I still take paid media work, because I ran that side for a decade.',
+    body: 'I founded Krunch Labs in Singapore in January 2025: multi-agent pipelines, custom ERPs, automation, and the analytics to say whether any of it worked. Most engagements start as one automation and turn into the system around it. I still take paid media work, because I ran that side for a decade.',
   },
   {
     /*
@@ -208,7 +208,7 @@ export const STOPS = [
     compose: 'index',
     align: 'left',
     title: { strong: 'Things I have built.' },
-    body: 'The things I have shipped, rather than the jobs I have held. Press any one below and this page answers it from what I have written down, which it is not allowed to contradict. The first three have a section of their own, immediately below.',
+    body: 'The things I have shipped, rather than the jobs I have held. Press any card below to read more. The first three have a section of their own, just underneath.',
   },
   {
     /*

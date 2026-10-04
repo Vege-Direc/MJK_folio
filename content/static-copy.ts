@@ -150,6 +150,6 @@ export const stopPrompts: Partial<Record<StopId, readonly string[]>> = {
     'What do you take on?',
     'How does an engagement start?',
     'Are you taking on new clients?',
-    'What would this cost?',
+    'How do you scope a project?',
   ],
 };

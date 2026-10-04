@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             <p>No account to make, no cookie set, no analytics script. I wrote this page because you might ask.</p>
 
             <p>
-              Questions you type into the dock leave this server and go to{' '}
+              Questions you type into the box leave this server and go to{' '}
               <span className="text-[color:var(--color-type)]">OpenRouter</span>, a third-party inference
               provider based in the US, so a model can generate an answer. From there they may be processed
               by whichever model provider OpenRouter routes the request to. I don&rsquo;t run the model, so I
@@ -47,12 +47,10 @@ export default function PrivacyPage() {
             </p>
 
             <p>
-              This whole site is a bet that people would rather ask than scroll, and until now I had no
-              way of knowing whether that was true. That is what the counting is for, and it is all it can
-              do: nothing is stored on your device, nothing follows you from one page to the next, nothing
-              goes to anyone else, and there is no profile of you anywhere because there is nothing here to
-              hang one on. I would rather write that out than let three words at the top of this page do
-              work they weren&rsquo;t written for.
+              The counting exists for one reason: I wanted to know whether people would rather ask than
+              scroll, and until now I had no way of telling. That is all it can do. Nothing is stored on
+              your device. Nothing follows you from one page to the next. Nothing goes to anyone else.
+              There is no profile of you anywhere, because there is nothing here to hang one on.
             </p>
 
             <p>If you&rsquo;d rather send nothing anywhere: the résumé PDF works with no chat at all.</p>

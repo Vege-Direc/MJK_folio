@@ -13,10 +13,10 @@ export default function NotFound() {
           § 404
         </div>
         <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[1.05] text-[color:var(--color-type)] tracking-[-0.02em]">
-          Wrong stop.
+          Page not found.
         </h1>
         <p className="mt-8 max-w-xl text-lg text-[color:var(--color-type-muted)] leading-relaxed">
-          Nothing lives at this address. The other twelve do. Start back at the top.
+          Nothing lives at this address. Start again from the top.
         </p>
         <Link
           href="/"

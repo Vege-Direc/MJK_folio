@@ -49,6 +49,16 @@ const MACHINERY: { pattern: RegExp; why: string }[] = [
   { pattern: /\bchecked against\b/i, why: 'do not advertise the check. Silence is the signal for a good answer.' },
   { pattern: /\bunder this paragraph\b/i, why: 'do not narrate the layout; it also stops being true when it changes.' },
   { pattern: /^cta$/i, why: 'a marketing word for the card, printed above the card, to the person it is aimed at.' },
+  /*
+   * The second kind, added 2026-10-05: not our VOCABULARY but our STANCE. MJK: "think from
+   * user perspective, not our perspective as builders." The entries above ban words a
+   * visitor would not know. These ban sentences that explain a rule the site follows to a
+   * visitor who did not ask -- which no readability metric can see, and the proof is that
+   * the worst offender scored grade 5.6, EASIER than the site average.
+   */
+  { pattern: /not allowed to contradict/i, why: 'a guarantee against a doubt the reader did not have. It also implies something here would.' },
+  { pattern: /wrong stop/i, why: '"stop" is our word for a section. On a 404 it is our filing system shown to a stranger.' },
+  { pattern: /fact-check/i, why: 'the machinery checking itself is not a feature a visitor asked for.' },
 ];
 
 /** Every string a visitor can read that this repo authors, with where it came from. */
@@ -156,6 +166,27 @@ describe('visitor-facing copy never explains the machine', () => {
       }),
     );
     expect(wrong, `suggestions did not route to their own stop:\n${wrong.join('\n')}`).toEqual([]);
+  });
+
+  /*
+   * A sentence a visitor has to re-read is friction whatever its reading grade, and the
+   * open-source readability stack (retext-readability, retext-simplify, write-good, alex)
+   * was measured against this copy and is NOT in CI: it would have passed every builder-voice
+   * sentence on the site while flagging "aircraft", "purchase order" and "uncle's". Length is
+   * the one thing it got right and the one thing that needs no dependency.
+   *
+   * 40 words, because the longest sentence on the site was 51 (the privacy page's "bet"
+   * paragraph) and the next longest is 35 (§10's rebuild). The cap sits in the gap.
+   */
+  it('keeps every authored sentence under forty words', () => {
+    const long: string[] = [];
+    for (const { where, text } of copy) {
+      for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+        const words = sentence.trim().split(/\s+/).filter(Boolean).length;
+        if (words > 40) long.push(`${where}: ${words} words -- ${sentence.trim().slice(0, 90)}...`);
+      }
+    }
+    expect(long, `a visitor has to hold these in their head to the end: ${long.join(' | ')}`).toEqual([]);
   });
 
   it('lets the privacy page name the machinery, because that is what it is for', () => {
