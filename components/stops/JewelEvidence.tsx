@@ -81,6 +81,16 @@ const POSTER = {
   alt: 'A generated photograph of the same ring resting on wet slate with moss growing from a crack, lit low and warm from behind.',
 };
 
+/**
+ * The clip's description, which is the BUTTON's accessible name rather than the video's.
+ *
+ * The video element sits inside the control, so a description on it concatenated onto the
+ * control's own and was announced as one run-on sentence. It belongs on the thing a screen
+ * reader actually operates.
+ */
+const CLIP_ALT =
+  'Play the four-second clip: the camera pulls back and around the same generated scene, the ring on wet slate.';
+
 const MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 function subscribeMotion(cb: () => void) {
@@ -190,13 +200,36 @@ export default function JewelEvidence() {
           rather than a 60x19px chip, and at rest it is a plate carrying a play mark and a
           duration — never the poster, which is the middle station's picture.
         */}
-        <button type="button" className="jp-clip" onClick={toggle} aria-pressed={playing}>
+        {/*
+          `aria-label` that changes, and NO `aria-pressed`. The ARIA Authoring Practices
+          Guide's button pattern is explicit: "it is critical the label on a toggle does not
+          change when its state changes", and "if the design were to call for the button
+          label to change... the aria-pressed attribute would not be needed." This element
+          did both at once, which announces the state twice and disagrees with itself the
+          moment one of them lags. `Carousel.tsx` already had it right and this did not.
+
+          `data-playing` carries the state to CSS, which is what hides the chip once the clip
+          it started is running.
+        */}
+        <button
+          type="button"
+          className="jp-clip"
+          onClick={toggle}
+          data-playing={playing || undefined}
+          aria-label={playing ? 'Pause the clip' : CLIP_ALT}
+        >
           {started ? (
             /*
              * `autoPlay` is defensible here and only here: the element does not exist
              * until a finger or a key has asked for it. `loop` is dropped under reduced
              * motion — the clip plays once and stops — which is the reading of WCAG 2.2
              * SC 2.2.2 that `Carousel.tsx` settled for this page.
+             *
+             * `aria-hidden` because this sits INSIDE the button. A control computes its
+             * name from its contents when it has none of its own, so the clip's description
+             * concatenated onto the control's and a screen reader announced "Pause A
+             * four-second clip: the camera pulls back and around...". Nothing is lost: that
+             * description is now the button's own label.
              */
             <video
               ref={video}
@@ -210,13 +243,15 @@ export default function JewelEvidence() {
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onEnded={() => setPlaying(false)}
-              aria-label="A four-second clip: the camera pulls back and around the same generated scene, the ring on wet slate."
+              aria-hidden="true"
             />
           ) : null}
           <span className="jp-clip-mark" aria-hidden="true">
             {playing ? '❚❚' : '▶'}
           </span>
           <span className="jp-clip-label">{playing ? 'Pause' : '4s clip'}</span>
+          {/* The visible text is decoration over the label above; the control's real name
+              never changes shape, which is the half of the APG rule that matters. */}
         </button>
       </div>
 

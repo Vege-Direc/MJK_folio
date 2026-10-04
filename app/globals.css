@@ -2938,16 +2938,16 @@ html[data-flying] .answer-layer-in {
  * hover, by focus, and by pausing -- which on a touch screen is a tap on the tile, because
  * the whole tile is the control.
  */
-.jp-clip[aria-pressed='true'] .jp-clip-mark,
-.jp-clip[aria-pressed='true'] .jp-clip-label {
+.jp-clip[data-playing] .jp-clip-mark,
+.jp-clip[data-playing] .jp-clip-label {
   opacity: 0;
   transition: opacity 160ms ease;
 }
 
-.jp-clip[aria-pressed='true']:hover .jp-clip-mark,
-.jp-clip[aria-pressed='true']:hover .jp-clip-label,
-.jp-clip[aria-pressed='true']:focus-visible .jp-clip-mark,
-.jp-clip[aria-pressed='true']:focus-visible .jp-clip-label {
+.jp-clip[data-playing]:hover .jp-clip-mark,
+.jp-clip[data-playing]:hover .jp-clip-label,
+.jp-clip[data-playing]:focus-visible .jp-clip-mark,
+.jp-clip[data-playing]:focus-visible .jp-clip-label {
   opacity: 1;
 }
 
