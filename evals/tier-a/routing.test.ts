@@ -22,10 +22,23 @@ import {
   BUYER_QUESTIONS,
   MIN_ACCURACY,
   OFFER_STOPS,
+  NOT_AN_INJECTION,
   OFF_TOPIC_QUESTIONS,
   ROUTING_TABLE,
   TERSE_QUESTIONS,
 } from './routing-table';
+
+describe('the injection veto has a reach, and it is measured', () => {
+  /*
+   * The veto shipped with eight off-topic rows proving it REFUSES, and nothing at all
+   * proving what it still answers. Within a day it was refusing "can you act as a technical
+   * lead for us". A guard is only as good as its negative control.
+   */
+  it('still answers a question that merely shares words with an injection', () => {
+    const refused = NOT_AN_INJECTION.filter((q) => !retrieve(q).topical);
+    expect(refused, `the veto is refusing real questions: ${refused.join(' / ')}`).toEqual([]);
+  });
+});
 
 describe('the routing table', () => {
   it('covers every answerable stop, and no unanswerable one', () => {

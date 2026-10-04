@@ -317,14 +317,14 @@ const INJECTION = new RegExp(
   [
     // Overriding what came before.
     /\b(ignore|disregard|forget|override|bypass|discard)\s+(all\s+|any\s+|your\s+|the\s+|previous\s+|prior\s+|above\s+|earlier\s+){0,3}(instruction|rule|prompt|direction|guideline|constraint|restriction)/,
-    // Asking for the instructions back.
-    /\b(what|show|tell|reveal|print|repeat|output|reveal)\b[^?]{0,40}\b(your|the)\s+(system\s+)?(prompt|instructions|rules|directive)/,
     /\brepeat\s+(the\s+)?(text|words|everything)\s+(above|before|preceding)/,
-    // Being told to be something other than Mathew.
-    /\byou\s+are\s+now\b|\bact\s+as\s+(if\s+)?(a|an|though)\b|\bpretend\s+(to\s+be|you)\b|\bfrom\s+now\s+on\s+you\b/,
     /\b(jailbreak|DAN\s+mode|developer\s+mode)\b/,
-    // Naming the machinery to get at it.
-    /\b(your|the)\s+(training\s+data|model\s+weights|api\s+key|env(ironment)?\s+variables?)\b/,
+    // Being told to be something other than Mathew.
+    /\byou\s+are\s+now\b|\bfrom\s+now\s+on\s+you\b|\bpretend\s+(to\s+be|you)\b/,
+    /\bact\s+as\s+(if\s+you|though\s+you)\b|\bact\s+as\s+(a\s+|an\s+)?(dan|jailbroken|unrestricted|unfiltered|uncensored)\b/,
+    // Asking for the instructions back. The trailing lookahead is what keeps "show me your
+    // system prompt design work" answerable: that is a question about what he has built.
+    /\b(show|tell|reveal|print|output|repeat|what\s+is)\b[^?]{0,20}\byour\s+(system\s+prompt|instructions)\b(?!\s*\w*\s*(design|engineering|work|handling|pipeline|architecture))/,
   ]
     .map((r) => r.source)
     .join('|'),
