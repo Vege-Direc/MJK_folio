@@ -202,9 +202,22 @@ drawn as a vertical lane with three exits because branching is what prose is bad
 >
 > He has now asked three times -- 2026-09-03 ("you didn't answer my earlier question on showing
 > the software builds as flow charts"), 2026-09-04, and 2026-09-06. **Decision 16 gives it a
-> home: it swaps into §06 under conditions.** `PLAN.md` §4.7 prices that at **134px short at
-> 1280x720** and rule-24 reach **29 → 27 against a floor of 29**, which is why it was not just
-> dropped back in. Neither number has been re-taken since §06 became a stop of its own.
+> home: it swaps into §06 under conditions.**
+>
+> **CORRECTION, same day: I wrote here that `PLAN.md` §4.7's price was not current. It is.**
+> §4.7 measures "§06's slack", and §06 only exists as a stop after the reorder, so the numbers
+> were taken on the shape the site has now: slack **11px at 1280x720, 160px at 1440x900, 286px
+> at 1920x1080**; removing the two cards frees 220px, giving **231px against the ~365px the
+> lane needs**, so **134px short at 1280x720** — and the 134px that `overflow: hidden` destroys
+> is the bottom of the lane, which is the judge row, the exit row and the caption. Removing
+> those two cards also takes rule-24 reach **29 → 27 against a floor of 29**, an error rather
+> than a warning.
+>
+> **So this is not unpriced, it is unexecuted.** §4.7 already names three ways out, in its own
+> order of preference: gate the lane from 1440 up, where there are 160px; cut it to five rows
+> (in / same-piece / angles / judge / out) for about 150px while keeping all three exits; or
+> retune `--pair-h` and re-measure. Whichever is taken, the floor change is deliberate and its
+> reason goes in the commit.
 
 Animating it is task 43, and animating something nothing renders is not the next move.
 
