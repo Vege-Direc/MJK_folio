@@ -200,10 +200,27 @@ export default function MJK101Figure() {
     /*
      * Sample both clouds during the hold, not at the transition.
      *
-     * 2,000 `getPointAtLength` calls across 165 paths is single-digit milliseconds on a
-     * desktop and tens on a throttled phone — cheap, but not cheap enough to spend on the
-     * frame where the engine gives way. The hold is 1,400ms of a figure that is doing
-     * nothing, so the work goes there, one tick after the engine has painted. It is kept
+     * THE ESTIMATE THAT STOOD HERE WAS WRONG BY TWO ORDERS OF MAGNITUDE, and it is why
+     * this is still a freeze. It read "2,000 `getPointAtLength` calls across 165 paths is
+     * single-digit milliseconds on a desktop and tens on a throttled phone". MEASURED
+     * 2026-10-04 over CDP on the live site, mobile tier, as ONE animation frame:
+     * **267ms at 1x CPU, 1,592ms at 4x, 2,507ms at 6x** — attributed exactly, by Long
+     * Animation Frames, to `TimerHandler:setTimeout`, one script, `blockingDuration`
+     * 2,471ms. It is 4,000 calls, not 2,000: `buildDust` samples both drawings. It
+     * survives the WebGL scene being removed entirely (2,484ms) and disappears under
+     * reduced motion, which is the signature of main-thread DOM work and nothing else.
+     * On a mid-range Android this is a page frozen for one to two and a half seconds in
+     * the middle of a scroll, and §08 is the worst section on the site because of it.
+     *
+     * NOT FIXED HERE. The repair is to slice the sampling across frames with a time
+     * budget — `scene.ts`'s `stepTier3()` already has the generator-and-budget pattern —
+     * rather than to cut `PARTICLES`, because the count is MJK's own ask ("denser and
+     * smaller particles") and the module header explains what 2,000 buys that 150 cannot.
+     * Slicing changes no pixel; cutting the count does.
+     *
+     * The placement below is still right and was never the problem. The hold is 1,400ms of
+     * a figure doing nothing, so the work goes there, one tick after the engine has
+     * painted — it simply has to go there in pieces. It is kept
      * on the ref because the geometry never changes: Replay reuses the same cloud, which
      * is also why the per-particle phase is a hash of the index rather than a random
      * number — the second run has to look like the first.

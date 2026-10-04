@@ -234,10 +234,27 @@ export const CFG: Record<Tier, MindConfig> = {
      */
     tubeSeg: 26, tubeRad: 8, icoDetail: 1, nodeRadius: 0.5, tubeRadius: 0.06, fog: 0.022,
     bloomStrength: 0.45, bloomRadius: 0.85, bloomThreshold: 0.6, tubeCorePower: 1.6, axialFloor: 0.45,
-    // No bloom on mobile => the shader carries all the glow, so keep the white-peak a
-    // touch higher than desktop so nodes still read as light. Turning bloom on here is
-    // a one-line experiment (bloom:true, bloomStrength:0.45) but costs five full-screen
-    // passes at up to 1.5x DPR — on a mid-range Android that is 55fps against 20.
+    // STALE, AND IT CONTRADICTS THE OBJECT IT SITS IN: `bloom` is `true` twenty lines
+    // above. This read "No bloom on mobile => the shader carries all the glow... Turning
+    // bloom on here is a one-line experiment but costs five full-screen passes at up to
+    // 1.5x DPR — on a mid-range Android that is 55fps against 20."
+    //
+    // Bloom was turned on deliberately and it is not a mistake: it is the cure for §07 and
+    // §08 reading as an unlit asset, measured at contact 12.11% -> 27.92% and §02 21.3% ->
+    // 50.9% lit coverage, and it only works after the density restoration, which is why
+    // every earlier measurement of it said zero. Its price was recorded at the time:
+    // full-screen fill 1.0 -> 2.13 frames.
+    //
+    // WHAT WAS NEVER TRUE IS THAT THE PRICE HAD BEEN MEASURED. Fill was the cost, and
+    // 2026-10-04 established that this project's instrument cannot see fill at all: at
+    // 390x664 the same page at deviceScaleFactor 1, 2 and 3 — 258,960 / 517,920 / 582,660
+    // device pixels, 2.25x the fill, byte-identical script — came back p50 17.6 / 17.6 /
+    // 17.5ms. Zero. A desktop GPU absorbs it. So the trade was accepted on a machine
+    // structurally blind to the axis being traded, and the warning above, deleted on the
+    // strength of that, may simply have been right.
+    //
+    // The white-peak note below still applies and is why turning bloom off again is not a
+    // one-line revert either: `nodeCoreWhite` was tuned for the no-bloom shader.
     nodeCoreWhite: 0.42, nodeBody: 0.40, nodeSizeScale: 1.6,
     pulseWidthRatio: 1.2, pulseElong: 1.15, pulseWidthEnd: 0.15, pulseOpacity: 1.0,
     pulseSpeed: 0.30, pulseGap: 0.6, pulseTailSharp: 6.0, pulsePeak: 1.35,
