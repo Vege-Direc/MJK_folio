@@ -497,7 +497,25 @@ function nextQuestionFor(answer: string, candidates: readonly Memory[]): Envelop
 function priorGist(text: string): string {
   const trimmed = text.trim();
   const first = firstSentence(trimmed);
-  const asked = /(?:^|[.!?]\s)([^.!?]{3,160}\?)\s*$/.exec(trimmed)?.[1]?.trim();
+  /*
+   * THE REGEX THAT STOOD HERE WORKED ON ONE INPUT: the fixture in its own test.
+   *
+   * It was `/(?:^|[.!?]\s)([^.!?]{3,160}\?)\s*$/`, and the capture class forbids `.`, so any
+   * clarifying question containing a full stop was dropped whole -- "Is the budget 2.5
+   * million?", "Should I send it to mjk.nila.li/contact?" -- and "Who is it for, e.g. a shop
+   * or a brand?" came through as the fragment "a shop or a brand?", handed to the model as
+   * the question the site had asked. `\s*$` also cannot step over a closing quote. The
+   * system prompt in the same commit tells the model to name things and run numbers, so a
+   * question with a dot in it is the common case, not the edge.
+   *
+   * `sentences()` is already imported at the top of this file -- "the same splitter the
+   * guard licenses by" -- and it already handles abbreviations, decimals and closing
+   * quotes. A second sentence-boundary implementation in a file that had the right one is
+   * the whole defect.
+   */
+  const parts = sentences(trimmed);
+  const last = parts.at(-1)?.trim() ?? '';
+  const asked = /\?["')\]”’]*$/.test(last) ? last.slice(0, 240) : undefined;
   return asked && !first.includes(asked) ? `${first} … ${asked}` : first;
 }
 
@@ -752,7 +770,23 @@ export async function handleAsk(req: Request, deps: AskDeps = defaultDeps): Prom
    *
    * `previousStopId` is still accepted on the wire and no longer read here.
    */
-  const recent = history.slice(-2).filter((h) => h.q.trim() && h.a.trim());
+  /*
+   * SCREENED, because this is the half of the input the veto was not looking at.
+   *
+   * `INJECTION` and `WORK_REQUEST` are tested against `question`. `history[].q` and
+   * `history[].a` are client-supplied and land in the SYSTEM message. Reproduced with this
+   * repo's own mock: the exact string that is refused before the model is called when sent
+   * as `question` reaches the system role intact when sent as a prior answer. And this
+   * session widened the channel while the hole was open -- from one exchange gated on
+   * `previousStopId`, trimmed to a first sentence, to two ungated exchanges each carrying a
+   * first sentence plus a trailing question. About 800 characters of attacker-chosen text
+   * in the system role, up from 240.
+   *
+   * The same predicate, over the same shapes, on every field that reaches the model.
+   */
+  const recent = history
+    .slice(-2)
+    .filter((h) => h.q.trim() && h.a.trim() && !isWorkRequest(h.q) && !isWorkRequest(h.a));
   const priorLine = recent.length
     ? `\n\n---\nEarlier in this conversation, for continuity only. The subject of THIS question is the memories above, not these exchanges.\n${recent
         .map((h) => `They asked: ${h.q}\nYou answered: ${priorGist(h.a)}`)

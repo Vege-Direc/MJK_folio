@@ -84,12 +84,19 @@ const POSTER = {
 /**
  * The clip's description, which is the BUTTON's accessible name rather than the video's.
  *
+ * IT OPENS WITH THE VISIBLE WORDS, and that is WCAG 2.5.3 Label in Name rather than taste.
+ * The visible span reads "4s clip"; the accessible name used to begin "Play the four-second
+ * clip...", which does not contain the visible label, so "click 4s clip" failed under voice
+ * control. Fixing the double-announcement introduced that, and `AnswerBlock.tsx` states in
+ * writing that this repo treats 2.5.3 as binding -- so it was self-inconsistent, not merely
+ * arguable. Same for the playing state: the span says "Pause", so the name is "Pause".
+ *
  * The video element sits inside the control, so a description on it concatenated onto the
  * control's own and was announced as one run-on sentence. It belongs on the thing a screen
  * reader actually operates.
  */
 const CLIP_ALT =
-  'Play the four-second clip: the camera pulls back and around the same generated scene, the ring on wet slate.';
+  '4s clip: the camera pulls back and around the same generated scene, the ring on wet slate.';
 
 const MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
@@ -216,7 +223,7 @@ export default function JewelEvidence() {
           className="jp-clip"
           onClick={toggle}
           data-playing={playing || undefined}
-          aria-label={playing ? 'Pause the clip' : CLIP_ALT}
+          aria-label={playing ? 'Pause' : CLIP_ALT}
         >
           {started ? (
             /*

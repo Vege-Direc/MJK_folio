@@ -573,7 +573,7 @@
     and the page starts moving there while the first token is still in flight. The model writes
     prose and nothing else: it does not choose the section, the layout, the images or the links.
     Every number and every name it writes is checked back against the record, and a sentence that
-    cannot be matched is taken out before you see it. Where the record holds nothing, the site says
+    cannot be matched is replaced with what I wrote. Where the record holds nothing, the site says
     so rather than guessing.
 
 - id: who-i-am
