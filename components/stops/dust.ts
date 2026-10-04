@@ -48,7 +48,37 @@ const TAU = Math.PI * 2;
  * a document even though nothing needs to be painted. `visibility: hidden` keeps the layout
  * box that guarantees that while painting nothing.
  */
-function samplePaths(ds: readonly string[], n: number): Float32Array {
+/**
+ * Hand the main thread back between slices.
+ *
+ * `scheduler.yield()` is the platform's own answer and needs no dependency: Chrome 129+,
+ * Firefox 142+. Where it is missing -- Safari, today -- `setTimeout(0)` yields too; it is
+ * coarser, because the task goes to the back of the macrotask queue rather than keeping
+ * priority, but the slices are small enough that the difference does not show.
+ *
+ * Deliberately NOT `requestIdleCallback`: an idle period is exactly what a scrolling page
+ * does not have, so the work would never finish on the device that needs it most.
+ */
+function yieldToBrowser(): Promise<void> {
+  const s = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (typeof s?.yield === 'function') return s.yield();
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+/**
+ * How long a slice may hold the main thread before handing it back.
+ *
+ * MEASURED, and the first value was wrong in an instructive way. At 8ms the 2,507ms freeze
+ * became a 124ms worst frame -- the point of the exercise -- but frames over 32ms went 26 to
+ * 62 at 6x CPU. `scheduler.yield()` yields while KEEPING priority, so it resumes soon and
+ * often inside the same frame, and several 8ms slices stack into one long one. The budget
+ * has to be small enough that a few of them still fit a 17.4ms frame.
+ */
+const SLICE_MS = 3;
+
+async function samplePaths(ds: readonly string[], n: number): Promise<Float32Array> {
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 300 232');
@@ -74,6 +104,7 @@ function samplePaths(ds: readonly string[], n: number): Float32Array {
 
     const out = new Float32Array(n * 2);
     let w = 0;
+    let since = performance.now();
     for (let i = 0; i < els.length && w < n; i++) {
       // Rounded up, so a short path still gets one point rather than vanishing; the loop
       // stops at n, so the longest paths give up the slack rather than the shortest.
@@ -85,6 +116,11 @@ function samplePaths(ds: readonly string[], n: number): Float32Array {
         out[w * 2] = pt.x;
         out[w * 2 + 1] = pt.y;
         w++;
+        if (performance.now() - since > SLICE_MS) {
+          // eslint-disable-next-line no-await-in-loop -- the yield IS the point
+          await yieldToBrowser();
+          since = performance.now();
+        }
       }
     }
     return w === n ? out : out.slice(0, w * 2);
@@ -102,8 +138,8 @@ function samplePaths(ds: readonly string[], n: number): Float32Array {
  * move. What changed is that the intro gate's portrait — sampled from tone rather than
  * from path data, because a face is not its edges — can reach them without a fork.
  */
-export function buildDust(engine: readonly string[], plane: readonly string[], n: number): Dust {
-  return pairClouds(samplePaths(engine, n), samplePaths(plane, n));
+export async function buildDust(engine: readonly string[], plane: readonly string[], n: number): Promise<Dust> {
+  return pairClouds(await samplePaths(engine, n), await samplePaths(plane, n));
 }
 
 export type DustOptions = {

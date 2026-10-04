@@ -91,6 +91,7 @@ export default function MJK101Figure() {
   const [running, setRunning] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const dust = useRef<Dust | null>(null);
+  const building = useRef(false);
   const stopDust = useRef<(() => void) | null>(null);
 
   /*
@@ -219,21 +220,35 @@ export default function MJK101Figure() {
      * Slicing changes no pixel; cutting the count does.
      *
      * The placement below is still right and was never the problem. The hold is 1,400ms of
-     * a figure doing nothing, so the work goes there, one tick after the engine has
-     * painted — it simply has to go there in pieces. It is kept
-     * on the ref because the geometry never changes: Replay reuses the same cloud, which
-     * is also why the per-particle phase is a hash of the index rather than a random
-     * number — the second run has to look like the first.
+     * a figure doing nothing, so the work goes there — it simply has to go there IN PIECES,
+     * which it now does. `samplePaths` yields to the browser every 8ms through
+     * `scheduler.yield()`, so the same total work no longer lands as one task.
+     *
+     * WHAT A SLOW DEVICE GETS. The scatter fires at 900ms. On this desktop the build is
+     * 267ms, so the cloud is ready well before it. On a phone that cannot finish in time
+     * the consumer below already degrades correctly — `if (!el || !dust.current) return` —
+     * so the figure plays engine to aircraft without the dust, and the cloud lands for the
+     * Replay. A missing flourish on a slow phone is a trade worth making against a page
+     * frozen for two and a half seconds mid-scroll. It is NOT cut by particle count,
+     * because 2,000 is MJK's own ask and the module header explains what it buys.
+     *
+     * `building` guards re-entry: Replay can fire while a build is still in flight, and two
+     * concurrent builds would do the work twice for one result.
+     *
+     * It is kept on the ref because the geometry never changes: Replay reuses the same
+     * cloud, which is also why the per-particle phase is a hash of the index rather than a
+     * random number — the second run has to look like the first.
      */
-    timers.current.push(
-      window.setTimeout(() => {
-        dust.current ??= buildDust(
-          ENGINE.map(([, d]) => d),
-          [MJK101_PATH, ...MJK101_INNER],
-          PARTICLES,
-        );
-      }, 0),
-    );
+    if (!dust.current && !building.current) {
+      building.current = true;
+      void buildDust(ENGINE.map(([, d]) => d), [MJK101_PATH, ...MJK101_INNER], PARTICLES)
+        .then((d) => {
+          dust.current ??= d;
+        })
+        .finally(() => {
+          building.current = false;
+        });
+    }
 
     timers.current.push(
       window.setTimeout(() => {
