@@ -2922,6 +2922,35 @@ html[data-flying] .answer-layer-in {
   background: #08080c;
 }
 
+/*
+ * While it plays, the control gets out of the way of the thing it started.
+ *
+ * MJK: "the video which has a permanent play button on it even when playing." He is right
+ * and it is worse than a wrong glyph. The mark and the label sit at `z-index: 1` on their
+ * own opaque plate -- correct, and the reason is two lines above: the accent over wet slate
+ * measured 2.84:1 where an 11px label needs 4.5:1. But the plate was never taken away, so a
+ * 4-second clip plays underneath a chip that covers the middle of a 135px tile, on the one
+ * section whose whole argument is "look at the output".
+ *
+ * `aria-pressed` is already bound to `playing`, so this needs no JavaScript and cannot
+ * drift from the state the element reports. Hidden by opacity rather than `display`, so the
+ * button keeps its accessible name while it is invisible, and brought straight back by
+ * hover, by focus, and by pausing -- which on a touch screen is a tap on the tile, because
+ * the whole tile is the control.
+ */
+.jp-clip[aria-pressed='true'] .jp-clip-mark,
+.jp-clip[aria-pressed='true'] .jp-clip-label {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.jp-clip[aria-pressed='true']:hover .jp-clip-mark,
+.jp-clip[aria-pressed='true']:hover .jp-clip-label,
+.jp-clip[aria-pressed='true']:focus-visible .jp-clip-mark,
+.jp-clip[aria-pressed='true']:focus-visible .jp-clip-label {
+  opacity: 1;
+}
+
 .jp-clip:focus-visible {
   outline: 1px solid var(--color-accent);
   outline-offset: 3px;
