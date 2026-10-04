@@ -185,20 +185,74 @@
   /*
    * The trimmed set, named rather than inlined, because two different conditions want
    * exactly these values and a second copy would drift from the first.
+   *
+   * EIGHT, SIX AND EIGHT LAYERS BECAME FOUR, on 2026-10-04, and this is the largest
+   * frame-time change ever made to this site. MJK: "the frames still stutter on mobile
+   * scroll", and he was right that every earlier mobile measurement had been taken on a
+   * desktop GPU, where the discriminator for fill reads literally zero — 2.25x the device
+   * pixels, byte-identical script, p50 17.6 / 17.6 / 17.5ms.
+   *
+   * Measured over CDP at 390x664 DPR 3 with a scripted touch scroll, 30 swipes, the whole
+   * page, at three CPU throttles. Frames over 32ms, before and after:
+   *
+   *     1x CPU      7  ->   4
+   *     4x CPU     43  ->   6
+   *     6x CPU     84  ->  26
+   *     p99      35.7ms -> 18.9ms, back inside a 17.4ms vsync budget at every throttle
+   *
+   * Ablation found it before the fix did: overriding these tokens to `none` on the old
+   * build took 84 bad frames to 23 and §02 — the text-densest section and the worst on the
+   * page — from 42 of 270 to 4 of 302. Removing the ENTIRE three.js scene removed 38% of
+   * dropped frames against the halo's 73%. **The halo cost nearly twice what the scene
+   * did**, which nobody had suspected because nobody had ablated it.
+   *
+   * The mechanism was already written down a hundred lines above: a `text-shadow` is a
+   * CPU-rastered Gaussian blur of every glyph, and a page in motion re-rasters every tile
+   * the scroll uncovers through every layer of it. The coarse-pointer trim was the right
+   * idea and 8/6/8 was not far enough; it bought about 15% of the problem.
+   *
+   * FOUR, NOT NONE, AND NOT THREE. The block at the top of this file says the radii do
+   * different work and all of them are load-bearing: the tight ones give the hard edge
+   * where a filament crosses a stroke, the wide ones pool so a bright cluster behind a
+   * paragraph does not shimmer between the lines. So each token keeps two tight, one mid
+   * and one wide rather than the first four, which would have been all edge and no pool.
+   *
+   * THREE WAS TRIED FIRST AND GAVE THE WORST PIXEL AWAY. At three layers the gate still
+   * passed — worst 5% of glyph pixels 6.88:1 against a floor of 4.5 — but the worst single
+   * pixel went from 5.10 to **3.30**, under the floor, on §02 and §09. Three layers also
+   * measured 22 bad frames at 6x against the halo being gone entirely at 23, i.e. the
+   * third layer was already free, so there was headroom to buy the tight layer back. Four
+   * layers: worst 5% **8.91:1**, worst single pixel **4.82**, and 26 bad frames. The
+   * fourth layer costs four frames in a thousand and returns the floor.
+   *
+   * GATED, NOT ASSUMED. The contrast floor is the one number on this site that is not
+   * allowed to move. Re-measured with the halo-mask instrument — glyph mask from the delta
+   * between an inked shot and a `-webkit-text-fill-color: transparent` shot, so the
+   * backdrop is what the ink actually sits on with its own halo intact — worst 5% of glyph
+   * pixels, twelve stops, both viewports, the field frozen with `prefers-reduced-motion`
+   * because a moving scene makes the two shots of a difference incomparable.
+   *
+   * Phone, which is the only tier these tokens touch: worst 5% **10.51 -> 8.91**, worst
+   * single pixel **5.10 -> 4.82**, floor 4.5, PASS. Desktop, which is the control arm,
+   * did not move by a hundredth at any of twelve stops — 10.40 to 10.74 before and after —
+   * which is the evidence that the instrument was measuring the tokens and not the weather.
+   *
+   * The instrument is a RECONSTRUCTION: the original went with its session's scratchpad.
+   * It agrees with the recorded baseline at `contact` on desktop to about 3% (10.51 against
+   * 10.79), which is enough to gate a before and an after taken on itself, and NOT enough
+   * to restate as this site's canonical contrast figure. It is not used that way.
    */
   --halo-lite:
-    0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
-    0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
-    0 0 11px rgba(8, 8, 12, 0.96), 0 0 22px rgba(8, 8, 12, 0.86);
+    0 0 2px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1), 0 0 5px rgba(8, 8, 12, 1),
+    0 0 14px rgba(8, 8, 12, 0.92);
 
   --halo-display-lite:
-    0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 6px rgba(8, 8, 12, 1),
-    0 0 6px rgba(8, 8, 12, 1), 0 0 20px rgba(8, 8, 12, 0.85), 0 0 48px rgba(8, 8, 12, 0.62);
+    0 0 3px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1), 0 0 7px rgba(8, 8, 12, 1),
+    0 0 28px rgba(8, 8, 12, 0.8);
 
   --halo-mono-lite:
-    0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 2px rgba(8, 8, 12, 1),
-    0 0 2px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1), 0 0 4px rgba(8, 8, 12, 1),
-    0 0 10px rgba(8, 8, 12, 0.95), 0 0 24px rgba(8, 8, 12, 0.76);
+    0 0 1px rgba(8, 8, 12, 1), 0 0 1px rgba(8, 8, 12, 1), 0 0 3px rgba(8, 8, 12, 1),
+    0 0 11px rgba(8, 8, 12, 0.9);
 }
 
 @media (pointer: coarse) {
