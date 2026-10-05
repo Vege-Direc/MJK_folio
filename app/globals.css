@@ -486,7 +486,34 @@ html[data-flying] {
   padding: 8vh min(5vw, 73px) calc(var(--dock-h) + max(32px, var(--dock-feather)));
   position: relative;
   text-align: left;
-  transition: opacity 0.5s cubic-bezier(0.2, 0, 0, 1), transform 0.5s cubic-bezier(0.2, 0, 0, 1);
+  /*
+   * NO TRANSITION HERE ANY MORE, and the frame it cost is the stutter MJK reported:
+   * "an observable stutter between sections when i scroll, as if the page is getting
+   * stuck or jittering between sections."
+   *
+   * This declared `opacity 0.5s, transform 0.5s`. The opacity half was already DEAD --
+   * nothing on this element changes opacity since the 0.32 dim was removed -- and the
+   * transform half animated `translateY(8px)` on two entire section containers at every
+   * one of the eleven boundaries.
+   *
+   * An unpromoted element that starts a transform transition has to be rastered into a
+   * new compositor layer on the frame the transition begins, and this element contains
+   * every word on the screen with a multi-layer `text-shadow` inherited through it. So the
+   * boundary frame paid a full-viewport raster of glow text at DPR 3. Measured over CDP at
+   * 390x664: the frame on which `data-stop` flips ran p50 35.6ms against a 17.4ms budget,
+   * and 17.4ms with this one declaration disabled. Chromium's own compositing notes are
+   * the mechanism: a layer gets its own backing surface when it animates transform or
+   * opacity, and only AFTER that promotion are updates free of a repaint.
+   *
+   * It is deleted rather than optimised, because every way of keeping it costs something
+   * real. `will-change: transform` moves the raster to load and keeps twelve
+   * viewport-sized layers resident. Animating opacity instead promotes identically, and
+   * `will-change: opacity` would additionally make each section a BACKDROP ROOT under
+   * Filter Effects Level 2 -- which would break a `backdrop-filter` dock before it is
+   * built. The 8px settle is not worth a dropped frame at every section change, and the
+   * "you are here" signal it was carrying is already carried by `.section-kicker`'s own
+   * colour transition, which animates two small elements and stays.
+   */
 }
 
 /*
@@ -506,10 +533,6 @@ html[data-flying] {
  * `data-active` at all — no JavaScript, a hydration that never came — still renders
  * exactly as it should rather than sitting back forever.
  */
-.panel[data-active='false'] .section-inner {
-  transform: translateY(8px);
-}
-
 .panel[data-active='false'] .section-kicker {
   color: var(--color-type-dim);
 }

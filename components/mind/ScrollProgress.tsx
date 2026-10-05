@@ -137,13 +137,25 @@ export default function ScrollProgress({ count }: { count: number }) {
 
       const stop = Math.min(count - 1, Math.max(0, Math.round(u * (count - 1))));
       if (stop !== lastStop) {
+        const prev = lastStop;
         lastStop = stop;
         root.dataset.stop = String(stop);
         // The lit-stop affordance (preview.html:30-46), set on the section itself: CSS
         // cannot compare an attribute on <html> against one on a descendant, and nine
         // hard-coded id pairs would be nine chances to mistype a stop id.
-        for (const el of sections) {
-          el.dataset.active = el.dataset.stop === String(stop) ? 'true' : 'false';
+        // Only the two that changed. This wrote all twelve on every boundary, so ten of
+        // the twelve writes set an attribute to the value it already held -- a style
+        // invalidation on ten section subtrees for nothing. `prev` is the stop we are
+        // leaving; on the first run it is -1 and the loop below seeds every section once.
+        if (prev < 0) {
+          for (const el of sections) {
+            el.dataset.active = el.dataset.stop === String(stop) ? 'true' : 'false';
+          }
+        } else {
+          const leaving = sections.find((el) => el.dataset.stop === String(prev));
+          const arriving = sections.find((el) => el.dataset.stop === String(stop));
+          if (leaving) leaving.dataset.active = 'false';
+          if (arriving) arriving.dataset.active = 'true';
         }
       }
       if (!scrolled && u > 0.005) {
