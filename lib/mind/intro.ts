@@ -105,7 +105,7 @@ export function tailStartsAt(revealAtMs: number | null): number {
  * Width is capped against BOTH axes on purpose. Height alone put a 490px-tall figure
  * inside a 390px-wide phone, which is 367px of shoulders across a 390px screen — the
  * portrait touching both edges reads as a crop, not as a person. The mark count is
- * constant, so the head lands at about 38 marks across at every size this returns: that
+ * constant, so the head lands at about 44 marks across at every size this returns: that
  * is the whole reason a full-screen gate is the only shape in which a phone visitor ever
  * sees the portrait at all.
  */
@@ -279,8 +279,24 @@ function buildSprites(pitch: number, dpr: number): HTMLCanvasElement[] {
     cv.height = px;
     const g = cv.getContext('2d');
     if (g) {
+      /*
+       * THE GRADIENT STOPS AT `r`, NOT AT THE CANVAS EDGE, and that one argument is the
+       * whole of MJK's "the particle sizes that make up my face are too big".
+       *
+       * `px` is `ceil(r*2*dpr) + 2`, and the `+2` is meant to be PADDING so the falloff
+       * has somewhere to land. Passing `half` as the outer radius let the gradient eat
+       * that padding, and the draw loop then scales the whole canvas by `sprite.width/dpr`
+       * -- so every mark rendered wider than the radius the line above computes. The
+       * comment two blocks up claimed "diameter runs 0.44 to 0.72 of the mark pitch, so
+       * neighbours barely overlap"; measured against the shipped tone map it was 0.96 to
+       * 1.29 of pitch, and neighbours overlapped fully at every tone level. The light
+       * sitting BETWEEN marks -- which is what makes a dot field read as a smear with dots
+       * in it rather than as dots -- measured 16.9% on desktop and 20.2% on a phone.
+       *
+       * He was right, and it was a one-argument defect rather than a judgement call.
+       */
       const half = px / 2;
-      const grad = g.createRadialGradient(half, half, 0, half, half, half);
+      const grad = g.createRadialGradient(half, half, 0, half, half, r * dpr);
       const rgb = `${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])}`;
       grad.addColorStop(0, `rgba(${rgb},${alpha})`);
       grad.addColorStop(0.45, `rgba(${rgb},${alpha * 0.75})`);
@@ -455,11 +471,32 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
         const wv = 0.028 * env * Math.sin(TAU * WAVES * s - u1 * OMEGA + ph * JITTER);
         x += a[o + 4] * wv;
         y += a[o + 5] * wv;
-        // The HOLD is not a freeze. A sub-pixel radial breath keeps the field alive
+        // The HOLD is not a freeze. A small coherent radial breath keeps the field alive
         // while the scene builds behind it; without it the portrait goes to a still and
         // the visitor reads the pause as the page having stopped.
         if (!inTail) {
-          const br = 0.0045 * Math.sin(t * 0.0016 + ph);
+          /*
+           * PHASE FROM POSITION, NOT FROM INDEX, and five times the frequency.
+           *
+           * `phase[i]` is a hash of the mark's INDEX, so two marks a pitch apart differed
+           * in phase by about pi -- they moved in opposite directions. Measured order
+           * parameter 0.029, against 0.020 for pure noise: the field was incoherent, so
+           * 2,600 marks each crept on their own and the net motion of the cloud was zero.
+           * `dust.ts` states the principle this violated, in this repo's own words: "a
+           * per-particle random wobble is not a wave -- it is noise... what makes a medium
+           * look like a medium is COHERENCE: neighbours agree, and the disturbance
+           * travels." The HEAD wave obeys it; the HOLD breath did not.
+           *
+           * And it was too slow to see. 0.0016 rad/ms is a 3,927ms period and a peak
+           * velocity of 3.2 px/s -- 0.054 px per frame, under the threshold at which a
+           * small bright dot reads as moving at all, and only 9% of a cycle fits the
+           * shortest HOLD. So the beat this gate exists to fill was a still frame, which
+           * is what MJK saw. 0.008 gives a 785ms period and 16 px/s.
+           *
+           * Amplitude is deliberately UNCHANGED at 0.0045: measured, it is 0.296 of the
+           * mark pitch, which is right. The fault was never how far the marks moved.
+           */
+          const br = 0.0045 * Math.sin(t * 0.008 + TAU * (1.7 * a[o] + 1.3 * a[o + 1]));
           x += a[o + 6] * br;
           y += a[o + 7] * br;
         } else {
