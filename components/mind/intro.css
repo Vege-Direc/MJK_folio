@@ -52,7 +52,7 @@ html[data-intro='on'] .intro {
    * — hiding the overlay while the page beneath stayed `inert` would be worse than the
    * failure this guards against.
    */
-  animation: intro-expire 4600ms linear forwards;
+  animation: intro-expire 6400ms linear forwards;
 }
 
 @keyframes intro-expire {

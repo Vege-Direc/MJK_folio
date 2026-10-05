@@ -41,16 +41,30 @@
 import { PALETTE } from './config';
 import { decodeTone, sampleTone, type ToneMap } from '@/lib/particles/cloud';
 
-/** Every duration the gate has, in one place, because two of them are also in CSS. */
+/*
+ * Every duration the gate has, in one place, because two of them are also in CSS.
+ *
+ * LENGTHENED 2026-10-05. MJK: "overall animation should be a few seconds longer as well,
+ * seems too fast at the moment for anyone to really see whats happening and read it." He
+ * is right on both counts and they are different problems. The assembly was 620ms, which
+ * is under the ~800ms a viewer needs to see a figure RESOLVE rather than simply appear;
+ * and the hold floor was 340ms, which is less than the time it takes to read eight words,
+ * so the sentence could be gone before it had been read. The whole gate ran 1,740ms at
+ * its floor.
+ *
+ * Now 1,150 + 700 + 1,250 = 3,100ms at the floor and 4,400ms at the ceiling. The dead
+ * man in `intro.css` moves with it; it is measured from first paint and has to clear the
+ * ceiling plus the hydration it is covering.
+ */
 export const INTRO = {
   /** The portrait assembles. Fixed: it is the beat the visitor is being asked to watch. */
-  HEAD_MS: 620,
+  HEAD_MS: 1150,
   /** The floor. Below this the face has assembled and vanished without being read. */
-  HOLD_MIN_MS: 340,
+  HOLD_MIN_MS: 700,
   /** The ceiling. Past this the gate has stopped covering a load and become one. */
-  HOLD_MAX_MS: 1500,
+  HOLD_MAX_MS: 2000,
   /** Zoom, disperse, and hand over. Overlaps the scene's own 700ms opacity ramp. */
-  TAIL_MS: 780,
+  TAIL_MS: 1250,
   /** A skip, a scroll, a key. Short enough to feel like an answer rather than a queue. */
   DISMISS_MS: 220,
   /**
@@ -69,7 +83,7 @@ export const INTRO = {
    * beneath stayed `inert` — an invisible overlay holding a dead page, which is a worse
    * failure than the one the dead man exists to prevent.
    */
-  EXPIRE_MS: 4600,
+  EXPIRE_MS: 6400,
   /**
    * Measured rather than chosen. Legibility was found between 27 and 47 marks across the
    * head — 27 marginal, 47 clear — and `sqrt(n / 1.35)` puts 2,600 at 44, near the clear
@@ -78,7 +92,7 @@ export const INTRO = {
    * on a 2-second animation. The earlier estimate of 6,000-8,000 was wrong by about 3x,
    * which is why the performance objection to drawing a face this way does not stand.
    */
-  MARKS: 2600,
+  MARKS: 4200,
 } as const;
 
 /** X and Y: the shortest and longest the gate can last. Stated so a test can hold them. */
@@ -131,10 +145,7 @@ const easeIn = (t: number) => t * t * t;
  * progress, which is what makes the displacement vanish exactly where the particle
  * arrives — the cloud resolves INTO the portrait rather than near it.
  */
-const WAVES = 2.1;
 const SWEEP = 0.42;
-const OMEGA = TAU * 1.2;
-const JITTER = 0.5;
 
 /** Stride 8: tx, ty, ox, oy, nx, ny, rx, ry — all in unit-box coordinates. */
 const STRIDE = 8;
@@ -265,7 +276,11 @@ function buildSprites(pitch: number, dpr: number): HTMLCanvasElement[] {
   const out: HTMLCanvasElement[] = [];
   for (let b = 0; b < BUCKETS; b++) {
     const u = (b + 0.5) / BUCKETS;
-    const r = pitch * (0.36 + 0.16 * Math.pow(u, 0.75));
+    // 0.30/0.13 rather than 0.36/0.16. With the gradient no longer eating its padding
+    // these are the real drawn diameters, and MJK asked for finer. Fill is not the
+    // constraint here -- `clearRect` is 83-89% of the gate's pixel traffic -- so the cost
+    // of more, smaller marks is draw calls, which is why MARKS rose only to 4,200.
+    const r = pitch * (0.30 + 0.13 * Math.pow(u, 0.75));
     const alpha = Math.min(1, 0.26 + 0.26 * Math.pow(u, 0.85));
     const t = Math.min(1, u * 1.6);
     let c = dim.map((d, i) => d + (mid[i] - d) * t);
@@ -444,7 +459,9 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
     const hx = box.x + box.w * tone.head.cx;
     const hy = box.y + box.h * tone.head.cy;
 
-    const fade = inTail ? Math.max(0, 1 - Math.pow(u3, 1.6)) : 1;
+    // 2.2 rather than 1.6: the marks have to survive long enough for the dispersal to be
+    // seen as a dispersal. At 1.6 they were half gone by the time they had moved.
+    const fade = inTail ? Math.max(0, 1 - Math.pow(u3, 2.2)) : 1;
 
     for (let b = 0; b < BUCKETS; b++) {
       const sprite = sprites[b];
@@ -457,20 +474,38 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
       for (let j = 0; j < list.length; j++) {
         const i = list[j];
         const o = i * STRIDE;
-        const s = a[o];                                       // 0..1 across the figure
-        // The wavefront reaches this station at s * SWEEP and then has the rest to cross.
-        const p = Math.min(1, Math.max(0, (u1 - s * SWEEP) / (1 - SWEEP)));
-        const gp = easeInOut(p);
-        const env = Math.sin(Math.PI * p);
         const ph = phase[i];
+        /*
+         * EACH MARK LEAVES ON ITS OWN, and that is the difference between particles and a
+         * fluid.
+         *
+         * This used to read `(u1 - s * SWEEP) / (1 - SWEEP)` where `s` is the mark's x
+         * position, so arrival swept across the figure as a front -- and a front of 2,600
+         * points moving together is a wave, which is what MJK saw and called water. The
+         * stagger is now a per-mark hash, so the cloud resolves all over at once in a
+         * scatter rather than wiping in from one side.
+         */
+        const st = (Math.abs(ph) / TAU) * SWEEP;
+        const p = Math.min(1, Math.max(0, (u1 - st) / (1 - SWEEP)));
+        const gp = easeInOut(p);
 
         // Assemble: the start offset is paid off as `gp` reaches 1.
         let x = a[o] + a[o + 2] * (1 - gp);
         let y = a[o + 1] + a[o + 3] * (1 - gp);
-        // The travelling transverse wave, in box units.
-        const wv = 0.028 * env * Math.sin(TAU * WAVES * s - u1 * OMEGA + ph * JITTER);
-        x += a[o + 4] * wv;
-        y += a[o + 5] * wv;
+        /*
+         * NO TRANSVERSE WAVE. What stood here displaced every mark along a shared sine
+         * travelling across the figure -- a ripple, and a ripple is a property of a
+         * surface, not of a cloud of points. MJK: "the water like effect... doesn't fit
+         * particles right? Take inspiration from the main animation."
+         *
+         * The scene's own vocabulary is a pulse: a point of light that travels a filament,
+         * flares as it arrives at a node, and decays. So the mark flares as it lands and
+         * settles, instead of riding a current. `exc` peaks at the instant `p` reaches 1
+         * and decays over about a sixth of the assembly, which is the scene's
+         * `exciteRise`/`exciteDecay` shape at the gate's own scale.
+         */
+        const since = u1 - (st + (1 - SWEEP));
+        const exc = since >= 0 ? Math.exp(-since * 9) : 0;
         // The HOLD is not a freeze. A small coherent radial breath keeps the field alive
         // while the scene builds behind it; without it the portrait goes to a still and
         // the visitor reads the pause as the page having stopped.
@@ -502,7 +537,11 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
         } else {
           // Disperse: outward from the head, quadratic so it is a burst rather than a
           // slide, and the far marks leave first because the zoom multiplies distance.
-          const d = 0.34 * u3 * u3 * (0.55 + 0.45 * Math.sin(ph));
+          // Stronger and more varied than it was (0.34, 0.55/0.45): MJK asked for the
+          // marks to disperse at the end and the old throw was swallowed by the zoom
+          // before it read as one. Per-mark speed spread is wider so the cloud comes
+          // apart rather than expanding as a disc.
+          const d = 0.62 * u3 * u3 * (0.35 + 0.65 * Math.abs(Math.sin(ph * 1.7)));
           x += a[o + 6] * d;
           y += a[o + 7] * d;
         }
@@ -522,7 +561,7 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
          * the page. So the cloud arrives rather than being switched on, and the frame loop
          * keeps its ten state changes.
          */
-        const sz = inTail ? sw : sw * (0.5 + 0.5 * gp);
+        const sz = inTail ? sw : sw * (0.5 + 0.5 * gp) * (1 + 0.55 * exc);
         ctx.drawImage(sprite, px - sz / 2, py - sz / 2, sz, sz);
       }
     }
