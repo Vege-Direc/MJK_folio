@@ -8,3 +8,9 @@ build
 .DS_Store
 .vercel
 coverage
+
+# build artifacts
+tsconfig.tsbuildinfo
+
+# generated knowledge graph (rebuild with: graphify)
+graphify-out/
