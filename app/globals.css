@@ -3324,13 +3324,77 @@ html[data-flying] .answer-layer-in {
    * padding derived from `--dock-h` keeps the *end* of a section clear of the dock; this
    * is what keeps its middle clear on the way past.
    */
+  /*
+   * GLASS, not a plate. MJK: "I think needs to be glassmorphic so that users can still
+   * comfortably type, see recommended questions and see what they're typing but also
+   * doesn't lose out the animation from behind. A fully black interface like now kind of
+   * loses out on the beauty of things don't you think? especially on limited real estate
+   * of a mobile screen."
+   *
+   * He is describing the rule in DESIGN.md being broken by the thing that was meant to
+   * uphold it: "the scene and the words occupy the same space, and neither may mask the
+   * other." This veil was solid `--color-bg`, which masks. On a phone it masks the
+   * bottom quarter of the only screen there is.
+   *
+   * `brightness()` inside `backdrop-filter` is what makes this safe, and it is the whole
+   * reason this is not the scrim that was rejected twice. A scrim HIDES the scene to
+   * protect the words. This one keeps the scene and puts a CEILING on it: whatever is
+   * behind, however bright the frame, it arrives dimmed to at most 32% before anything is
+   * composited over it. So the contrast floor is a property of the filter rather than a
+   * bet on what the animation does next.
+   *
+   * The worst case is arithmetic, not a hope. Take a pure white backdrop -- brighter than
+   * anything this scene renders -- 255 * 0.32 = 82, composited under rgba(10,10,14,0.62)
+   * gives 0.38*82 + 0.62*10 = 37, about #252525, relative luminance 0.0185. Against that:
+   *
+   *   --color-type       #f5f3ee   13.8:1
+   *   --color-type-muted #c2bfb3    8.4:1
+   *   --color-type-dim   #9d998e    5.5:1
+   *
+   * All three clear 4.5:1 against a backdrop the scene cannot actually produce.
+   *
+   * The mask does the feathering. `backdrop-filter` applies uniformly to its whole box
+   * and cannot be graded, so blurring a box that extends 44px above the dock would put a
+   * hard horizontal seam across the scene at its top edge. Masking the element fades the
+   * filter and the tint together, and the seam goes away.
+   */
   background: linear-gradient(
     to top,
-    var(--color-bg) 0,
-    var(--color-bg) calc(100% - var(--dock-feather)),
-    rgba(10, 10, 14, 0.78) calc(100% - var(--dock-feather) + 26px),
+    rgba(10, 10, 14, 0.62) 0,
+    rgba(10, 10, 14, 0.62) calc(100% - var(--dock-feather)),
     rgba(10, 10, 14, 0) 100%
   );
+  -webkit-backdrop-filter: blur(18px) brightness(0.32) saturate(1.15);
+  backdrop-filter: blur(18px) brightness(0.32) saturate(1.15);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    #000 0,
+    #000 calc(100% - var(--dock-feather)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to top,
+    #000 0,
+    #000 calc(100% - var(--dock-feather)),
+    transparent 100%
+  );
+}
+
+/*
+ * Where there is no `backdrop-filter`, the tint alone is not enough to guarantee the
+ * contrast above, so that case keeps the opaque veil it has always had. Firefox shipped
+ * this in 103 and every current engine has it; this is for the ones that do not.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dock-veil {
+    background: linear-gradient(
+      to top,
+      var(--color-bg) 0,
+      var(--color-bg) calc(100% - var(--dock-feather)),
+      rgba(10, 10, 14, 0.78) calc(100% - var(--dock-feather) + 26px),
+      rgba(10, 10, 14, 0) 100%
+    );
+  }
 }
 
 /*

@@ -46,6 +46,49 @@ import { mulberry32, srand, type Waypoint } from './waypoints';
 export { buildWaypoints } from './waypoints';
 
 /** The precomputed tier-3 topology, as `public/far-network.json` stores it. */
+/*
+ * The vertical field of view at a landscape aspect, and the ceiling it ramps to as the
+ * viewport goes portrait. 62 is the value this scene was tuned at, and desktop keeps it
+ * exactly: at aspect 1.6 the ramp in `resize` is zero. See `resize` for why this exists.
+ */
+const PORTRAIT_FOV_MIN = 62;
+const PORTRAIT_FOV_MAX = Number(process.env.NEXT_PUBLIC_FOV_MAX ?? 78);
+
+/*
+ * WIDEN THE LENS ON A PORTRAIT SCREEN. MJK: "the other thing to look at is the focus of
+ * camera on mobile screens, which needs to differ from pc since the angle changes I
+ * think." He is right, and the reason is that three's `fov` is the VERTICAL angle --
+ * horizontal is derived from it through the aspect ratio. A fixed 62 therefore gives:
+ *
+ *   1440x900  aspect 1.60   horizontal 87.7 degrees
+ *   768x1024  aspect 0.75   horizontal 48.5
+ *   390x664   aspect 0.587  horizontal 38.9
+ *   390x844   aspect 0.462  horizontal 31.0
+ *
+ * A phone was seeing about a third of the horizontal angle a desktop sees, which is a
+ * 2.8x zoom nobody asked for. What that does to this scene is visible in a frame rather
+ * than a number: the camera ends up INSIDE a soma, one blob filling the lower two thirds
+ * with filaments running off every edge, so the field reads as a close-up of one node
+ * instead of a network. The repo had already measured the same thing from the other side
+ * -- peak soma coverage 30.4% at 1440x900 against 37.9% at 390x664.
+ *
+ * FOV is the right lever specifically BECAUSE the waypoints are hand-tuned. It is the
+ * only one that leaves camera positions, the spline, the fog and the world-unit proximity
+ * window (near0 1.2, near1 9.0) exactly as they are. Dollying back or scaling the
+ * waypoint radius would move nodes through that band and re-tune the scene by accident.
+ *
+ * Capped rather than a true horizontal lock: holding horizontal at 87.7 would demand
+ * 128.7 vertical at aspect 0.462, which is fisheye.
+ *
+ * Called at construction as well as on resize, and the first of those is the one that
+ * matters. A phone does not fire a resize on load -- it opens at its size -- so a ramp
+ * living only in `resize` never runs on the device it exists for.
+ */
+export function fovFor(aspect: number): number {
+  return PORTRAIT_FOV_MIN + (PORTRAIT_FOV_MAX - PORTRAIT_FOV_MIN)
+    * Math.min(1, Math.max(0, (1 - aspect) / 0.5));
+}
+
 export type FarNetwork = { nodes: number[][]; edges: number[][] };
 
 export type MindOptions = {
@@ -386,7 +429,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
     scene.background = new THREE.Color(PALETTE.bg);
     scene.fog = new THREE.FogExp2(PALETTE.bg, cfg.fog);
 
-    const camera = new THREE.PerspectiveCamera(62, viewW / viewH, 0.1, 600);
+    const camera = new THREE.PerspectiveCamera(fovFor(viewW / viewH), viewW / viewH, 0.1, 600);
 
     // spine nodes (featured) = waypoint.lookAt ; camera vantages = waypoint.position
     const S = waypoints.map(w => new THREE.Vector3().fromArray(w.lookAt));
@@ -2581,6 +2624,7 @@ export function createMind(canvas: HTMLCanvasElement, opts: MindOptions): MindHa
       if (!(w > 0) || !(h > 0)) return;
       viewW = w; viewH = h;
       camera.aspect = w / h;
+      camera.fov = fovFor(camera.aspect);
       camera.updateProjectionMatrix();
       // The tier cap, times whatever the adaptive controller has decided.
       const pr = Math.min(view.devicePixelRatio || 1, cfg.pixelRatioCap) * QUALITY_SCALES[qualityLevel];
