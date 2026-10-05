@@ -98,6 +98,19 @@ export const PROOF_CARDS = 2;
  * more, is under its own memory id -- which is what `check-corpus`'s rule-24 count reads,
  * so the count is 29 rather than 30 and the floor says so.
  */
+/*
+ * SIX, AND NINE WAS MEASURED AND REJECTED. MJK: section 04 is titled "Things I have built"
+ * and three of its six cards were the Paxel assessment, its numbers, and the awards --
+ * none of which he built. The corpus is reordered so the built things lead, which is the
+ * fix. Raising this to 9 so the credential still drew was tried and does not fit: measured
+ * over CDP, section 04's content is 830px in a 720px panel at 1280x720, 110px past it, and
+ * `.panel` is `overflow: hidden`, which destroys the excess rather than scrolling it. It
+ * fits at 1440x900 (803 of 900) and on a phone, and that is not enough.
+ *
+ * So the assessment and the awards are no longer drawn anywhere. They are reachable by
+ * asking, and rule-24 reach sits exactly on its floor of 29. Where that credential should
+ * live is a content decision, not a layout one.
+ */
 export const INDEX_CARDS = 6;
 
 /**

@@ -169,10 +169,17 @@ if(m==='calm')return;
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 if(!f){
 if(location.hash)return;
-var s=null;try{s=localStorage.getItem('mjk:intro')}catch(e){}
+/* sessionStorage, not localStorage, since 2026-10-05. MJK: "intro gate should show for
+   every new user or hard refresh right? now just one time for a device?" It was once per
+   device FOREVER -- he had not seen his own opening animation since the day it shipped,
+   and neither had any returning visitor. Per tab session now: a new visit plays it, a
+   reload inside the same tab does not. A hard refresh in the same tab still will not; the
+   one-line change for that is to drop these four lines entirely, which plays it on every
+   load including every accidental reload. */
+var s=null;try{s=sessionStorage.getItem('mjk:intro')}catch(e){}
 if(s)return;
 }
-try{localStorage.setItem('mjk:intro','1')}catch(e){}
+try{sessionStorage.setItem('mjk:intro','1')}catch(e){}
 d.dataset.intro='on';
 }catch(e){}})()`;
 

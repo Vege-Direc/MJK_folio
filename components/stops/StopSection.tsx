@@ -114,6 +114,20 @@ function Cards({ stop }: { stop: Stop }) {
           <span className="mb">{firstSentence(m.body)}</span>
         </AskCard>
       ))}
+      {/*
+        The one link to /privacy on the whole site, and until now there were none.
+        `voice.test.ts` names that page as the single place this site is allowed to explain
+        its own machinery -- so it is where a visitor learns the first-person answers are
+        generated, where their question goes, and what is counted. A page nothing links to
+        cannot do that job, and the omission left the only honest account of the machinery
+        unreachable while fragments of it leaked into the sales copy.
+
+        Deliberately not a fifth entry in CONTACT_LINKS: those four are the conversion
+        paths, their order is argued for above, and a privacy link is not one of them.
+      */}
+      <p className="contact-fine">
+        <a href="/privacy">How this site answers, and what it counts</a>
+      </p>
     </div>
   );
 }

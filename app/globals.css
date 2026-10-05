@@ -4105,3 +4105,31 @@ html[data-flying] .answer-layer-in {
     --jp-w: 680px;
   }
 }
+
+/*
+ * The privacy link under the contact links. Quiet by construction: it is the one piece of
+ * housekeeping on a screen whose whole job is the four links above it, and it must not
+ * compete with them. Mono at the kicker size, muted rather than dim, so it still clears
+ * the contrast floor over the scene.
+ */
+.contact-fine {
+  margin-top: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-type-muted);
+}
+
+.contact-fine a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-type-muted) 40%, transparent);
+  padding-bottom: 2px;
+}
+
+.contact-fine a:hover,
+.contact-fine a:focus-visible {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
