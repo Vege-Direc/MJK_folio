@@ -242,7 +242,24 @@ export default function IntroGate() {
           chat" is not here because it writes a cheque the guard may bounce — six of ten
           buying enquiries were refused when task 27a measured it.
         */}
-        <p className="intro-line">I&rsquo;m Mathew. This is my mind &mdash; ask it something.</p>
+        {/*
+          THE FIRST SENTENCE A STRANGER READS, and it used to be "I'm Mathew. This is my
+          mind -- ask it something."
+
+          A first-time visitor was read through this site cold and named 0.6 seconds as the
+          moment they were first confused: they did not know who Mathew was, what a "mind"
+          was, or what they would be asking it about -- and the page is `inert` behind this
+          for up to 2.9 seconds while they wonder. The surname is on the hero in the
+          smallest type on the screen, and the sentence that says what he does does not
+          arrive for another three seconds.
+
+          So this one orients instead of intriguing: a full name and a trade, which is what
+          a stranger needs in the two seconds before they can touch anything. The "mind"
+          metaphor is NOT retired -- `voice.test.ts` protects it deliberately and it still
+          carries the hero and the dock's placeholder. It is only taken out of the one
+          place where it is the first thing a stranger meets, having been explained nowhere.
+        */}
+        <p className="intro-line">I&rsquo;m Mathew Kondekeril. I build AI systems &mdash; ask me anything.</p>
       </div>
       <button type="button" className="intro-skip" onClick={() => run.current?.dismiss()}>
         Skip
