@@ -109,7 +109,29 @@ export default function ChatDock() {
     let raf = 0;
     let until = 0;
 
+    /*
+     * ONLY WHILE THE KEYBOARD IS UP, and this is the whole of MJK's "on mobile when I
+     * scroll up and down the chat dock moves up and down sometimes."
+     *
+     * `visualViewport` fires `scroll` and `resize` when a mobile browser collapses and
+     * restores its URL bar, which happens constantly during an ordinary scroll and has
+     * nothing to do with a keyboard. The loop below then measured a gap that was real,
+     * closed it, and the dock rode the URL bar up and down the screen.
+     *
+     * The measuring design underneath is right and is kept -- it exists because iOS
+     * reports viewport metrics that no formula can be built on, so this asks where the
+     * dock IS rather than where it should be. What was missing is a reason to ask at all.
+     * The keyboard is only ever up because this input has focus, so that is the gate, and
+     * losing focus drives the inset back to zero rather than leaving it wherever the last
+     * measurement put it.
+     */
+    const keyboardUp = () => input != null && document.activeElement === input;
+
     const apply = () => {
+      if (!keyboardUp()) {
+        setKbInset((prev) => (prev === 0 ? prev : 0));
+        return;
+      }
       const band = vv.offsetTop + vv.height;
       const delta = dock.getBoundingClientRect().bottom - band;
       // Under a pixel is converged. The guard also stops the loop oscillating around a

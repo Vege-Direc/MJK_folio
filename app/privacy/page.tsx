@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { SITE } from '@/content/site';
 
 export const metadata: Metadata = {
@@ -8,6 +9,23 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <main className="px-8 md:px-16 py-40 pb-48">
+      {/*
+        MJK: "no way to get back from privacy page even if we chat."
+        True, and it was a dead end in the strict sense: this page carried a download, a
+        mailto and nothing else, so the only way back to the site was the browser's own
+        back button — which is not there at all if the visitor opened the link in a new
+        tab, and is not obvious on a phone in standalone mode. The chat is on the main
+        page, so there was no way back from here by asking either.
+        `prefetch={false}`: this is the only route off a static page, and pulling the whole
+        main bundle down on hover to serve one link back is not a trade worth making.
+      */}
+      <Link
+        href="/"
+        prefetch={false}
+        className="fixed top-6 left-6 md:top-10 md:left-10 z-20 font-mono text-[11px] tracking-[0.2em] uppercase text-[color:var(--color-type-dim)] hover:text-[color:var(--color-accent)] transition-colors"
+      >
+        &larr; Back to the site
+      </Link>
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 md:col-span-2 font-mono text-[11px] tracking-[0.2em] text-[color:var(--color-type-dim)] uppercase">
           § 12 — Privacy
