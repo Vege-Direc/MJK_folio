@@ -506,34 +506,34 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
          */
         const since = u1 - (st + (1 - SWEEP));
         const exc = since >= 0 ? Math.exp(-since * 9) : 0;
+        let twinkle = 1;
         // The HOLD is not a freeze. A small coherent radial breath keeps the field alive
         // while the scene builds behind it; without it the portrait goes to a still and
         // the visitor reads the pause as the page having stopped.
         if (!inTail) {
           /*
-           * PHASE FROM POSITION, NOT FROM INDEX, and five times the frequency.
+           * NOTHING MOVES IN THE HOLD. The marks TWINKLE instead, and that is the whole
+           * correction.
            *
-           * `phase[i]` is a hash of the mark's INDEX, so two marks a pitch apart differed
-           * in phase by about pi -- they moved in opposite directions. Measured order
-           * parameter 0.029, against 0.020 for pure noise: the field was incoherent, so
-           * 2,600 marks each crept on their own and the net motion of the cloud was zero.
-           * `dust.ts` states the principle this violated, in this repo's own words: "a
-           * per-particle random wobble is not a wave -- it is noise... what makes a medium
-           * look like a medium is COHERENCE: neighbours agree, and the disturbance
-           * travels." The HEAD wave obeys it; the HOLD breath did not.
+           * I made this worse before I made it better. The breath used to take its phase
+           * from the mark's index, which is incoherent, so I gave it a phase from POSITION
+           * -- neighbours agreeing, the disturbance travelling. That is the textbook recipe
+           * for a wave, and MJK saw it immediately: the liquid he asked me to remove was
+           * still there, because I had just rebuilt it somewhere else. Coherent
+           * displacement across a field IS a ripple. There is no amount of tuning that
+           * makes a travelling sheet of points read as points.
            *
-           * And it was too slow to see. 0.0016 rad/ms is a 3,927ms period and a peak
-           * velocity of 3.2 px/s -- 0.054 px per frame, under the threshold at which a
-           * small bright dot reads as moving at all, and only 9% of a cycle fits the
-           * shortest HOLD. So the beat this gate exists to fill was a still frame, which
-           * is what MJK saw. 0.008 gives a 785ms period and 16 px/s.
+           * The distinction the first attempt missed is that coherence is right for one
+           * quantity and wrong for another. For POSITION, neighbours agreeing makes a
+           * surface -- water. For BRIGHTNESS, neighbours disagreeing makes a field of
+           * things that are individually alive -- which is what the scene behind it does:
+           * nodes fire and decay on their own clocks, and nothing slides.
            *
-           * Amplitude is deliberately UNCHANGED at 0.0045: measured, it is 0.296 of the
-           * mark pitch, which is right. The fault was never how far the marks moved.
+           * So the idle motion is now purely in size, per mark, with a per-mark phase, and
+           * the positional drift is gone entirely. `a[o + 6]` and `a[o + 7]` keep their
+           * dispersal job in the tail below and do nothing here.
            */
-          const br = 0.0045 * Math.sin(t * 0.008 + TAU * (1.7 * a[o] + 1.3 * a[o + 1]));
-          x += a[o + 6] * br;
-          y += a[o + 7] * br;
+          twinkle = 1 + 0.2 * Math.sin(t * 0.0052 + ph * 3.1);
         } else {
           // Disperse: outward from the head, quadratic so it is a burst rather than a
           // slide, and the far marks leave first because the zoom multiplies distance.
@@ -561,7 +561,7 @@ export function runIntro(els: IntroElements, tone: PortraitSource, onDone: () =>
          * the page. So the cloud arrives rather than being switched on, and the frame loop
          * keeps its ten state changes.
          */
-        const sz = inTail ? sw : sw * (0.5 + 0.5 * gp) * (1 + 0.55 * exc);
+        const sz = inTail ? sw : sw * (0.5 + 0.5 * gp) * (1 + 0.55 * exc) * twinkle;
         ctx.drawImage(sprite, px - sz / 2, py - sz / 2, sz, sz);
       }
     }
